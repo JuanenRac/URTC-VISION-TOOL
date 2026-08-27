@@ -200,18 +200,3 @@ Questo progetto fa parte di un ecosistema robotico più ampio dello stesso autor
 
 ## 📜 LICENZA
 GPL-3.0 - Vedi LICENSE per i dettagli.
-
-## Progetti correlati
-
-> Mappa canonica delle relazioni URTC.
-
-**Core URTC e strumenti correlati:**
-[URTC](https://github.com/JuanenRac/URTC) · [URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER) · [URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER) · [URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO) · [URTC-SMART-RACK](https://github.com/JuanenRac/URTC-SMART-RACK)
-
-**Integrazione HYDRA-UMC opzionale:**
-[HYDRA-UMC](https://github.com/JuanenRac/HYDRA-UMC) · [HYDRA-UMC-SDK](https://github.com/JuanenRac/HYDRA-UMC-SDK)
-
-URTC è un sottosistema di controllo indipendente. La sua integrazione con HYDRA-UMC usa contratti pubblici SDK e non rende URTC parte del core HYDRA-UMC.
-
-**Resto dell’ecosistema:**
-Gli altri progetti pubblici sono disponibili nella [dashboard dell’ecosistema JuanenRac](https://juanenrac.github.io/JuanenRac/).
