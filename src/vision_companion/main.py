@@ -23,7 +23,9 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
-__version__ = "0.0.0"
+from alignment import BoundingBox, analyze_rgb_roi
+
+__version__ = "0.0.1"
 
 # Native resolution of the MLX90640 thermal sensor family this tool head
 # targets (see README.md) - kept as the synthetic frame's shape too, so
@@ -151,6 +153,21 @@ def cmd_selftest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_analyze_roi(args: argparse.Namespace) -> int:
+    """Runs the real RGB->thermal ROI alignment + stats pipeline against a
+    synthetic thermal frame - the same code path a real detection (e.g. a
+    component bounding box from the Vision AI Node) would drive once real
+    dual-modal capture exists. Exercises alignment.py end-to-end today."""
+    thermal = generate_synthetic_thermal_frame()
+    roi = BoundingBox(args.x0, args.y0, args.x1, args.y1)
+    stats = analyze_rgb_roi(thermal, roi, rgb_width=RGB_WIDTH, rgb_height=RGB_HEIGHT)
+
+    print(f"RGB ROI ({roi.x0},{roi.y0})-({roi.x1},{roi.y1}) in a {RGB_WIDTH}x{RGB_HEIGHT} frame")
+    print(f"  -> thermal stats: min={stats.min_c:.2f}C max={stats.max_c:.2f}C "
+          f"mean={stats.mean_c:.2f}C ({stats.pixel_count} thermal px)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="vision-companion",
@@ -169,6 +186,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output directory for generated frames (default: ./selftest_output)",
     )
     selftest.set_defaults(func=cmd_selftest)
+
+    analyze_roi = subparsers.add_parser(
+        "analyze-roi",
+        help="Map an RGB-space bounding box to thermal space and report real temperature stats for it "
+             "(runs against a synthetic thermal frame - no hardware needed).",
+    )
+    analyze_roi.add_argument("x0", type=int, help=f"ROI left edge, in RGB pixels (0-{RGB_WIDTH})")
+    analyze_roi.add_argument("y0", type=int, help=f"ROI top edge, in RGB pixels (0-{RGB_HEIGHT})")
+    analyze_roi.add_argument("x1", type=int, help=f"ROI right edge, in RGB pixels (0-{RGB_WIDTH})")
+    analyze_roi.add_argument("y1", type=int, help=f"ROI bottom edge, in RGB pixels (0-{RGB_HEIGHT})")
+    analyze_roi.set_defaults(func=cmd_analyze_roi)
 
     return parser
 

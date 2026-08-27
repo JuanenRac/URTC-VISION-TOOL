@@ -27,16 +27,18 @@
 节点提供双模态数据，使其不仅能检测组件是否存在，还能检测其工作温度或
 焊点散热情况。
 
-该板卡目前尚不存在 PCB/原理图（见 `hardware/`）——以下功能描述的是目标
-设计；目前真实存在的是固件工具链以及主机端的视觉处理流水线。
+该板卡目前尚不存在 PCB/原理图（见 `hardware/`），因此下面的功能都无法驱动
+真实的热成像/RGB 传感器——但固件工具链以及主机端的视觉处理流水线（合成帧
+生成、伪彩色渲染、RGB->热成像 ROI 对位与温度统计提取，全部有 pytest 覆盖）
+今天就是真实且可用的。
 
 ### 关键特性：
-* 🔬 **双模态感知** —— 同步的热成像与 RGB 图像捕获。*（计划中——需要真实的 PCB 和传感器）*
-* 🌡️ **高精度热成像** —— 集成 MLX90640/41/42 传感器支持。*（计划中）*
-* 🎯 **Eye-in-Hand 对位** —— 亚毫米级 PnP 与 AOI（自动光学检测）。*（计划中）*
-* 📡 **统一 CAN API** —— 无缝集成到 URTC 25 种工具目录中。*（计划中）*
+* 🔬 **双模态感知** —— 同步的热成像与 RGB 图像捕获。*（两路帧所馈送的处理流水线是真实的——见下文；真正的同步捕获需要 PCB 和传感器。）*
+* 🌡️ **高精度热成像** —— 集成 MLX90640/41/42 传感器支持。*（伪彩色渲染和按区域统计提取是真实的——见下文；通过 I2C 读取真实的 MLX9064x 需要 PCB。）*
+* 🎯 **Eye-in-Hand 对位** —— 亚毫米级 PnP 与 AOI（自动光学检测）。*（RGB->热成像 ROI 坐标映射与温度统计提取是真实的并已测试——见下文的 `vision_companion/alignment.py`；亚毫米级精度需要真实的已标定摄像头。）*
+* 📡 **统一 CAN API** —— 无缝集成到 URTC 25 种工具目录中。*（计划中——需要真实的 CAN 收发器。）*
 * ✅ **Cortex-M4F 固件工具链** —— 一个真实的裸机镜像，使用与兄弟仓库 URTC 和 URTC-SMART-RACK 相同的工具链，通过 `arm-none-eabi-gcc` 交叉编译并链接。*（已实现——见下方"构建"）*
-* ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、统计报告，无需连接任何硬件即可端到端运行。*（已实现——见下方"VISION COMPANION"）*
+* ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 21 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方"VISION COMPANION"）*
 
 ---
 
@@ -60,6 +62,7 @@ flowchart LR
 * **为什么本项目拥有 2 条独立的版本跟踪线。** `src/firmware_common.h`（STM32 端固件）和 `src/vision_companion/pyproject.toml`（独立的主机端 Python 包）分别独立进行版本管理——它们运行在不同的硬件上（MCU 与主机 CM5/PC），并按不同的发布节奏交付。
 * **为什么它不是 URTC 自身的子项目。** 与 URTC-SMART-RACK 自身 README 中的理由相同——它是一个共享 URTC 的 CAN 总线/固件惯例的配套工具，而非其集成层级结构的一部分。
 * **为什么需要一个主机端配套软件包。** 热成像/RGB 双模态捕获需要真正的图像处理（numpy/Pillow），而这不适合直接运行在 STM32 上——该配套软件包正是执行这些处理的地方，通过 CAN 与板卡通信。
+* **为什么 `alignment.py` 假设两个传感器共享同一视场，而非使用真实单应变换。** 两个传感器安装在同一个刚性工具头上，因此在 RGB 空间与热成像空间之间对像素坐标做逐轴线性缩放是合理的 v0 近似——真正的逐像素标定（棋盘格、镜头畸变）需要真实摄像头才能进行，而这些目前还不存在。
 * **这如何融入生态系统的其余部分。** 共享 URTC 自身的 CAN 总线/工具生态系统，并与 HYDRA-UMC-DETECTION-HEF 自然搭配，承担与 URTC-SMART-RACK 相同的视觉识别角色。
 
 ---
@@ -76,7 +79,9 @@ URTC-VISION-TOOL/
 │   └── vision_companion/           # 主机端（CM5/开发机）Python 视觉流水线
 │       ├── pyproject.toml          # 打包配置 + `vision-companion` 控制台脚本
 │       ├── requirements.txt        # numpy + pillow
-│       ├── main.py                 # 真实可用的 CLI（版本/自检）
+│       ├── main.py                 # 真实可用的 CLI（版本/自检/analyze-roi）
+│       ├── alignment.py            # 真实：RGB<->热成像 ROI 映射 + 温度统计提取
+│       ├── tests/                  # 21 个真实 pytest 用例（main.py + alignment.py）
 │       └── README.md               # 配套软件专属使用文档
 ├── docs/                           # 文档与标定参考
 ├── hardware/                       # 硬件设计文件（PCB、外壳）—— 目前为空，尚无原理图
@@ -131,8 +136,31 @@ python3 -m venv .venv
 `selftest` 会生成一个合成的、符合 MLX9064x 格式的热成像帧（32x24，带有
 类似烙铁头的热点），以及一个合成的 RGB 彩条测试图案，将两者渲染/保存为
 真实文件，并打印其统计信息——证明 numpy/Pillow 处理流水线确实可以正常
-工作，独立于将在硬件问世后才实现的真实传感器捕获步骤。完整的配套软件
-文档请见 `src/vision_companion/README.md`。
+工作，独立于将在硬件问世后才实现的真实传感器捕获步骤。
+
+`analyze-roi X0 Y0 X1 Y1` 将 RGB 空间中的一个边界框映射到热成像空间，并
+报告该区域的真实温度统计——这正是 README 中"Eye-in-Hand Alignment"功能
+背后的对位逻辑，今天就是真实的：
+
+```bash
+.venv/bin/python main.py analyze-roi 280 210 360 270
+```
+
+真实示例输出：
+
+```text
+RGB ROI (280,210)-(360,270) in a 640x480 frame
+  -> thermal stats: min=75.67C max=78.97C mean=77.69C (16 thermal px)
+```
+
+21 个真实 pytest 用例覆盖了 `main.py` 和 `alignment.py`：
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
+
+完整的配套软件文档请见 `src/vision_companion/README.md`。
 
 ---
 

@@ -24,6 +24,34 @@ production build step exists yet for a Python tool this small.
 
 ---
 
+## vision_companion [0.0.1] - Real RGB->thermal ROI alignment + temperature stats
+
+- **`src/vision_companion/alignment.py`** (new) - the README's "Eye-in-Hand
+  Alignment" feature, made real: `rgb_roi_to_thermal_roi()` rescales a
+  bounding box detected in RGB-frame pixel space into the thermal sensor's
+  much lower native resolution (assumes a shared field of view - a real
+  per-pixel homography needs actual cameras to calibrate against, which
+  don't exist yet), clamped and widened so it never collapses to a
+  zero-size box; `extract_roi_stats()` pulls real min/max/mean temperature
+  out of a thermal-frame region; `analyze_rgb_roi()` chains both into the
+  end-to-end path a real component detection would drive.
+- **`main.py`** - new `analyze-roi X0 Y0 X1 Y1` CLI command, runs the above
+  against the existing synthetic thermal frame and prints real stats.
+- **`tests/`** (new) - 21 real pytest cases across `test_main.py` (synthetic
+  frame generation, false-color rendering, all 3 CLI commands) and
+  `test_alignment.py` (ROI coordinate mapping, degenerate/out-of-bounds
+  input guards, ROI stats extraction against real numpy arrays).
+- **`pyproject.toml`** - added a `dev` extra (`pytest>=8`) and registered
+  `alignment` as a packaged module; version bumped by hand to 0.0.1 per
+  this package's own documented policy (no production build step exists
+  yet for a Python tool this small - see the Versioning scheme above).
+- Verified for real: `pip install -e ".[dev]"` + `pytest` -> 21/21 passed;
+  `vision-companion analyze-roi 280 210 360 270` against the real synthetic
+  thermal frame -> real min/max/mean temperature output.
+- Still out of scope: real dual-modal capture (RGB camera + MLX9064x over
+  I2C) and a real per-pixel calibration between the two sensors - both need
+  a real PCB and real cameras that don't exist yet.
+
 ## [0.0.3]
 
 - Build version synchronized with `hydra-umc.project.json` and the repository-native version source.

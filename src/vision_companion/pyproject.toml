@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vision-companion"
-version = "0.0.0"
+version = "0.0.1"
 description = "Vision companion for URTC-VISION-TOOL - thermal (MLX9064x) + RGB dual-modal capture pipeline."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -23,8 +23,11 @@ dependencies = [
     "pillow>=10.0",
 ]
 
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
 [project.scripts]
 vision-companion = "main:main"
 
 [tool.setuptools]
-py-modules = ["main"]
+py-modules = ["main", "alignment"]

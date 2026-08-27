@@ -11,11 +11,11 @@
     "Python vision companion"
   ],
   "deployment_target": "user-pc",
-  "maturity": "scaffolding",
+  "maturity": "functional",
   "family": "Complementary Tools",
   "parent": null,
-  "build": "bash build_firmware.sh. Also contains an independent Python vision companion package.",
-  "notes": "Scaffolding stage for the firmware itself, but the Python vision-companion package's install paths and selftest are both really verified - real dual-modal (RGB + thermal) capture needs a real PCB first.",
+  "build": "bash build_firmware.sh. Also contains an independent Python vision companion package (cd src/vision_companion && pip install -e '.[dev]' && pytest).",
+  "notes": "Firmware itself is still an unverified skeleton pending a real PCB. The Python vision_companion package is real and test-covered: synthetic thermal+RGB frame generation, false-color rendering, and (new) real RGB->thermal ROI alignment + temperature-stats extraction (alignment.py), all verified by 21 real pytest cases. Real dual-modal (RGB + thermal) capture and per-pixel sensor calibration still need a real PCB and real cameras.",
   "native_version": {
     "file": "src/firmware_common.h",
     "pattern": {

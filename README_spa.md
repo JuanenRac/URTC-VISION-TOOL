@@ -23,15 +23,15 @@
 
 Equipado con una camara RGB de obturador global y un sensor termico de la familia MLX9064x, proporciona al Vision AI Node datos duales, permitiendole detectar no solo la presencia de un componente sino tambien su temperatura de funcionamiento o la disipacion de calor de una soldadura.
 
-Todavia no existe PCB/esquematico para esta placa (ver `hardware/`) - las caracteristicas de abajo describen el diseno objetivo; el toolchain de firmware y el pipeline de vision del lado host son lo que es real hoy.
+Todavia no existe PCB/esquematico para esta placa (ver `hardware/`), asi que nada de lo de abajo puede manejar sensores termicos/RGB reales - pero el toolchain de firmware y el pipeline de vision del lado host (generacion sintetica de frames, renderizado en falso color, alineacion de ROI RGB->termico y extraccion de estadisticas de temperatura, todo cubierto por pytest) son reales y funcionan hoy.
 
 ### Caracteristicas Clave:
-* 🔬 **Percepcion Dual-Modal** — captura sincronizada de imagen Termica y RGB. *(planeado — necesita el PCB y los sensores reales)*
-* 🌡️ **Termico de Alta Precision** — soporte integrado para sensores MLX90640/41/42. *(planeado)*
-* 🎯 **Alineacion Eye-in-Hand** — PnP y AOI (Inspeccion Optica Automatizada) sub-milimetrica. *(planeado)*
-* 📡 **API CAN Unificada** — integrado sin fisuras en el catalogo de 25 herramientas de URTC. *(planeado)*
+* 🔬 **Percepcion Dual-Modal** — captura sincronizada de imagen Termica y RGB. *(el pipeline de procesamiento que alimentan ambos frames es real - ver abajo; la captura sincronizada real necesita el PCB y los sensores.)*
+* 🌡️ **Termico de Alta Precision** — soporte integrado para sensores MLX90640/41/42. *(el renderizado en falso color y la extraccion de estadisticas por region son reales - ver abajo; leer un MLX9064x real por I2C necesita el PCB.)*
+* 🎯 **Alineacion Eye-in-Hand** — PnP y AOI (Inspeccion Optica Automatizada) sub-milimetrica. *(el mapeo de coordenadas ROI RGB->termico y la extraccion de estadisticas de temperatura son reales y estan testeados - ver `vision_companion/alignment.py` abajo; la precision sub-milimetrica necesita una camara calibrada real.)*
+* 📡 **API CAN Unificada** — integrado sin fisuras en el catalogo de 25 herramientas de URTC. *(planeado - necesita un transceptor CAN real.)*
 * ✅ **Toolchain de firmware Cortex-M4F** — una imagen bare-metal real que compila y enlaza de verdad con `arm-none-eabi-gcc`, el mismo toolchain que los repositorios hermanos URTC y URTC-SMART-RACK. *(implementado — ver COMPILACIÓN abajo)*
-* ✅ **Pipeline de procesamiento `vision_companion`** — un paquete Python real y funcional: generacion sintetica de frames termicos+RGB, renderizado termico en falso color, informe de estadisticas, funciona de principio a fin sin hardware conectado. *(implementado — ver COMPANION DE VISIÓN abajo)*
+* ✅ **Pipeline de procesamiento `vision_companion`** — un paquete Python real y funcional: generacion sintetica de frames termicos+RGB, renderizado termico en falso color, alineacion de ROI RGB->termico + extraccion de estadisticas de temperatura, informe de estadisticas, todo cubierto por 21 casos reales de pytest, funciona de principio a fin sin hardware conectado. *(implementado — ver COMPANION DE VISIÓN abajo)*
 
 ---
 
@@ -55,6 +55,7 @@ flowchart LR
 * **Por qué este proyecto tiene 2 pistas de versión independientes.** `src/firmware_common.h` (el firmware del lado STM32) y `src/vision_companion/pyproject.toml` (un paquete Python independiente del lado host) se versionan por separado - corren en hardware distinto (MCU frente a host CM5/PC) y se publican en calendarios distintos.
 * **Por qué no es un hijo del propio URTC.** Mismo motivo que el propio README de URTC-SMART-RACK - una Herramienta Complementaria que comparte el bus CAN/convenciones de firmware de URTC, sin formar parte de su jerarquía de integración.
 * **Por qué un paquete complementario del lado host.** La captura dual térmica/RGB necesita procesamiento de imagen real (numpy/Pillow) que no tiene sitio corriendo en el propio STM32 - el paquete complementario es donde eso ocurre de verdad, hablando con la placa por CAN.
+* **Por qué `alignment.py` asume un campo de vision compartido en vez de una homografia real.** Ambos sensores estan en el mismo cabezal fisico rigido, asi que un reescalado lineal por eje entre coordenadas de pixel en espacio RGB y espacio termico es una aproximacion v0 razonable - una calibracion real por pixel (tablero de ajedrez, distorsion de lente) necesita camaras reales contra las que calibrar, que todavia no existen.
 * **Cómo encaja en el resto del ecosistema.** Comparte el propio bus CAN/ecosistema de herramientas de URTC, y forma pareja natural con HYDRA-UMC-DETECTION-HEF para el mismo papel de reconocimiento visual que también cumple URTC-SMART-RACK.
 
 ---
@@ -71,7 +72,9 @@ URTC-VISION-TOOL/
 │   └── vision_companion/           # Pipeline de vision Python del lado host (CM5/maquina de desarrollo)
 │       ├── pyproject.toml          # Empaquetado + console script `vision-companion`
 │       ├── requirements.txt        # numpy + pillow
-│       ├── main.py                 # CLI real y funcional (version / selftest)
+│       ├── main.py                 # CLI real y funcional (version / selftest / analyze-roi)
+│       ├── alignment.py            # Real: mapeo de ROI RGB<->termico + extraccion de estadisticas de temperatura
+│       ├── tests/                  # 21 casos reales de pytest (main.py + alignment.py)
 │       └── README.md               # Documentacion especifica del companion
 ├── docs/                           # Documentacion y referencia de calibracion
 ├── hardware/                       # Archivos de diseno de hardware (PCB, carcasa) - vacio, sin esquematico todavia
@@ -117,7 +120,29 @@ python3 -m venv .venv
 .venv\Scripts\python main.py selftest
 ```
 
-`selftest` genera un frame termico sintetico con forma MLX9064x (32x24, con un punto caliente tipo punta de soldadura) y un patron de prueba RGB de barras de color, renderiza/guarda ambos como archivos reales, e imprime sus estadisticas — prueba de que el pipeline de procesamiento numpy/Pillow funciona de verdad, independientemente del paso de captura del sensor real que llegara cuando exista hardware. Ver `src/vision_companion/README.md` para la documentacion completa del companion.
+`selftest` genera un frame termico sintetico con forma MLX9064x (32x24, con un punto caliente tipo punta de soldadura) y un patron de prueba RGB de barras de color, renderiza/guarda ambos como archivos reales, e imprime sus estadisticas — prueba de que el pipeline de procesamiento numpy/Pillow funciona de verdad, independientemente del paso de captura del sensor real que llegara cuando exista hardware.
+
+`analyze-roi X0 Y0 X1 Y1` mapea una caja delimitadora en espacio RGB a espacio termico y reporta estadisticas reales de temperatura para esa region — la logica de alineacion detras de la caracteristica Eye-in-Hand Alignment del README, real hoy:
+
+```bash
+.venv/bin/python main.py analyze-roi 280 210 360 270
+```
+
+Salida de ejemplo real:
+
+```text
+RGB ROI (280,210)-(360,270) in a 640x480 frame
+  -> thermal stats: min=75.67C max=78.97C mean=77.69C (16 thermal px)
+```
+
+21 casos reales de pytest cubren tanto `main.py` como `alignment.py`:
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
+
+Ver `src/vision_companion/README.md` para la documentacion completa del companion.
 
 ---
 

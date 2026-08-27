@@ -7,8 +7,9 @@ project - see the repo root README for the full project context.
 There is no real PCB for this tool head yet (see `../../hardware/`), so real
 sensor capture isn't implemented. What's real and fully working today is the
 processing pipeline those captures will feed: synthetic thermal/RGB frame
-generation, false-color thermal rendering, and stats reporting - runs
-end-to-end with no hardware attached.
+generation, false-color thermal rendering, real RGB->thermal ROI alignment
+and stats extraction (`alignment.py`), and stats reporting - runs end-to-end
+with no hardware attached, verified by 21 real pytest cases.
 
 ## Install & run
 
@@ -38,5 +39,27 @@ renders/saves both (`thermal_frame.npy`, `thermal_frame_falsecolor.png`,
 `rgb_frame.png`), and prints their stats - proof the numpy/Pillow pipeline
 works end-to-end, independent of real hardware.
 
-See [main.py](main.py) for the real, working code. A real MLX9064x/camera
-capture step will be added once hardware exists.
+`analyze-roi X0 Y0 X1 Y1` maps an RGB-space bounding box (e.g. a component
+detection from the Vision AI Node) into thermal-space, then reports real
+min/max/mean temperature for that region - the alignment path the README's
+"Eye-in-Hand Alignment" feature describes, exercised end-to-end today
+against the synthetic thermal frame:
+
+```bash
+vision-companion analyze-roi 280 210 360 270
+```
+
+## Tests
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
+
+21 real pytest cases across `tests/test_main.py` (synthetic frame generation,
+false-color rendering, CLI commands) and `tests/test_alignment.py` (ROI
+coordinate mapping, out-of-bounds/degenerate-input guards, ROI stats
+extraction).
+
+See [main.py](main.py) and [alignment.py](alignment.py) for the real, working
+code. A real MLX9064x/camera capture step will be added once hardware exists.
