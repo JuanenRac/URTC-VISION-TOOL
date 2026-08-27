@@ -38,6 +38,5 @@ renders/saves both (`thermal_frame.npy`, `thermal_frame_falsecolor.png`,
 `rgb_frame.png`), and prints their stats - proof the numpy/Pillow pipeline
 works end-to-end, independent of real hardware.
 
-See [main.py](main.py) for the real, working code, and
-`SONNET/URTC-VISION-TOOL/mejoras_futuras.txt` for what a real MLX9064x/camera
-capture step will need once hardware exists.
+See [main.py](main.py) for the real, working code. A real MLX9064x/camera
+capture step will be added once hardware exists.

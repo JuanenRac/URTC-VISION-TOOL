@@ -59,4 +59,4 @@ production build step exists yet for a Python tool this small.
 
 The real dual-modal capture (RGB camera + MLX9064x over I2C, synchronized
 with the STM32 firmware over CAN) is the next milestone - it needs a real
-PCB first, tracked in `SONNET/URTC-VISION-TOOL/mejoras_futuras.txt`.
+PCB first.

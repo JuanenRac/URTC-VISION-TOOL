@@ -11,8 +11,7 @@
 # USB) isn't implemented here yet. What IS real and fully working today is
 # the processing pipeline those captures will feed: synthetic-frame
 # generation, false-color thermal rendering, and stats reporting - this
-# runs end-to-end with no hardware attached, and the real capture step
-# (tracked in SONNET/URTC-VISION-TOOL/mejoras_futuras.txt) only has to
+# runs end-to-end with no hardware attached, and the real capture step only has to
 # swap `generate_synthetic_thermal_frame()`/`generate_synthetic_rgb_frame()`
 # for a real sensor read, everything downstream already works.
 from __future__ import annotations

@@ -11,7 +11,7 @@
 // =============================================================================
 // TARGET MCU: STM32 (Cortex-M4F family - exact part TBD, same situation as
 // sibling repo URTC-SMART-RACK). No PCB/schematic exists yet for this tool
-// head (see hardware/ and SONNET/URTC-VISION-TOOL/mejoras_futuras.txt), so
+// head (see hardware/), so
 // this firmware and its linker script (STM32_MINIMAL.ld) target the core
 // generically rather than guessing a specific flash/RAM size or exact MLX9064x
 // / RGB camera wiring that a real schematic hasn't confirmed yet.

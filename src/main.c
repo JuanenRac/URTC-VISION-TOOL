@@ -10,8 +10,7 @@
 // described in the README yet. There is no real PCB/schematic for
 // URTC-VISION-TOOL to date (see hardware/), so this firmware has nothing
 // to drive - no MLX9064x I2C link, no RGB camera trigger, no CAN
-// transceiver. That real work lands once hardware exists - see
-// SONNET/URTC-VISION-TOOL/mejoras_futuras.txt. The vision-side companion
+// transceiver. That real work lands once hardware exists. The vision-side companion
 // that DOES run today lives in src/vision_companion/ (Python) - see its
 // own README/main.py.
 #include "firmware_common.h"
