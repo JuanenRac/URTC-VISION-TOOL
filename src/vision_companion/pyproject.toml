@@ -1,0 +1,30 @@
+# =============================================================================
+# URTC-VISION-TOOL - vision_companion packaging: pyproject.toml
+# Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
+# GPL-3.0 - see LICENSE
+# =============================================================================
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vision-companion"
+version = "0.0.0"
+description = "Vision companion for URTC-VISION-TOOL - thermal (MLX9064x) + RGB dual-modal capture pipeline."
+readme = "README.md"
+requires-python = ">=3.10"
+# GPL-3.0, same as the rest of this repo (see ../../LICENSE.md) - an SPDX
+# string rather than {file = "../../LICENSE.md"}: setuptools refuses to
+# package a license file from outside this subdirectory's own root.
+license = "GPL-3.0-only"
+authors = [{ name = "JuanenRac (Electro Hobby 3D)", email = "electrohobby3d@gmail.com" }]
+dependencies = [
+    "numpy>=1.26",
+    "pillow>=10.0",
+]
+
+[project.scripts]
+vision-companion = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]

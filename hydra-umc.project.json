@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "ecosystem": "HYDRA-UMC",
+  "name": "URTC-VISION-TOOL",
+  "version": "0.0.3",
+  "role": "firmware",
+  "stack": "firmware-c",
+  "technologies": [
+    "C",
+    "STM32",
+    "Python vision companion"
+  ],
+  "deployment_target": "user-pc",
+  "maturity": "scaffolding",
+  "family": "Complementary Tools",
+  "parent": null,
+  "build": "bash build_firmware.sh. Also contains an independent Python vision companion package.",
+  "notes": "Scaffolding stage for the firmware itself, but the Python vision-companion package's install paths and selftest are both really verified - real dual-modal (RGB + thermal) capture needs a real PCB first.",
+  "native_version": {
+    "file": "src/firmware_common.h",
+    "pattern": {
+      "major": "#define\\s+FIRMWARE_VERSION_MAJOR\\s+(\\d+)",
+      "minor": "#define\\s+FIRMWARE_VERSION_MINOR\\s+(\\d+)",
+      "patch": "#define\\s+FIRMWARE_VERSION_PATCH\\s+(\\d+)"
+    }
+  }
+}

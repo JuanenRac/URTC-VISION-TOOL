@@ -1,0 +1,10 @@
+# =============================================================================
+# URTC-VISION-TOOL - vision_companion dependencies: requirements.txt
+# Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
+# GPL-3.0 - see LICENSE
+# =============================================================================
+# Alternative to `pip install -e .` (pyproject.toml) for environments that
+# prefer a plain requirements file (e.g. `pip install -r requirements.txt`
+# then `python main.py`).
+numpy>=1.26
+pillow>=10.0
