@@ -1,9 +1,31 @@
 #!/usr/bin/env bash
-# =============================================================================
+# HYDRA_UMC_SCRIPT_STANDARD_HEADER_BEGIN
+# *****************************************************************************
+# Project   : URTC-VISION-TOOL
+# Script    : build_firmware.sh
+# Purpose   : Incremental firmware build and versioned artifact packaging workflow.
+# Author    : JuanenRac (Electro Hobby 3D)
+# Email     : electrohobby3d@gmail.com
+# Copyright : (C) 2026 JuanenRac
+# License   : GPL-3.0 - see LICENSE
+# *****************************************************************************
+# HYDRA_UMC_SCRIPT_STANDARD_HEADER_END
+# HYDRA_UMC_SCRIPT_STANDARD_BANNER_BEGIN
+printf '\n*******************************************************************************\n'
+printf '%s\n' "* URTC-VISION-TOOL - build_firmware.sh"
+printf '%s\n' "* Mode      : INCREMENTAL BUILD"
+printf '%s\n' "* Author    : JuanenRac (Electro Hobby 3D)"
+printf '%s\n' "* Email     : electrohobby3d@gmail.com"
+printf '%s\n' "* Copyright : (C) 2026 JuanenRac"
+printf '%s\n' "* License   : GPL-3.0 - see LICENSE"
+printf '%s\n' "* ------------------------------------------------------------------------- *"
+printf '%s\n' "* 1. Increment the project version and synchronise its manifest."
+printf '%s\n' "* 2. Run this project's declared build, verification and packaging commands."
+printf '%s\n' "* 3. Report the result and keep an interactive terminal open."
+printf '%s\n' "*******************************************************************************"
+printf '\n'
+# HYDRA_UMC_SCRIPT_STANDARD_BANNER_END
 # URTC-VISION-TOOL - Firmware Build Script: build_firmware.sh
-# Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
-# =============================================================================
 # Compiles this project's minimal Cortex-M4F skeleton (src/main.c +
 # src/startup_stm32_minimal.c, see those files' own header comments for
 # why there's no ST HAL/CMSIS dependency yet - no real PCB exists to pin
@@ -25,23 +47,15 @@ HYDRA_UMC_CI_MODE="${HYDRA_UMC_CI:-0}"
 if [ "$HYDRA_UMC_CI_MODE" = "1" ]; then
     echo "URTC-VISION-TOOL CI: version sources are read-only."
 else
-    python3 "$(dirname "$0")/bump_manifest_version.py" || exit 1
+    # HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
+    printf '%s\n' "[1/3] Incrementing project version and synchronising its manifest..."
+    # HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
+    HYDRA_UMC_VERSION_BEFORE="$(python3 -c 'import json, pathlib, sys; print(json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["version"])' "$(dirname "$0")/hydra-umc.project.json")"
 fi
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD="$ROOT/build"
 FIRMWARE_OUT="$ROOT/firmware"
-
-echo "============================================================================="
-echo " URTC-VISION-TOOL - firmware build"
-echo ""
-echo " Compiles the minimal Cortex-M4F skeleton (no ST HAL yet - see"
-echo " src/firmware_common.h for why) with arm-none-eabi-gcc."
-echo ""
-echo " Author:  JuanenRac (Electro Hobby 3D) - electrohobby3d@gmail.com"
-echo " License: GPL-3.0 - see LICENSE"
-echo "============================================================================="
-
 if [ -t 0 ]; then
     trap 'echo ""; read -r -p "Press Enter to close this window..." _' EXIT
 fi
@@ -64,6 +78,15 @@ if [ "$HYDRA_UMC_CI_MODE" = "1" ]; then
     VERSION="$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_MAJOR[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$').$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_MINOR[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$').$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_PATCH[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$')"
 else
     VERSION="$(python3 bump_version.py src/firmware_common.h FIRMWARE_VERSION)"
+    python3 "$(dirname "$0")/bump_manifest_version.py" --sync
+    # HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_AFTER
+    HYDRA_UMC_VERSION_AFTER="$(python3 -c 'import json, pathlib, sys; print(json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["version"])' "$(dirname "$0")/hydra-umc.project.json")"
+    printf '\n*******************************************************************************\n'
+    printf '%s\n' '* VERSION INCREMENT COMPLETED'
+    printf '%s\n' "* v${HYDRA_UMC_VERSION_BEFORE:-unknown} -> v${HYDRA_UMC_VERSION_AFTER:-unknown}"
+    printf '%s\n' '* Project manifest synchronized with the firmware version.'
+    printf '%s\n' '*******************************************************************************'
+    printf '\n'
 fi
 echo "  Firmware version: $VERSION"
 
