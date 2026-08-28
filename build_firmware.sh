@@ -71,7 +71,25 @@ fi
 echo "  OK   arm-none-eabi-gcc found: $(arm-none-eabi-gcc --version | head -1)"
 
 echo ""
-echo "=== 2. Version bump (odometer, see bump_version.py) ==="
+echo "=== 2. Real logic tests (host gcc, not arm-none-eabi-gcc) ==="
+HOST_CC="${CC:-cc}"
+if ! command -v "$HOST_CC" >/dev/null 2>&1; then
+    HOST_CC=gcc
+fi
+if ! command -v "$HOST_CC" >/dev/null 2>&1; then
+    echo "FAIL: no host C compiler found (tried \$CC and gcc)."
+    exit 1
+fi
+mkdir -p "$BUILD"
+"$HOST_CC" -std=c11 -Wall -Wextra -Isrc -Itests \
+    -o "$BUILD/host_tests" \
+    tests/test_main.c tests/test_sensor_frame.c tests/test_sensor_reading.c tests/test_rate_limiter.c tests/test_sensor_diagnostics.c tests/test_vision_sensor_scenarios.c \
+    src/sensor_frame.c src/sensor_reading.c src/rate_limiter.c src/sensor_diagnostics.c
+"$BUILD/host_tests"
+echo "  OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_diagnostics.c pure-logic tests passed"
+
+echo ""
+echo "=== 3. Version bump (odometer, see bump_version.py) ==="
 # bump_version.py prints exactly "MAJOR.MINOR.PATCH" to stdout on success -
 # captured directly instead of re-parsing the header back out.
 if [ "$HYDRA_UMC_CI_MODE" = "1" ]; then
@@ -91,7 +109,7 @@ fi
 echo "  Firmware version: $VERSION"
 
 echo ""
-echo "=== 3. Compile + link ==="
+echo "=== 4. Compile + link ==="
 mkdir -p "$BUILD" "$FIRMWARE_OUT"
 
 CFLAGS="-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -ffreestanding -fno-builtin -Wall -Wextra -O2 -g -Isrc"
@@ -107,11 +125,11 @@ arm-none-eabi-objcopy -O ihex "$BUILD/urtc-vision-tool.elf" "$BUILD/urtc-vision-
 echo "  OK   $BUILD/urtc-vision-tool.bin / .hex"
 
 echo ""
-echo "=== 4. Size report ==="
+echo "=== 5. Size report ==="
 arm-none-eabi-size "$BUILD/urtc-vision-tool.elf"
 
 echo ""
-echo "=== 5. Publish versioned artifacts to firmware/ ==="
+echo "=== 6. Publish versioned artifacts to firmware/ ==="
 cp "$BUILD/urtc-vision-tool.elf" "$FIRMWARE_OUT/URTC_VISION_TOOL_FIRMWARE_v${VERSION}.elf"
 cp "$BUILD/urtc-vision-tool.bin" "$FIRMWARE_OUT/URTC_VISION_TOOL_FIRMWARE_v${VERSION}.bin"
 cp "$BUILD/urtc-vision-tool.hex" "$FIRMWARE_OUT/URTC_VISION_TOOL_FIRMWARE_v${VERSION}.hex"

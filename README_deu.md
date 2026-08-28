@@ -29,7 +29,8 @@ Für diese Platine existiert noch keine PCB/kein Schaltplan (siehe `hardware/`),
 * 🔬 **Dual-Modale Wahrnehmung** — synchronisierte Thermal- und RGB-Bildaufnahme. *(die Verarbeitungspipeline, die beide Frames speist, ist real - siehe unten; die echte synchronisierte Erfassung benötigt die PCB und die Sensoren.)*
 * 🌡️ **Hochpräzise Thermik** — integrierte Unterstützung für MLX90640/41/42-Sensoren. *(das Falschfarben-Rendering und die Statistik-Extraktion pro Region sind real - siehe unten; einen echten MLX9064x über I2C auszulesen benötigt die PCB.)*
 * 🎯 **Eye-in-Hand-Ausrichtung** — submillimetergenaues PnP und AOI (automatische optische Inspektion). *(die RGB->Thermal-ROI-Koordinatenzuordnung und die Temperaturstatistik-Extraktion sind real und getestet - siehe `vision_companion/alignment.py` unten; submillimetergenaue Präzision benötigt eine echte kalibrierte Kamera.)*
-* 📡 **Einheitliche CAN-API** — nahtlos integriert in den 25-Werkzeug-Katalog von URTC. *(geplant - benötigt einen echten CAN-Transceiver.)*
+* 📡 **Einheitliche CAN-API** — nahtlos integriert in den 25-Werkzeug-Katalog von URTC. *(das sensorseitige Leitungsprotokoll selbst - Framing, CRC, Bereichsvalidierung - ist real, siehe unten; ein echter CAN-Transceiver, der es tatsächlich transportiert, wird noch benötigt.)*
+* 🔒 **Sensorprotokoll-Sicherheit** — echtes versioniertes Framing mit CRC8-Prüfsumme, echte Messbereichsvalidierung, echte Ratenbegrenzung und dedizierte Diagnosezähler für Fehler/Latenz/Bus-Resets. *(implementiert)*
 * ✅ **Cortex-M4F-Firmware-Toolchain** — ein echtes Bare-Metal-Image, das mit `arm-none-eabi-gcc` wirklich kompiliert und gelinkt wird, dieselbe Toolchain wie die Schwester-Repositories URTC und URTC-SMART-RACK. *(implementiert — siehe BUILD unten)*
 * ✅ **`vision_companion`-Verarbeitungspipeline** — ein echtes, funktionierendes Python-Paket: synthetische Thermal+RGB-Frame-Erzeugung, thermisches Falschfarben-Rendering, RGB->Thermal-ROI-Ausrichtung + Temperaturstatistik-Extraktion, Statistikbericht, alles abgedeckt durch 21 echte pytest-Fälle, läuft Ende-zu-Ende ohne angeschlossene Hardware. *(implementiert — siehe VISION-COMPANION unten)*
 
@@ -57,6 +58,8 @@ flowchart LR
 * **Warum überhaupt ein hostseitiges Companion-Paket.** Die duale thermische/RGB-Erfassung benötigt echte Bildverarbeitung (numpy/Pillow), die auf dem STM32 selbst keinen Platz hat - das Companion-Paket ist der Ort, an dem das tatsächlich geschieht, im Gespräch mit der Platine über CAN.
 * **Warum `alignment.py` ein gemeinsames Sichtfeld annimmt statt einer echten Homografie.** Beide Sensoren sitzen auf demselben starren Werkzeugkopf, daher ist eine achsenweise lineare Neuskalierung zwischen Pixelkoordinaten im RGB-Raum und im Thermal-Raum eine vernünftige v0-Näherung - eine echte pixelgenaue Kalibrierung (Schachbrett, Objektivverzerrung) benötigt echte Kameras, gegen die kalibriert werden kann, die es noch nicht gibt.
 * **Wie sich das ins restliche Ökosystem einfügt.** Teilt den eigenen CAN-Bus/das Werkzeug-Ökosystem von URTC und bildet ein natürliches Paar mit HYDRA-UMC-DETECTION-HEF für dieselbe visuelle Erkennungsrolle, die auch URTC-SMART-RACK erfüllt.
+* **Warum das Sensor-Frame-Protokoll ein eigenes Zeitstempelfeld trägt.** Ein echter sensorseitiger Zeitstempel in Millisekunden lässt einen Aufrufer wissen, *wann* eine Messung tatsächlich vorgenommen wurde, unabhängig davon, wann die MCU dazu kommt, den Frame zu parsen - ein echter Wert für Historisierung/Diagnose, den eine bloße „gerade eben angekommen"-Annahme verlieren würde.
+* **Warum Diagnosezähler (`sensor_diagnostics.c`) niemals selbst eine Annahme-/Ablehnungsentscheidung treffen.** Nur `sensor_frame.c` (Framing), `sensor_reading.c` (Bereich) und `rate_limiter.c` (Ratenbegrenzung) entscheiden, ob einem Frame vertraut wird - Diagnose zeichnet nur auf, was sie entschieden haben. Diese Grenze strikt einzuhalten bedeutet, dass ein Diagnose-Bug niemals versehentlich schlechte Daten durchlassen kann, das eigene "separar diagnostico de salida de control" des Promotion-Audits.
 
 ---
 
@@ -66,6 +69,10 @@ flowchart LR
 URTC-VISION-TOOL/
 ├── src/
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH = 0.0.0
+│   ├── sensor_frame.h / .c         # Echt: versioniertes Frame-Format + CRC8-Parsing/Encoding
+│   ├── sensor_reading.h / .c       # Echt: Dekodierung thermischer Messwerte + Bereichsvalidierung
+│   ├── rate_limiter.h / .c         # Echt: Frame-Drosselung mit Mindestintervall
+│   ├── sensor_diagnostics.h / .c   # Echt: Zähler für Fehler/Latenz/Bus-Resets, getrennt von der Steuerung
 │   ├── main.c                      # Minimaler Einstiegspunkt (Lebenszeichen-Schleife)
 │   ├── startup_stm32_minimal.c     # Vektortabelle + Reset_Handler (noch keine ST-HAL, siehe Datei-Header)
 │   ├── STM32_MINIMAL.ld            # Platzhalter-Linkerskript (Untergrenze 128K FLASH / 32K RAM)
@@ -76,6 +83,7 @@ URTC-VISION-TOOL/
 │       ├── alignment.py            # Echt: RGB<->Thermal-ROI-Zuordnung + Temperaturstatistik-Extraktion
 │       ├── tests/                  # 21 echte pytest-Fälle (main.py + alignment.py)
 │       └── README.md               # Companion-spezifische Nutzungsdokumentation
+├── tests/                          # Echter hostnativer Firmware-Testharness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, Sensor-Szenarien)
 ├── docs/                           # Dokumentation und Kalibrierreferenz
 ├── hardware/                       # Hardware-Design-Dateien (PCB, Gehäuse) - leer, noch kein Schaltplan
 ├── firmware/                       # Versionierte Build-Ausgabe (.bin/.elf/.hex), eingecheckt wie im Schwester-Repo URTC
@@ -83,7 +91,7 @@ URTC-VISION-TOOL/
 ├── images/                         # Medien und Diagramme
 ├── scripts/                        # Hilfsskripte
 ├── bump_version.py                 # Versionserhöhung nach Kilometerzähler-Prinzip (generisch, geteilt mit URTC / URTC-SMART-RACK)
-├── build_firmware.sh / .bat        # Echter Build: Version erhöhen + kompilieren + linken + nach firmware/ veröffentlichen
+├── build_firmware.sh / .bat        # Echter Build: Host-Tests + Version erhöhen + kompilieren + linken + nach firmware/ veröffentlichen
 └── README.md
 ```
 

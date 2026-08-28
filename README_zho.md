@@ -36,7 +36,8 @@
 * 🔬 **双模态感知** —— 同步的热成像与 RGB 图像捕获。*（两路帧所馈送的处理流水线是真实的——见下文；真正的同步捕获需要 PCB 和传感器。）*
 * 🌡️ **高精度热成像** —— 集成 MLX90640/41/42 传感器支持。*（伪彩色渲染和按区域统计提取是真实的——见下文；通过 I2C 读取真实的 MLX9064x 需要 PCB。）*
 * 🎯 **Eye-in-Hand 对位** —— 亚毫米级 PnP 与 AOI（自动光学检测）。*（RGB->热成像 ROI 坐标映射与温度统计提取是真实的并已测试——见下文的 `vision_companion/alignment.py`；亚毫米级精度需要真实的已标定摄像头。）*
-* 📡 **统一 CAN API** —— 无缝集成到 URTC 25 种工具目录中。*（计划中——需要真实的 CAN 收发器。）*
+* 📡 **统一 CAN API** —— 无缝集成到 URTC 25 种工具目录中。*（传感器侧的线缆协议本身——帧格式、CRC、范围校验——是真实的，见下文；仍需要真实的 CAN 收发器来实际承载它。）*
+* 🔒 **传感器协议安全性** —— 真实的版本化帧格式，带 CRC8 校验和，真实的测量范围校验，真实的速率限制，以及独立于控制决策的专用错误/延迟/总线复位诊断计数器。*（已实现）*
 * ✅ **Cortex-M4F 固件工具链** —— 一个真实的裸机镜像，使用与兄弟仓库 URTC 和 URTC-SMART-RACK 相同的工具链，通过 `arm-none-eabi-gcc` 交叉编译并链接。*（已实现——见下方"构建"）*
 * ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 21 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方"VISION COMPANION"）*
 
@@ -64,6 +65,8 @@ flowchart LR
 * **为什么需要一个主机端配套软件包。** 热成像/RGB 双模态捕获需要真正的图像处理（numpy/Pillow），而这不适合直接运行在 STM32 上——该配套软件包正是执行这些处理的地方，通过 CAN 与板卡通信。
 * **为什么 `alignment.py` 假设两个传感器共享同一视场，而非使用真实单应变换。** 两个传感器安装在同一个刚性工具头上，因此在 RGB 空间与热成像空间之间对像素坐标做逐轴线性缩放是合理的 v0 近似——真正的逐像素标定（棋盘格、镜头畸变）需要真实摄像头才能进行，而这些目前还不存在。
 * **这如何融入生态系统的其余部分。** 共享 URTC 自身的 CAN 总线/工具生态系统，并与 HYDRA-UMC-DETECTION-HEF 自然搭配，承担与 URTC-SMART-RACK 相同的视觉识别角色。
+* **为什么传感器帧协议携带自己的时间戳字段。** 真实的传感器端毫秒级时间戳让调用方知道一次读数*实际上是何时*采集的，而与 MCU 何时才能解析该帧无关——这是历史记录/诊断方面真实的价值，若只是简单地假设“刚刚到达”则会丢失这一价值。
+* **为什么诊断计数器（`sensor_diagnostics.c`）自身从不做出接受/拒绝的决策。** 只有 `sensor_frame.c`（帧格式）、`sensor_reading.c`（范围）和 `rate_limiter.c`（速率限制）决定一帧数据是否可信——诊断模块只记录它们的决策结果。严格保持这一边界意味着诊断模块中的 bug 永远不可能意外放行错误数据，这正是晋级审计自身所说的"separar diagnostico de salida de control"。
 
 ---
 
@@ -73,6 +76,10 @@ flowchart LR
 URTC-VISION-TOOL/
 ├── src/
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH = 0.0.0
+│   ├── sensor_frame.h / .c         # 真实：版本化帧格式 + CRC8 解析/编码
+│   ├── sensor_reading.h / .c       # 真实：热成像读数解码 + 范围校验
+│   ├── rate_limiter.h / .c         # 真实：最小间隔帧限速
+│   ├── sensor_diagnostics.h / .c   # 真实：错误/延迟/总线复位计数器，与控制分离
 │   ├── main.c                      # 最小入口点（存活证明心跳循环）
 │   ├── startup_stm32_minimal.c     # 向量表 + Reset_Handler（暂无 ST HAL，见文件头说明）
 │   ├── STM32_MINIMAL.ld            # 占位链接脚本（128K FLASH / 32K RAM 下限）
@@ -83,6 +90,7 @@ URTC-VISION-TOOL/
 │       ├── alignment.py            # 真实：RGB<->热成像 ROI 映射 + 温度统计提取
 │       ├── tests/                  # 21 个真实 pytest 用例（main.py + alignment.py）
 │       └── README.md               # 配套软件专属使用文档
+├── tests/                          # 真实的主机原生固件测试套件（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、传感器场景）
 ├── docs/                           # 文档与标定参考
 ├── hardware/                       # 硬件设计文件（PCB、外壳）—— 目前为空，尚无原理图
 ├── firmware/                       # 版本化构建输出（.bin/.elf/.hex），与兄弟仓库 URTC 一样被提交
@@ -90,7 +98,7 @@ URTC-VISION-TOOL/
 ├── images/                         # 媒体与图表
 ├── scripts/                        # 实用脚本
 ├── bump_version.py                 # 里程表式版本递增（通用脚本，与 URTC / URTC-SMART-RACK 共享）
-├── build_firmware.sh / .bat        # 真实构建：版本递增 + 编译 + 链接 + 发布到 firmware/
+├── build_firmware.sh / .bat        # 真实构建：主机测试 + 版本递增 + 编译 + 链接 + 发布到 firmware/
 └── README.md
 ```
 

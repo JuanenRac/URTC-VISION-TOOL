@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "ecosystem": "HYDRA-UMC",
   "name": "URTC-VISION-TOOL",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "role": "firmware",
   "stack": "firmware-c",
   "technologies": [
@@ -11,11 +11,11 @@
     "Python vision companion"
   ],
   "deployment_target": "user-pc",
-  "maturity": "functional",
+  "maturity": "established",
   "family": "Complementary Tools",
   "parent": null,
   "build": "bash build_firmware.sh. Also contains an independent Python vision companion package (cd src/vision_companion && pip install -e '.[dev]' && pytest).",
-  "notes": "Firmware itself is still an unverified skeleton pending a real PCB. The Python vision_companion package is real and test-covered: synthetic thermal+RGB frame generation, false-color rendering, and (new) real RGB->thermal ROI alignment + temperature-stats extraction (alignment.py), all verified by 21 real pytest cases. Real dual-modal (RGB + thermal) capture and per-pixel sensor calibration still need a real PCB and real cameras.",
+  "notes": "Firmware now has a real, hardware-independent sensor protocol (sensor_frame.c: versioned framing + CRC8; sensor_reading.c: real range validation; rate_limiter.c: real minimum-interval throttling; sensor_diagnostics.c: real error/latency/bus-reset counters, kept separate from any accept/reject decision) with a real host-side sensor simulator covering valid/truncated/CRC-corrupt/out-of-range/disconnected frames - 65 host-native test assertions. Still pending a real PCB: wiring this pipeline to a real MLX9064x/RGB trigger over I2C/SPI. The Python vision_companion package is real and test-covered: synthetic thermal+RGB frame generation, false-color rendering, and real RGB->thermal ROI alignment + temperature-stats extraction (alignment.py), all verified by 21 real pytest cases. Real dual-modal (RGB + thermal) capture and per-pixel sensor calibration still need a real PCB and real cameras.",
   "native_version": {
     "file": "src/firmware_common.h",
     "pattern": {

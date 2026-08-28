@@ -55,7 +55,22 @@ if errorlevel 1 (
 echo   OK   arm-none-eabi-gcc found
 echo.
 
-echo === 2. Version bump (odometer, see bump_version.py) ===
+echo === 2. Real logic tests (host gcc, not arm-none-eabi-gcc) ===
+where gcc >nul 2>nul
+if errorlevel 1 (
+    echo FAIL: no host C compiler found ^(gcc^). Install MinGW/MSYS2 or run
+    echo       this from a shell that has a native gcc on PATH.
+    goto :error
+)
+if not exist build mkdir build
+gcc -std=c11 -Wall -Wextra -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_sensor_frame.c tests\test_sensor_reading.c tests\test_rate_limiter.c tests\test_sensor_diagnostics.c tests\test_vision_sensor_scenarios.c src\sensor_frame.c src\sensor_reading.c src\rate_limiter.c src\sensor_diagnostics.c
+if errorlevel 1 goto :error
+build\host_tests.exe
+if errorlevel 1 goto :error
+echo   OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_diagnostics.c pure-logic tests passed
+echo.
+
+echo === 3. Version bump (odometer, see bump_version.py) ===
 for /f "delims=" %%V in ('python bump_version.py src\firmware_common.h FIRMWARE_VERSION') do set VERSION=%%V
 if "%VERSION%"=="" goto :error
 python "%~dp0bump_manifest_version.py" --sync
@@ -74,7 +89,7 @@ echo.
 echo   Firmware version: %VERSION%
 echo.
 
-echo === 3. Compile + link ===
+echo === 4. Compile + link ===
 if not exist build mkdir build
 if not exist firmware mkdir firmware
 
@@ -94,11 +109,11 @@ arm-none-eabi-objcopy -O ihex build\urtc-vision-tool.elf build\urtc-vision-tool.
 echo   OK   build\urtc-vision-tool.bin / .hex
 echo.
 
-echo === 4. Size report ===
+echo === 5. Size report ===
 arm-none-eabi-size build\urtc-vision-tool.elf
 echo.
 
-echo === 5. Publish versioned artifacts to firmware\ ===
+echo === 6. Publish versioned artifacts to firmware\ ===
 copy /y build\urtc-vision-tool.elf firmware\URTC_VISION_TOOL_FIRMWARE_v%VERSION%.elf >nul
 copy /y build\urtc-vision-tool.bin firmware\URTC_VISION_TOOL_FIRMWARE_v%VERSION%.bin >nul
 copy /y build\urtc-vision-tool.hex firmware\URTC_VISION_TOOL_FIRMWARE_v%VERSION%.hex >nul

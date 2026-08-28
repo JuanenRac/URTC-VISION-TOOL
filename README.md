@@ -29,7 +29,8 @@ No PCB/schematic exists for this board yet (see `hardware/`), so nothing below c
 * 🔬 **Dual-Modal Perception** — synchronized Thermal and RGB image capture. *(the processing pipeline both frames feed is real - see below; synchronized real capture needs the PCB and sensors.)*
 * 🌡️ **High-Precision Thermal** — integrated MLX90640/41/42 sensor support. *(false-color rendering and per-region stats extraction are real - see below; reading a real MLX9064x over I2C needs the PCB.)*
 * 🎯 **Eye-in-Hand Alignment** — sub-millimetric PnP and AOI (Automated Optical Inspection). *(the RGB->thermal ROI coordinate mapping and temperature-stats extraction are real and tested - see `vision_companion/alignment.py` below; sub-millimetric precision needs a real calibrated camera.)*
-* 📡 **Unified CAN API** — seamlessly integrated into the URTC 25-tool catalog. *(planned - needs a real CAN transceiver.)*
+* 📡 **Unified CAN API** — seamlessly integrated into the URTC 25-tool catalog. *(the sensor-side wire protocol itself - framing, CRC, range validation - is real, see below; a real CAN transceiver to actually carry it is still needed.)*
+* 🔒 **Sensor Protocol Safety** — real versioned framing with a CRC8 checksum, real measurement-range validation, real rate limiting, and dedicated error/latency/bus-reset diagnostics counters. *(implemented)*
 * ✅ **Cortex-M4F firmware toolchain** — a real bare-metal image that cross-compiles and links with `arm-none-eabi-gcc`, same toolchain as sibling repos URTC and URTC-SMART-RACK. *(implemented — see BUILD below)*
 * ✅ **`vision_companion` processing pipeline** — a real, working Python package: synthetic thermal+RGB frame generation, false-color thermal rendering, RGB->thermal ROI alignment + temperature-stats extraction, stats reporting, all covered by 21 real pytest cases, runs end-to-end with no hardware attached. *(implemented — see VISION COMPANION below)*
 
@@ -57,6 +58,8 @@ flowchart LR
 * **Why a host-side companion package at all.** Thermal/RGB dual-modal capture needs real image processing (numpy/Pillow) that has no place running on the STM32 itself - the companion package is where that actually happens, talking to the board over CAN.
 * **Why `alignment.py` assumes a shared field of view rather than a real homography.** Both sensors sit on the same rigid tool head, so a per-axis linear rescale between RGB-space and thermal-space pixel coordinates is a reasonable v0 approximation - a real per-pixel calibration (checkerboard, lens distortion) needs actual cameras to calibrate against, which don't exist yet.
 * **How this fits the rest of the ecosystem.** Shares URTC's own CAN bus/tool ecosystem, and is a natural pairing with HYDRA-UMC-DETECTION-HEF for the same visual-recognition role URTC-SMART-RACK also serves.
+* **Why the sensor frame protocol carries its own timestamp field.** A real sensor-side millisecond timestamp lets a caller know *when* a reading was actually taken, independent of whenever the MCU happens to get around to parsing the frame - real historian/diagnostic value that a bare "just arrived" assumption would lose.
+* **Why diagnostics counters (`sensor_diagnostics.c`) never make an accept/reject decision themselves.** Only `sensor_frame.c` (framing), `sensor_reading.c` (range) and `rate_limiter.c` (throttling) decide whether a frame is trusted - diagnostics only records what they decided. Keeping that boundary strict means a diagnostics bug can never accidentally let bad data through, the promotion audit's own "separar diagnostico de salida de control".
 
 ---
 
@@ -65,7 +68,11 @@ flowchart LR
 ```text
 URTC-VISION-TOOL/
 ├── src/
-│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH = 0.0.0
+│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
+│   ├── sensor_frame.h / .c         # Real: versioned frame format + CRC8 parse/encode
+│   ├── sensor_reading.h / .c       # Real: thermal reading decode + range validation
+│   ├── rate_limiter.h / .c         # Real: minimum-interval frame throttling
+│   ├── sensor_diagnostics.h / .c   # Real: error/latency/bus-reset counters, separate from control
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32_minimal.c     # Vector table + Reset_Handler (no ST HAL yet, see file header)
 │   ├── STM32_MINIMAL.ld            # Placeholder linker script (128K FLASH / 32K RAM floor)
@@ -76,6 +83,7 @@ URTC-VISION-TOOL/
 │       ├── alignment.py            # Real: RGB<->thermal ROI mapping + temperature-stats extraction
 │       ├── tests/                  # 21 real pytest cases (main.py + alignment.py)
 │       └── README.md               # Companion-specific usage docs
+├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios)
 ├── docs/                           # Documentation and calibration reference
 ├── hardware/                       # Hardware design files (PCB, Case) - empty, no schematic yet
 ├── firmware/                       # Versioned build output (.bin/.elf/.hex), committed like sibling repo URTC
@@ -83,7 +91,7 @@ URTC-VISION-TOOL/
 ├── images/                         # Media and diagrams
 ├── scripts/                        # Utility scripts
 ├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC / URTC-SMART-RACK)
-├── build_firmware.sh / .bat        # Real build: bump version + compile + link + publish to firmware/
+├── build_firmware.sh / .bat        # Real build: host tests + bump version + compile + link + publish to firmware/
 └── README.md
 ```
 

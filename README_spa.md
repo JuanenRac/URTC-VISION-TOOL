@@ -29,7 +29,8 @@ Todavia no existe PCB/esquematico para esta placa (ver `hardware/`), asi que nad
 * 🔬 **Percepcion Dual-Modal** — captura sincronizada de imagen Termica y RGB. *(el pipeline de procesamiento que alimentan ambos frames es real - ver abajo; la captura sincronizada real necesita el PCB y los sensores.)*
 * 🌡️ **Termico de Alta Precision** — soporte integrado para sensores MLX90640/41/42. *(el renderizado en falso color y la extraccion de estadisticas por region son reales - ver abajo; leer un MLX9064x real por I2C necesita el PCB.)*
 * 🎯 **Alineacion Eye-in-Hand** — PnP y AOI (Inspeccion Optica Automatizada) sub-milimetrica. *(el mapeo de coordenadas ROI RGB->termico y la extraccion de estadisticas de temperatura son reales y estan testeados - ver `vision_companion/alignment.py` abajo; la precision sub-milimetrica necesita una camara calibrada real.)*
-* 📡 **API CAN Unificada** — integrado sin fisuras en el catalogo de 25 herramientas de URTC. *(planeado - necesita un transceptor CAN real.)*
+* 📡 **API CAN Unificada** — integrado sin fisuras en el catalogo de 25 herramientas de URTC. *(el protocolo de cable del propio sensor - framing, CRC, validacion de rango - es real, ver abajo; todavia se necesita un transceptor CAN real para transportarlo.)*
+* 🔒 **Seguridad del Protocolo de Sensor** — framing versionado real con checksum CRC8, validacion de rango de medicion real, limitacion de tasa real, y contadores de diagnostico dedicados de error/latencia/reset de bus. *(implementado)*
 * ✅ **Toolchain de firmware Cortex-M4F** — una imagen bare-metal real que compila y enlaza de verdad con `arm-none-eabi-gcc`, el mismo toolchain que los repositorios hermanos URTC y URTC-SMART-RACK. *(implementado — ver COMPILACIÓN abajo)*
 * ✅ **Pipeline de procesamiento `vision_companion`** — un paquete Python real y funcional: generacion sintetica de frames termicos+RGB, renderizado termico en falso color, alineacion de ROI RGB->termico + extraccion de estadisticas de temperatura, informe de estadisticas, todo cubierto por 21 casos reales de pytest, funciona de principio a fin sin hardware conectado. *(implementado — ver COMPANION DE VISIÓN abajo)*
 
@@ -57,6 +58,8 @@ flowchart LR
 * **Por qué un paquete complementario del lado host.** La captura dual térmica/RGB necesita procesamiento de imagen real (numpy/Pillow) que no tiene sitio corriendo en el propio STM32 - el paquete complementario es donde eso ocurre de verdad, hablando con la placa por CAN.
 * **Por qué `alignment.py` asume un campo de vision compartido en vez de una homografia real.** Ambos sensores estan en el mismo cabezal fisico rigido, asi que un reescalado lineal por eje entre coordenadas de pixel en espacio RGB y espacio termico es una aproximacion v0 razonable - una calibracion real por pixel (tablero de ajedrez, distorsion de lente) necesita camaras reales contra las que calibrar, que todavia no existen.
 * **Cómo encaja en el resto del ecosistema.** Comparte el propio bus CAN/ecosistema de herramientas de URTC, y forma pareja natural con HYDRA-UMC-DETECTION-HEF para el mismo papel de reconocimiento visual que también cumple URTC-SMART-RACK.
+* **Por qué el protocolo de trama del sensor lleva su propio campo de timestamp.** Un timestamp real en milisegundos generado por el propio sensor permite a quien llama saber *cuándo* se tomó realmente una lectura, independientemente de cuándo la MCU llegue a analizar la trama - un valor real para historial/diagnóstico que una simple suposición de "acaba de llegar" perdería.
+* **Por qué los contadores de diagnóstico (`sensor_diagnostics.c`) nunca toman una decisión de aceptar/rechazar por sí mismos.** Solo `sensor_frame.c` (framing), `sensor_reading.c` (rango) y `rate_limiter.c` (limitación de tasa) deciden si se confía en una trama - diagnóstico solo registra lo que ellos decidieron. Mantener ese límite estricto significa que un bug en diagnóstico nunca pueda dejar pasar datos incorrectos por accidente, la propia "separar diagnostico de salida de control" de la auditoría de promoción.
 
 ---
 
@@ -66,6 +69,10 @@ flowchart LR
 URTC-VISION-TOOL/
 ├── src/
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH = 0.0.0
+│   ├── sensor_frame.h / .c         # Real: formato de trama versionado + parseo/codificacion CRC8
+│   ├── sensor_reading.h / .c       # Real: decodificacion de lectura termica + validacion de rango
+│   ├── rate_limiter.h / .c         # Real: limitacion de trama por intervalo minimo
+│   ├── sensor_diagnostics.h / .c   # Real: contadores de error/latencia/reset de bus, separado del control
 │   ├── main.c                      # Punto de entrada minimo (bucle de latido de vida)
 │   ├── startup_stm32_minimal.c     # Tabla de vectores + Reset_Handler (sin HAL de ST todavia, ver cabecera del archivo)
 │   ├── STM32_MINIMAL.ld            # Linker script placeholder (suelo de 128K FLASH / 32K RAM)
@@ -76,6 +83,7 @@ URTC-VISION-TOOL/
 │       ├── alignment.py            # Real: mapeo de ROI RGB<->termico + extraccion de estadisticas de temperatura
 │       ├── tests/                  # 21 casos reales de pytest (main.py + alignment.py)
 │       └── README.md               # Documentacion especifica del companion
+├── tests/                          # Arnes real de pruebas de firmware nativo del host (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, escenarios de sensor)
 ├── docs/                           # Documentacion y referencia de calibracion
 ├── hardware/                       # Archivos de diseno de hardware (PCB, carcasa) - vacio, sin esquematico todavia
 ├── firmware/                       # Salida de build versionada (.bin/.elf/.hex), commiteada igual que el repo hermano URTC
@@ -83,7 +91,7 @@ URTC-VISION-TOOL/
 ├── images/                         # Medios y diagramas
 ├── scripts/                        # Scripts de utilidad
 ├── bump_version.py                 # Incremento de version estilo cuentakilometros (generico, compartido con URTC / URTC-SMART-RACK)
-├── build_firmware.sh / .bat        # Build real: incrementa version + compila + enlaza + publica en firmware/
+├── build_firmware.sh / .bat        # Build real: pruebas de host + incrementa version + compila + enlaza + publica en firmware/
 └── README.md
 ```
 
