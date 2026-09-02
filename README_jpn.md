@@ -97,9 +97,13 @@ URTC-VISION-TOOL/
 ├── firmware/                       # バージョン管理されたビルド出力（.bin/.elf/.hex）、兄弟リポジトリ URTC と同様にコミットされる
 ├── build/                          # 中間ビルドオブジェクト（gitignore 対象）
 ├── images/                         # メディアと図表
-├── scripts/                        # ユーティリティスクリプト
+├── tools/
+│   ├── build_test.py               # バージョンを更新しないビルド/コンパイル確認
+│   └── ci_validate.py              # CI が使用する manifest/CHANGELOG/docs の検証
 ├── bump_version.py                 # オドメーター式バージョンインクリメント（汎用スクリプト、URTC / URTC-SMART-RACK と共有）
+├── bump_manifest_version.py        # hydra-umc.project.json のバージョンをネイティブ側と同期（--sync）
 ├── build_firmware.sh / .bat        # 実際のビルド：ホストテスト + バージョンインクリメント + コンパイル + リンク + firmware/ へ公開
+├── build-test.sh / .bat            # バージョンを更新しないビルド/コンパイル確認
 └── README.md
 ```
 

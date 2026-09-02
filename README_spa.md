@@ -89,9 +89,13 @@ URTC-VISION-TOOL/
 ├── firmware/                       # Salida de build versionada (.bin/.elf/.hex), commiteada igual que el repo hermano URTC
 ├── build/                          # Objetos intermedios de build (ignorado por git)
 ├── images/                         # Medios y diagramas
-├── scripts/                        # Scripts de utilidad
+├── tools/
+│   ├── build_test.py               # Comprobación de build/compilación sin subir versión
+│   └── ci_validate.py              # Validación de manifest/CHANGELOG/docs usada por la CI
 ├── bump_version.py                 # Incremento de versión estilo cuentakilómetros (genérico, compartido con URTC / URTC-SMART-RACK)
+├── bump_manifest_version.py        # Sincroniza la versión de hydra-umc.project.json con la nativa (--sync)
 ├── build_firmware.sh / .bat        # Build real: pruebas de host + incrementa versión + compila + enlaza + publica en firmware/
+├── build-test.sh / .bat            # Comprobación de build/compilación sin subir versión
 └── README.md
 ```
 
