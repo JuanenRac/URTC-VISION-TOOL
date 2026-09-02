@@ -162,6 +162,7 @@ Ce projet fait partie d'un écosystème robotique plus large du même auteur (Ju
 
 - **[URTC](https://github.com/JuanenRac/URTC)** — même écosystème d'outils / bus CAN.
 - **[HYDRA-UMC-DETECTION-HEF](https://github.com/JuanenRac/HYDRA-UMC-DETECTION-HEF)** — frère de reconnaissance visuelle.
+- **[URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER)** — son propre diagnostic CAN-bus en direct complète les contrôles QA visuels de cet outil sur la même tête d'outil.
 
 ### Reste de l'Écosystème
 

@@ -191,6 +191,7 @@ pytest
 
 - **[URTC](https://github.com/JuanenRac/URTC)** —— 同一の工具エコシステム/CAN バス。
 - **[HYDRA-UMC-DETECTION-HEF](https://github.com/JuanenRac/HYDRA-UMC-DETECTION-HEF)** —— 視覚認識の同族プロジェクト。
+- **[URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER)** —— その独自のライブCANバス診断が、同じツールヘッドに対する本ツールの視覚的QAチェックを補完します。
 
 ### エコシステムのその他のプロジェクト
 

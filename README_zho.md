@@ -182,6 +182,7 @@ pytest
 
 - **[URTC](https://github.com/JuanenRac/URTC)** —— 同一工具生态系统/CAN 总线。
 - **[HYDRA-UMC-DETECTION-HEF](https://github.com/JuanenRac/HYDRA-UMC-DETECTION-HEF)** —— 视觉识别的同族项目。
+- **[URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER)** —— 其自身的实时 CAN 总线诊断与本工具对同一工具头的视觉 QA 检查相辅相成。
 
 ### 生态系统的其余部分
 
