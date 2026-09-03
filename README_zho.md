@@ -172,7 +172,15 @@ pip install -e ".[dev]"
 pytest
 ```
 
-完整的配套软件文档请见 `src/vision_companion/README.md`。
+完整的配套软件文档请见 `src/vision_companion/README.md`,每个命令、参数和
+退出码及其真实捕获输出请见 [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md)。
+
+---
+
+## 6. 📋 更新日志
+
+完整版本历史见 [`CHANGELOG.md`](CHANGELOG.md) —— 固件与 `vision_companion` 各自独立
+进行版本管理(见上方"构建"与"视觉配套软件"一节),每次真实变更在其中都有独立条目。
 
 ---
 

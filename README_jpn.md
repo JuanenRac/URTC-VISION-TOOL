@@ -179,7 +179,16 @@ pytest
 ```
 
 完全なコンパニオンドキュメントについては `src/vision_companion/README.md`
-を参照してください。
+を、実際に取得した出力付きの全コマンド・フラグ・終了コード一覧については
+[`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md) を参照してください。
+
+---
+
+## 6. 📋 チェンジログ
+
+バージョン履歴の全文は [`CHANGELOG.md`](CHANGELOG.md) を参照。ファームウェアと
+`vision_companion` は独立してバージョン管理されており(上記のビルドおよび
+ビジョンコンパニオンを参照)、実際の変更ごとに個別のエントリを持つ。
 
 ---
 

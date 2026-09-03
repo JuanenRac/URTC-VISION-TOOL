@@ -154,7 +154,13 @@ pip install -e ".[dev]"
 pytest
 ```
 
-Vedi `src/vision_companion/README.md` per la documentazione completa del companion.
+Vedi `src/vision_companion/README.md` per la documentazione completa del companion, e [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md) per ogni comando, flag e codice di uscita con output reale catturato.
+
+---
+
+## 6. 📋 CHANGELOG
+
+Consulta [`CHANGELOG.md`](CHANGELOG.md) per la cronologia completa delle versioni — il firmware e `vision_companion` sono versionati in modo indipendente (vedi COMPILAZIONE e COMPAGNO DI VISIONE sopra), e ogni modifica reale ha lì la propria voce.
 
 ---
 
