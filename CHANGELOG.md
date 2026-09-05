@@ -1,9 +1,7 @@
 # Changelog
 
 All notable work on **URTC-VISION-TOOL** is summarized here, newest first.
-Full session-by-session detail (including dates) lives in a private,
-unpublished internal log - this file is public, so it intentionally omits
-calendar dates.
+Full This file intentionally omits calendar dates from individual entries.
 
 ## Versioning scheme
 
