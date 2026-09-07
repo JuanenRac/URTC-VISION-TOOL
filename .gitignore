@@ -1,0 +1,13 @@
+build/
+
+# vision_companion (Python) - venvs and packaging artifacts, never committed
+src/vision_companion/.venv/
+src/vision_companion/build/
+src/vision_companion/*.egg-info/
+src/vision_companion/selftest_output/
+__pycache__/
+*.pyc
+# HYDRA-UMC shared secret protection
+.env
+.env.*
+!.env.example
