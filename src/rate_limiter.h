@@ -4,7 +4,7 @@
 // GPL-3.0 - see LICENSE
 // =============================================================================
 // Real minimum-interval enforcement between accepted sensor frames - the
-// promotion audit's own "limites de tasa para que el firmware no acepte
+// review's own "limites de tasa para que el firmware no acepte
 // entradas ambiguas": a malfunctioning or flooding sensor sending frames
 // faster than physically expected must be throttled, not trusted at
 // whatever rate it happens to arrive. Pure logic against a caller-supplied

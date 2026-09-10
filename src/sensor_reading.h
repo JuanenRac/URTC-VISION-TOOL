@@ -7,7 +7,7 @@
 // range-checked reading - separate from the wire-framing layer, since a
 // perfectly well-formed frame can still carry a physically impossible
 // measurement (a real ADC glitch, a disconnected sensor reporting rail
-// voltage, etc.). The promotion audit's own "medidas fuera de rango" case.
+// voltage, etc.). The review's own "medidas fuera de rango" case.
 #ifndef SENSOR_READING_H
 #define SENSOR_READING_H
 
