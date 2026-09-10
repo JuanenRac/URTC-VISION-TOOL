@@ -3,7 +3,7 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 // =============================================================================
-// Real, dedicated field-support counters - the promotion audit's own
+// Real, dedicated field-support counters - the review's own
 // "separar diagnostico de salida de control y mantener contadores de
 // error, latencia y reinicio de bus". This module never makes an
 // accept/reject decision itself - sensor_frame.c/sensor_reading.c/

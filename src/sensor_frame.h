@@ -7,7 +7,7 @@
 // RGB trigger, once the PCB wiring exists - see main.c's own note). This
 // project's own v0 convention, not a copy of the real MLX9064x I2C
 // register protocol (that needs the real datasheet in hand, still
-// pending real hardware) - the promotion audit's own "formalizar
+// pending real hardware) - the review's own "formalizar
 // contrato de sensor/camara... para que el firmware no acepte entradas
 // ambiguas". Pure byte-buffer logic, no I2C/SPI peripheral access - real
 // and testable on the host today.
@@ -16,7 +16,7 @@
 //         [SOF][VERSION][SENSOR_ID][SEQ] [TIMESTAMP_MS]  [LEN] [PAYLOAD...]   [CRC8]
 //
 // TIMESTAMP_MS is a 4-byte little-endian sensor-side millisecond
-// timestamp - the real "cuando se midio" the audit calls for, distinct
+// timestamp - the real "cuando se midio" the review calls for, distinct
 // from whenever the MCU happens to parse the frame. CRC8 covers
 // everything from SOF through the last payload byte.
 #ifndef SENSOR_FRAME_H

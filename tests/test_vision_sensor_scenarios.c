@@ -3,7 +3,7 @@
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 // GPL-3.0 - see LICENSE
 // =============================================================================
-// The promotion audit's own "añadir capa simulada de sensor que reproduzca
+// The review's own "añadir capa simulada de sensor que reproduzca
 // desconexion, frame truncado y medidas fuera de rango sin requerir
 // hardware optico" / "Evidencia: ... pruebas de parser con tramas
 // validas/invalidas, asegurando que no se activa salida ante datos
@@ -17,7 +17,7 @@
 // diagnostic counters at each step - no MLX9064x, RGB trigger or PCB
 // required, since none exist for this board yet (see main.c's own note).
 //
-// Found in an ecosystem-wide software-improvements audit: this real
+// Found while auditing the code: this real
 // decision used to be a static function defined INSIDE this test file
 // rather than a real src/ module anything else could call - promoted to
 // vision_sensor_link.c/.h, with this file now calling INTO it instead of
