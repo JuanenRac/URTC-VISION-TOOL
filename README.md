@@ -15,6 +15,8 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
+**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 65 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler - confirmed by compiling and running that exact host test suite), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `main.py`) is likewise real and backed by 21 passing pytest cases (`pytest tests/` inside `src/vision_companion/`, confirmed by running it), but CI never actually runs that suite - the top-level workflow only `py_compile`-checks every `.py` file, so a regression there wouldn't fail a build today. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
+
 ---
 
 ## 1. 🛠️ TECHNICAL OVERVIEW
@@ -73,6 +75,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_reading.h / .c       # Real: thermal reading decode + range validation
 │   ├── rate_limiter.h / .c         # Real: minimum-interval frame throttling
 │   ├── sensor_diagnostics.h / .c   # Real: error/latency/bus-reset counters, separate from control
+│   ├── vision_sensor_link.h / .c   # Real: frame-dispatch decision tying sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics together
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32_minimal.c     # Vector table + Reset_Handler (no ST HAL yet, see file header)
 │   ├── STM32_MINIMAL.ld            # Placeholder linker script (128K FLASH / 32K RAM floor)

@@ -15,6 +15,8 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
+**诚实核查 - 今天真正能运行的部分：** 固件端的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）都是真实、纯粹的 C 代码，由 65 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器编译并运行——通过实际编译并运行这套宿主测试套件加以确认），而且这个仓库自己的 CI 确实会运行它：`.github/workflows/ci.yml` 的固件步骤会调用 `build_firmware.sh`，其第 2 步在触碰 STM32 构建之前，总是会编译并运行 `tests/`。宿主端的 `vision_companion` 软件包（`alignment.py`、`main.py`）同样是真实的，由 21 个通过的 pytest 用例支撑（在 `src/vision_companion/` 内运行 `pytest tests/`，已通过实际运行确认），但 CI 从来不会真正运行这套测试——顶层工作流只对每个 `.py` 文件做语法检查（`py_compile`），所以今天那里的一个回归并不会导致构建失败。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的代码从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成。具体已经交付了什么，请参见 `CHANGELOG.md`。
+
 ---
 
 ## 1. 🛠️ 技术概述
@@ -80,6 +82,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_reading.h / .c       # 真实：热成像读数解码 + 范围校验
 │   ├── rate_limiter.h / .c         # 真实：最小间隔帧限速
 │   ├── sensor_diagnostics.h / .c   # 真实：错误/延迟/总线复位计数器，与控制分离
+│   ├── vision_sensor_link.h / .c   # 真实：连接 sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics 的帧分发决策
 │   ├── main.c                      # 最小入口点（存活证明心跳循环）
 │   ├── startup_stm32_minimal.c     # 向量表 + Reset_Handler（暂无 ST HAL，见文件头说明）
 │   ├── STM32_MINIMAL.ld            # 占位链接脚本（128K FLASH / 32K RAM 下限）

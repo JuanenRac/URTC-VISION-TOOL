@@ -15,6 +15,8 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
+**Verifica di onestà - cosa funziona davvero oggi:** il protocollo del sensore lato firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) è vero C puro, supportato da 65 controlli `TEST_ASSERT` superati (`tests/test_*.c`, compilati ed eseguiti con il compilatore C proprio dell'host - confermato compilando ed eseguendo esattamente quella suite di test host), e la CI di questo repository la esegue davvero: lo step firmware di `.github/workflows/ci.yml` invoca `build_firmware.sh`, il cui step 2 compila ed esegue sempre `tests/` prima di toccare la build STM32. Il pacchetto lato host `vision_companion` (`alignment.py`, `main.py`) è allo stesso modo reale e supportato da 21 test pytest superati (`pytest tests/` dentro `src/vision_companion/`, confermato eseguendolo), ma la CI non esegue mai realmente quella suite - il workflow di livello superiore si limita a controllare la sintassi (`py_compile`) di ogni file `.py`, quindi oggi una regressione lì non farebbe fallire una build. Come dice già l'introduzione del README: non esiste ancora un PCB/schema per questa scheda, quindi niente qui ha mai letto un vero sensore MLX9064x o una vera fotocamera RGB, né pilotato un vero transceiver CAN - `main.c`/`startup_stm32_minimal.c` dimostrano solo che la compilazione incrociata e il linking per Cortex-M4F riescono contro un linker script segnaposto. Vedi `CHANGELOG.md` per sapere esattamente cosa è stato consegnato finora.
+
 ---
 
 ## 1. 🛠️ PANORAMICA TECNICA
@@ -73,6 +75,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_reading.h / .c       # Reale: decodifica lettura termica + validazione intervallo
 │   ├── rate_limiter.h / .c         # Reale: limitazione frame a intervallo minimo
 │   ├── sensor_diagnostics.h / .c   # Reale: contatori errori/latenza/reset bus, separati dal controllo
+│   ├── vision_sensor_link.h / .c   # Reale: decisione di dispatch dei frame che collega sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics
 │   ├── main.c                      # Punto di ingresso minimo (ciclo di battito di vita)
 │   ├── startup_stm32_minimal.c     # Tabella dei vettori + Reset_Handler (ancora senza HAL ST, vedi intestazione del file)
 │   ├── STM32_MINIMAL.ld            # Linker script placeholder (base 128K FLASH / 32K RAM)

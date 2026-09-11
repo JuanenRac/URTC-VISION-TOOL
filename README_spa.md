@@ -15,6 +15,8 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
+**Comprobación de honestidad - lo que realmente funciona hoy:** el protocolo de sensor del lado del firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) es C real y puro, respaldado por 65 comprobaciones `TEST_ASSERT` que pasan (`tests/test_*.c`, compiladas y ejecutadas con el propio compilador C del host - confirmado compilando y ejecutando exactamente esa suite de tests de host), y la propia CI de este repositorio realmente la ejecuta: el paso de firmware de `.github/workflows/ci.yml` invoca `build_firmware.sh`, cuyo paso 2 siempre compila y ejecuta `tests/` antes de tocar la build de STM32. El paquete `vision_companion` del lado host (`alignment.py`, `main.py`) es igualmente real y está respaldado por 21 tests de pytest que pasan (`pytest tests/` dentro de `src/vision_companion/`, confirmado ejecutándolo), pero la CI nunca ejecuta realmente esa suite - el workflow de nivel superior solo comprueba la sintaxis (`py_compile`) de cada archivo `.py`, así que hoy una regresión ahí no haría fallar una build. Como ya dice la propia introducción del README: todavía no existe PCB/esquemático para esta placa, así que nada de esto ha leído nunca un sensor MLX9064x o una cámara RGB reales, ni ha manejado un transceptor CAN real - `main.c`/`startup_stm32_minimal.c` solo demuestran que la compilación cruzada y el enlazado para Cortex-M4F funcionan contra un linker script de relleno. Consulta `CHANGELOG.md` para ver exactamente qué se ha entregado hasta ahora.
+
 ---
 
 ## 1. 🛠️ VISIÓN TÉCNICA GENERAL
@@ -73,6 +75,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_reading.h / .c       # Real: decodificación de lectura térmica + validación de rango
 │   ├── rate_limiter.h / .c         # Real: limitación de trama por intervalo mínimo
 │   ├── sensor_diagnostics.h / .c   # Real: contadores de error/latencia/reset de bus, separado del control
+│   ├── vision_sensor_link.h / .c   # Real: decisión de despacho de tramas que enlaza sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics
 │   ├── main.c                      # Punto de entrada mínimo (bucle de latido de vida)
 │   ├── startup_stm32_minimal.c     # Tabla de vectores + Reset_Handler (sin HAL de ST todavía, ver cabecera del archivo)
 │   ├── STM32_MINIMAL.ld            # Linker script placeholder (suelo de 128K FLASH / 32K RAM)
