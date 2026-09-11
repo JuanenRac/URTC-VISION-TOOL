@@ -15,6 +15,8 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
+**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C コードであり、65件の通過している `TEST_ASSERT` チェック（`tests/test_*.c`、ホスト自身の C コンパイラでコンパイル・実行——実際にこのホストテストスイートをコンパイルして実行し確認済み）に裏付けられている。そしてこのリポジトリ自身の CI は実際にそれを実行している——`.github/workflows/ci.yml` のファームウェアステップは `build_firmware.sh` を呼び出し、そのステップ2は STM32 のビルドに触れる前に必ず `tests/` をコンパイル・実行する。ホスト側の `vision_companion` パッケージ（`alignment.py`、`main.py`）も同様に本物であり、21件の通過している pytest ケース（`src/vision_companion/` 内で `pytest tests/` を実行——実際に実行し確認済み）に裏付けられているが、CI は実際には一度もそのスイートを実行しない——トップレベルのワークフローは各 `.py` ファイルの構文チェック（`py_compile`）を行うだけなので、今日の時点ではそこでのリグレッションがビルドを失敗させることはない。README 自身の冒頭がすでに述べている通り、このボード用の PCB/回路図はまだ存在しないため、ここにあるものはいずれも実際の MLX9064x センサーや RGB カメラを読み取ったことも、実際の CAN トランシーバーを駆動したこともない——`main.c`/`startup_stm32_minimal.c` は、Cortex-M4F 向けのクロスコンパイルとリンクがプレースホルダーのリンカスクリプトに対して成功することを示すだけだ。これまでに実際に出荷されたものの詳細は `CHANGELOG.md` を参照。
+
 ---
 
 ## 1. 🛠️ 技術概要
@@ -81,6 +83,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_reading.h / .c       # 本物：熱画像読み取りのデコード + 範囲検証
 │   ├── rate_limiter.h / .c         # 本物：最小間隔によるフレームのスロットリング
 │   ├── sensor_diagnostics.h / .c   # 本物：エラー/レイテンシ/バスリセットのカウンター、制御からは分離
+│   ├── vision_sensor_link.h / .c   # 本物：sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics を結びつけるフレームディスパッチの判断
 │   ├── main.c                      # 最小限のエントリポイント（生存証明のハートビートループ）
 │   ├── startup_stm32_minimal.c     # ベクターテーブル + Reset_Handler（ST HAL はまだなし、ファイルヘッダー参照）
 │   ├── STM32_MINIMAL.ld            # プレースホルダーリンカスクリプト（128K FLASH / 32K RAM の下限）

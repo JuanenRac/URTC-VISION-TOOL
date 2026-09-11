@@ -15,6 +15,8 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
+**Ehrlichkeitscheck - was heute wirklich funktioniert:** das firmwareseitige Sensorprotokoll (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) ist echtes, reines C, abgesichert durch 65 bestandene `TEST_ASSERT`-Prüfungen (`tests/test_*.c`, kompiliert und ausgeführt mit dem eigenen C-Compiler des Hosts - bestätigt durch Kompilieren und Ausführen genau dieser Host-Testsuite), und die eigene CI dieses Repos führt sie tatsächlich aus: der Firmware-Schritt in `.github/workflows/ci.yml` ruft `build_firmware.sh` auf, dessen Schritt 2 immer `tests/` kompiliert und ausführt, bevor der STM32-Build berührt wird. Das hostseitige `vision_companion`-Paket (`alignment.py`, `main.py`) ist ebenso real und durch 21 bestandene Pytest-Fälle abgesichert (`pytest tests/` innerhalb von `src/vision_companion/`, bestätigt durch Ausführen), aber die CI führt diese Suite nie tatsächlich aus - der übergeordnete Workflow prüft nur die Syntax (`py_compile`) jeder `.py`-Datei, sodass eine Regression dort heute keinen Build fehlschlagen ließe. Wie die Einleitung des READMEs bereits sagt: für diese Platine existiert noch keine PCB/kein Schaltplan, also hat nichts hier je einen echten MLX9064x-Sensor oder eine echte RGB-Kamera gelesen oder einen echten CAN-Transceiver angesteuert - `main.c`/`startup_stm32_minimal.c` beweisen nur, dass die Cross-Kompilierung und das Linken für Cortex-M4F gegen ein Platzhalter-Linker-Skript gelingen. Siehe `CHANGELOG.md` für das, was bisher genau ausgeliefert wurde.
+
 ---
 
 ## 1. 🛠️ TECHNISCHER ÜBERBLICK
@@ -73,6 +75,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_reading.h / .c       # Echt: Dekodierung thermischer Messwerte + Bereichsvalidierung
 │   ├── rate_limiter.h / .c         # Echt: Frame-Drosselung mit Mindestintervall
 │   ├── sensor_diagnostics.h / .c   # Echt: Zähler für Fehler/Latenz/Bus-Resets, getrennt von der Steuerung
+│   ├── vision_sensor_link.h / .c   # Echt: Frame-Dispatch-Entscheidung, die sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics verbindet
 │   ├── main.c                      # Minimaler Einstiegspunkt (Lebenszeichen-Schleife)
 │   ├── startup_stm32_minimal.c     # Vektortabelle + Reset_Handler (noch keine ST-HAL, siehe Datei-Header)
 │   ├── STM32_MINIMAL.ld            # Platzhalter-Linkerskript (Untergrenze 128K FLASH / 32K RAM)

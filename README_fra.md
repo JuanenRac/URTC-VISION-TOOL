@@ -15,6 +15,8 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
+**Vérification d'honnêteté - ce qui fonctionne réellement aujourd'hui :** le protocole de capteur côté firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) est du vrai C pur, appuyé par 65 vérifications `TEST_ASSERT` qui passent (`tests/test_*.c`, compilées et exécutées avec le propre compilateur C de l'hôte - confirmé en compilant et en exécutant exactement cette suite de tests hôte), et la propre CI de ce dépôt l'exécute réellement : l'étape firmware de `.github/workflows/ci.yml` invoque `build_firmware.sh`, dont l'étape 2 compile et exécute toujours `tests/` avant de toucher au build STM32. Le paquet côté hôte `vision_companion` (`alignment.py`, `main.py`) est de même réel et appuyé par 21 tests pytest qui passent (`pytest tests/` dans `src/vision_companion/`, confirmé en l'exécutant), mais la CI n'exécute jamais réellement cette suite - le workflow de haut niveau se contente de vérifier la syntaxe (`py_compile`) de chaque fichier `.py`, donc une régression là ne ferait pas échouer un build aujourd'hui. Comme le dit déjà l'introduction du README : aucun PCB/schéma n'existe encore pour cette carte, donc rien ici n'a jamais lu un vrai capteur MLX9064x ou une vraie caméra RGB, ni piloté un vrai transceiver CAN - `main.c`/`startup_stm32_minimal.c` prouvent seulement que la compilation croisée et l'édition de liens pour Cortex-M4F réussissent contre un script de liaison provisoire. Voir `CHANGELOG.md` pour savoir exactement ce qui a été livré jusqu'à présent.
+
 ---
 
 ## 1. 🛠️ APERÇU TECHNIQUE
@@ -73,6 +75,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_reading.h / .c       # Réel : décodage de lecture thermique + validation de plage
 │   ├── rate_limiter.h / .c         # Réel : limitation de trame par intervalle minimal
 │   ├── sensor_diagnostics.h / .c   # Réel : compteurs d'erreurs/latence/réinitialisations de bus, séparés du contrôle
+│   ├── vision_sensor_link.h / .c   # Réel : décision de dispatch de trame reliant sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics
 │   ├── main.c                      # Point d'entrée minimal (boucle de battement de vie)
 │   ├── startup_stm32_minimal.c     # Table des vecteurs + Reset_Handler (pas de HAL ST pour l'instant, voir l'en-tête du fichier)
 │   ├── STM32_MINIMAL.ld            # Script de liaison provisoire (plancher 128K FLASH / 32K RAM)
