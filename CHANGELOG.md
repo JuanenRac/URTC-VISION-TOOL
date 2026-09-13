@@ -3,6 +3,35 @@
 All notable work on **URTC-VISION-TOOL** is summarized here, newest first.
 This file intentionally omits calendar dates from individual entries.
 
+## vision_companion [0.0.2] - H043: an RGB ROI entirely outside the frame no longer reads as edge temperature
+
+- **The bug.** `rgb_roi_to_thermal_roi()` clamped ANY projected thermal-space
+  box into the frame's bounds, whether it genuinely overlapped the thermal
+  frame or not. An RGB-space detection box entirely outside the RGB frame
+  (or otherwise projecting somewhere with zero real overlap with the
+  thermal sensor's field of view) still came back as a real, if narrow,
+  in-bounds `BoundingBox` sitting right at whichever thermal edge was
+  nearest - so `analyze_rgb_roi()` silently returned that edge pixel's
+  temperature as if it were a real reading of the (nonexistent, off-frame)
+  requested region, instead of reporting that there was no data at all.
+- **The fix.** `rgb_roi_to_thermal_roi()` now returns `None` when the
+  projected box has no real intersection with the thermal frame at all
+  (a partially-overlapping box is still clamped to its real overlap, as
+  before). `analyze_rgb_roi()` returns a new `RoiStats.empty()` sentinel
+  in that case (`is_empty` True, `pixel_count == 0`, `min_c`/`max_c`/
+  `mean_c` all NaN) instead of ever computing stats from a bogus clamped
+  box. The `analyze-roi` CLI command reports "no thermal data" and exits
+  1 for this case, instead of printing a real-looking temperature.
+- 6 new tests across `test_alignment.py`/`test_main.py` (a box entirely
+  past each frame edge, a genuinely partial-overlap box still clamping
+  correctly, the empty-stats sentinel end to end, and the CLI's own
+  no-data reporting) - confirmed to fail against the pre-fix code (5 real
+  failures) via a local revert of just `alignment.py`/`main.py`, tests
+  kept. 27/27 pytest cases pass with the fix (up from 21).
+- Version 0.0.1 -> 0.0.2 (`vision_companion`'s own hand-bumped odometer -
+  no production build step exists yet for this Python tool, see the
+  Versioning scheme below).
+
 ## Unreleased - Fix standalone receive-path compilation
 
 - Include `<stddef.h>` explicitly in `src/vision_sensor_link.c` so its

@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**Comprobación de honestidad - lo que realmente funciona hoy:** el protocolo de sensor del lado del firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) es C real y puro, respaldado por 65 comprobaciones `TEST_ASSERT` que pasan (`tests/test_*.c`, compiladas y ejecutadas con el propio compilador C del host - confirmado compilando y ejecutando exactamente esa suite de tests de host), y la propia CI de este repositorio realmente la ejecuta: el paso de firmware de `.github/workflows/ci.yml` invoca `build_firmware.sh`, cuyo paso 2 siempre compila y ejecuta `tests/` antes de tocar la build de STM32. El paquete `vision_companion` del lado host (`alignment.py`, `main.py`) es igualmente real y está respaldado por 21 tests de pytest que pasan (`pytest tests/` dentro de `src/vision_companion/`, confirmado ejecutándolo), pero la CI nunca ejecuta realmente esa suite - el workflow de nivel superior solo comprueba la sintaxis (`py_compile`) de cada archivo `.py`, así que hoy una regresión ahí no haría fallar una build. Como ya dice la propia introducción del README: todavía no existe PCB/esquemático para esta placa, así que nada de esto ha leído nunca un sensor MLX9064x o una cámara RGB reales, ni ha manejado un transceptor CAN real - `main.c`/`startup_stm32_minimal.c` solo demuestran que la compilación cruzada y el enlazado para Cortex-M4F funcionan contra un linker script de relleno. Consulta `CHANGELOG.md` para ver exactamente qué se ha entregado hasta ahora.
+**Comprobación de honestidad - lo que realmente funciona hoy:** el protocolo de sensor del lado del firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) es C real y puro, respaldado por 65 comprobaciones `TEST_ASSERT` que pasan (`tests/test_*.c`, compiladas y ejecutadas con el propio compilador C del host - confirmado compilando y ejecutando exactamente esa suite de tests de host), y la propia CI de este repositorio realmente la ejecuta: el paso de firmware de `.github/workflows/ci.yml` invoca `build_firmware.sh`, cuyo paso 2 siempre compila y ejecuta `tests/` antes de tocar la build de STM32. El paquete `vision_companion` del lado host (`alignment.py`, `main.py`) es igualmente real y está respaldado por 27 tests de pytest que pasan (`pytest tests/` dentro de `src/vision_companion/`, confirmado ejecutándolo), pero la CI nunca ejecuta realmente esa suite - el workflow de nivel superior solo comprueba la sintaxis (`py_compile`) de cada archivo `.py`, así que hoy una regresión ahí no haría fallar una build. Como ya dice la propia introducción del README: todavía no existe PCB/esquemático para esta placa, así que nada de esto ha leído nunca un sensor MLX9064x o una cámara RGB reales, ni ha manejado un transceptor CAN real - `main.c`/`startup_stm32_minimal.c` solo demuestran que la compilación cruzada y el enlazado para Cortex-M4F funcionan contra un linker script de relleno. Consulta `CHANGELOG.md` para ver exactamente qué se ha entregado hasta ahora.
 
 ---
 
@@ -34,7 +34,7 @@ Todavía no existe PCB/esquemático para esta placa (ver `hardware/`), así que 
 * 📡 **API CAN Unificada** — integrado sin fisuras en el catálogo de 25 herramientas de URTC. *(el protocolo de cable del propio sensor - framing, CRC, validación de rango - es real, ver abajo; todavía se necesita un transceptor CAN real para transportarlo.)*
 * 🔒 **Seguridad del Protocolo de Sensor** — framing versionado real con checksum CRC8, validación de rango de medición real, limitación de tasa real, y contadores de diagnóstico dedicados de error/latencia/reset de bus. *(implementado)*
 * ✅ **Toolchain de firmware Cortex-M4F** — una imagen bare-metal real que compila y enlaza de verdad con `arm-none-eabi-gcc`, el mismo toolchain que los repositorios hermanos URTC y URTC-SMART-RACK. *(implementado — ver COMPILACIÓN abajo)*
-* ✅ **Pipeline de procesamiento `vision_companion`** — un paquete Python real y funcional: generación sintética de frames térmicos+RGB, renderizado térmico en falso color, alineación de ROI RGB->térmico + extracción de estadísticas de temperatura, informe de estadísticas, todo cubierto por 21 casos reales de pytest, funciona de principio a fin sin hardware conectado. *(implementado — ver COMPANION DE VISIÓN abajo)*
+* ✅ **Pipeline de procesamiento `vision_companion`** — un paquete Python real y funcional: generación sintética de frames térmicos+RGB, renderizado térmico en falso color, alineación de ROI RGB->térmico + extracción de estadísticas de temperatura, informe de estadísticas, todo cubierto por 27 casos reales de pytest, funciona de principio a fin sin hardware conectado. *(implementado — ver COMPANION DE VISIÓN abajo)*
 
 ---
 
@@ -84,7 +84,7 @@ URTC-VISION-TOOL/
 │       ├── requirements.txt        # numpy + pillow
 │       ├── main.py                 # CLI real y funcional (versión / selftest / analyze-roi)
 │       ├── alignment.py            # Real: mapeo de ROI RGB<->térmico + extracción de estadísticas de temperatura
-│       ├── tests/                  # 21 casos reales de pytest (main.py + alignment.py)
+│       ├── tests/                  # 27 casos reales de pytest (main.py + alignment.py)
 │       └── README.md               # Documentación específica del companion
 ├── tests/                          # Arnes real de pruebas de firmware nativo del host (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, escenarios de sensor)
 ├── docs/                           # Documentación y referencia de calibración
@@ -150,7 +150,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C (16 thermal px)
 ```
 
-21 casos reales de pytest cubren tanto `main.py` como `alignment.py`:
+27 casos reales de pytest cubren tanto `main.py` como `alignment.py`:
 
 ```bash
 pip install -e ".[dev]"

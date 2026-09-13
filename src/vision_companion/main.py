@@ -25,7 +25,7 @@ from PIL import Image
 
 from alignment import BoundingBox, analyze_rgb_roi
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 # Native resolution of the MLX90640 thermal sensor family this tool head
 # targets (see README.md) - kept as the synthetic frame's shape too, so
@@ -163,6 +163,13 @@ def cmd_analyze_roi(args: argparse.Namespace) -> int:
     stats = analyze_rgb_roi(thermal, roi, rgb_width=RGB_WIDTH, rgb_height=RGB_HEIGHT)
 
     print(f"RGB ROI ({roi.x0},{roi.y0})-({roi.x1},{roi.y1}) in a {RGB_WIDTH}x{RGB_HEIGHT} frame")
+    if stats.is_empty:
+        # H043: this ROI does not overlap the thermal sensor's field of
+        # view at all - honestly report "no data", never a min/max/mean
+        # computed from whatever pixel happened to sit at the nearest
+        # thermal edge.
+        print("  -> no thermal data: this RGB ROI does not overlap the thermal sensor's field of view")
+        return 1
     print(f"  -> thermal stats: min={stats.min_c:.2f}C max={stats.max_c:.2f}C "
           f"mean={stats.mean_c:.2f}C ({stats.pixel_count} thermal px)")
     return 0

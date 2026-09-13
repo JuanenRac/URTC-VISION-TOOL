@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C コードであり、65件の通過している `TEST_ASSERT` チェック（`tests/test_*.c`、ホスト自身の C コンパイラでコンパイル・実行——実際にこのホストテストスイートをコンパイルして実行し確認済み）に裏付けられている。そしてこのリポジトリ自身の CI は実際にそれを実行している——`.github/workflows/ci.yml` のファームウェアステップは `build_firmware.sh` を呼び出し、そのステップ2は STM32 のビルドに触れる前に必ず `tests/` をコンパイル・実行する。ホスト側の `vision_companion` パッケージ（`alignment.py`、`main.py`）も同様に本物であり、21件の通過している pytest ケース（`src/vision_companion/` 内で `pytest tests/` を実行——実際に実行し確認済み）に裏付けられているが、CI は実際には一度もそのスイートを実行しない——トップレベルのワークフローは各 `.py` ファイルの構文チェック（`py_compile`）を行うだけなので、今日の時点ではそこでのリグレッションがビルドを失敗させることはない。README 自身の冒頭がすでに述べている通り、このボード用の PCB/回路図はまだ存在しないため、ここにあるものはいずれも実際の MLX9064x センサーや RGB カメラを読み取ったことも、実際の CAN トランシーバーを駆動したこともない——`main.c`/`startup_stm32_minimal.c` は、Cortex-M4F 向けのクロスコンパイルとリンクがプレースホルダーのリンカスクリプトに対して成功することを示すだけだ。これまでに実際に出荷されたものの詳細は `CHANGELOG.md` を参照。
+**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C コードであり、65件の通過している `TEST_ASSERT` チェック（`tests/test_*.c`、ホスト自身の C コンパイラでコンパイル・実行——実際にこのホストテストスイートをコンパイルして実行し確認済み）に裏付けられている。そしてこのリポジトリ自身の CI は実際にそれを実行している——`.github/workflows/ci.yml` のファームウェアステップは `build_firmware.sh` を呼び出し、そのステップ2は STM32 のビルドに触れる前に必ず `tests/` をコンパイル・実行する。ホスト側の `vision_companion` パッケージ（`alignment.py`、`main.py`）も同様に本物であり、27件の通過している pytest ケース（`src/vision_companion/` 内で `pytest tests/` を実行——実際に実行し確認済み）に裏付けられているが、CI は実際には一度もそのスイートを実行しない——トップレベルのワークフローは各 `.py` ファイルの構文チェック（`py_compile`）を行うだけなので、今日の時点ではそこでのリグレッションがビルドを失敗させることはない。README 自身の冒頭がすでに述べている通り、このボード用の PCB/回路図はまだ存在しないため、ここにあるものはいずれも実際の MLX9064x センサーや RGB カメラを読み取ったことも、実際の CAN トランシーバーを駆動したこともない——`main.c`/`startup_stm32_minimal.c` は、Cortex-M4F 向けのクロスコンパイルとリンクがプレースホルダーのリンカスクリプトに対して成功することを示すだけだ。これまでに実際に出荷されたものの詳細は `CHANGELOG.md` を参照。
 
 ---
 
@@ -42,7 +42,7 @@ RGB グローバルシャッターカメラと MLX9064x ファミリーの熱セ
 * 📡 **統一 CAN API** — URTC の 25 種類の工具カタログにシームレスに統合。*（センサー側のワイヤープロトコル自体——フレーミング、CRC、範囲検証——は本物です。下記参照。それを実際に伝送する実際の CAN トランシーバーはまだ必要です。）*
 * 🔒 **センサープロトコルの安全性** — 実際のバージョン管理されたフレーミング、CRC8 チェックサム、実際の測定範囲検証、実際のレート制限、そして制御判断とは独立した専用のエラー/レイテンシ/バスリセット診断カウンター。*（実装済み）*
 * ✅ **Cortex-M4F ファームウェアツールチェーン** — 兄弟リポジトリ URTC と URTC-SMART-RACK と同じツールチェーンを用いて、`arm-none-eabi-gcc` でクロスコンパイルおよびリンクされる実際のベアメタルイメージ。*（実装済み——下記の「ビルド」を参照）*
-* ✅ **`vision_companion` 処理パイプライン** — 実際に動作する Python パッケージ：合成された熱画像+RGB フレーム生成、疑似カラー熱画像レンダリング、RGB->熱画像 ROI アライメント + 温度統計抽出、統計レポート、21 件の実際の pytest ケースでカバー、ハードウェア接続なしでエンドツーエンドに実行可能。*（実装済み——下記の「VISION COMPANION」を参照）*
+* ✅ **`vision_companion` 処理パイプライン** — 実際に動作する Python パッケージ：合成された熱画像+RGB フレーム生成、疑似カラー熱画像レンダリング、RGB->熱画像 ROI アライメント + 温度統計抽出、統計レポート、27 件の実際の pytest ケースでカバー、ハードウェア接続なしでエンドツーエンドに実行可能。*（実装済み——下記の「VISION COMPANION」を参照）*
 
 ---
 
@@ -92,7 +92,7 @@ URTC-VISION-TOOL/
 │       ├── requirements.txt        # numpy + pillow
 │       ├── main.py                 # 実際に動作する CLI（バージョン/自己診断/analyze-roi）
 │       ├── alignment.py            # 本物：RGB<->熱画像 ROI マッピング + 温度統計抽出
-│       ├── tests/                  # 21 件の実際の pytest ケース（main.py + alignment.py）
+│       ├── tests/                  # 27 件の実際の pytest ケース（main.py + alignment.py）
 │       └── README.md               # コンパニオン専用の使用方法ドキュメント
 ├── tests/                          # 実際のホストネイティブなファームウェアテストハーネス（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、センサーシナリオ）
 ├── docs/                           # ドキュメントとキャリブレーションリファレンス
@@ -173,7 +173,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C (16 thermal px)
 ```
 
-21 件の実際の pytest ケースが `main.py` と `alignment.py` の両方をカバー
+27 件の実際の pytest ケースが `main.py` と `alignment.py` の両方をカバー
 します：
 
 ```bash
