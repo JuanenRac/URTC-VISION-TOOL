@@ -9,7 +9,7 @@ sensor capture isn't implemented. What's real and fully working today is the
 processing pipeline those captures will feed: synthetic thermal/RGB frame
 generation, false-color thermal rendering, real RGB->thermal ROI alignment
 and stats extraction (`alignment.py`), and stats reporting - runs end-to-end
-with no hardware attached, verified by 21 real pytest cases.
+with no hardware attached, verified by 27 real pytest cases.
 
 ## Install & run
 
@@ -56,10 +56,10 @@ pip install -e ".[dev]"
 pytest
 ```
 
-21 real pytest cases across `tests/test_main.py` (synthetic frame generation,
+27 real pytest cases across `tests/test_main.py` (synthetic frame generation,
 false-color rendering, CLI commands) and `tests/test_alignment.py` (ROI
-coordinate mapping, out-of-bounds/degenerate-input guards, ROI stats
-extraction).
+coordinate mapping, out-of-bounds/degenerate-input guards including a ROI
+with no real overlap with the thermal frame at all, ROI stats extraction).
 
 See [main.py](main.py) and [alignment.py](alignment.py) for the real, working
 code. A real MLX9064x/camera capture step will be added once hardware exists.

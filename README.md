@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 65 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler - confirmed by compiling and running that exact host test suite), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `main.py`) is likewise real and backed by 21 passing pytest cases (`pytest tests/` inside `src/vision_companion/`, confirmed by running it), but CI never actually runs that suite - the top-level workflow only `py_compile`-checks every `.py` file, so a regression there wouldn't fail a build today. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
+**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 65 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler - confirmed by compiling and running that exact host test suite), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `main.py`) is likewise real and backed by 27 passing pytest cases (`pytest tests/` inside `src/vision_companion/`, confirmed by running it), but CI never actually runs that suite - the top-level workflow only `py_compile`-checks every `.py` file, so a regression there wouldn't fail a build today. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
 
 ---
 
@@ -34,7 +34,7 @@ No PCB/schematic exists for this board yet (see `hardware/`), so nothing below c
 * 📡 **Unified CAN API** — seamlessly integrated into the URTC 25-tool catalog. *(the sensor-side wire protocol itself - framing, CRC, range validation - is real, see below; a real CAN transceiver to actually carry it is still needed.)*
 * 🔒 **Sensor Protocol Safety** — real versioned framing with a CRC8 checksum, real measurement-range validation, real rate limiting, and dedicated error/latency/bus-reset diagnostics counters. *(implemented)*
 * ✅ **Cortex-M4F firmware toolchain** — a real bare-metal image that cross-compiles and links with `arm-none-eabi-gcc`, same toolchain as sibling repos URTC and URTC-SMART-RACK. *(implemented — see BUILD below)*
-* ✅ **`vision_companion` processing pipeline** — a real, working Python package: synthetic thermal+RGB frame generation, false-color thermal rendering, RGB->thermal ROI alignment + temperature-stats extraction, stats reporting, all covered by 21 real pytest cases, runs end-to-end with no hardware attached. *(implemented — see VISION COMPANION below)*
+* ✅ **`vision_companion` processing pipeline** — a real, working Python package: synthetic thermal+RGB frame generation, false-color thermal rendering, RGB->thermal ROI alignment + temperature-stats extraction, stats reporting, all covered by 27 real pytest cases, runs end-to-end with no hardware attached. *(implemented — see VISION COMPANION below)*
 
 ---
 
@@ -84,7 +84,7 @@ URTC-VISION-TOOL/
 │       ├── requirements.txt        # numpy + pillow
 │       ├── main.py                 # Real, working CLI (version / selftest / analyze-roi)
 │       ├── alignment.py            # Real: RGB<->thermal ROI mapping + temperature-stats extraction
-│       ├── tests/                  # 21 real pytest cases (main.py + alignment.py)
+│       ├── tests/                  # 27 real pytest cases (main.py + alignment.py)
 │       └── README.md               # Companion-specific usage docs
 ├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios)
 ├── docs/                           # Documentation and calibration reference
@@ -150,7 +150,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C (16 thermal px)
 ```
 
-21 real pytest cases cover both `main.py` and `alignment.py`:
+27 real pytest cases cover both `main.py` and `alignment.py`:
 
 ```bash
 pip install -e ".[dev]"

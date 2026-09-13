@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**诚实核查 - 今天真正能运行的部分：** 固件端的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）都是真实、纯粹的 C 代码，由 65 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器编译并运行——通过实际编译并运行这套宿主测试套件加以确认），而且这个仓库自己的 CI 确实会运行它：`.github/workflows/ci.yml` 的固件步骤会调用 `build_firmware.sh`，其第 2 步在触碰 STM32 构建之前，总是会编译并运行 `tests/`。宿主端的 `vision_companion` 软件包（`alignment.py`、`main.py`）同样是真实的，由 21 个通过的 pytest 用例支撑（在 `src/vision_companion/` 内运行 `pytest tests/`，已通过实际运行确认），但 CI 从来不会真正运行这套测试——顶层工作流只对每个 `.py` 文件做语法检查（`py_compile`），所以今天那里的一个回归并不会导致构建失败。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的代码从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成。具体已经交付了什么，请参见 `CHANGELOG.md`。
+**诚实核查 - 今天真正能运行的部分：** 固件端的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）都是真实、纯粹的 C 代码，由 65 个通过的 `TEST_ASSERT` 检查支撑（`tests/test_*.c`，使用宿主机自身的 C 编译器编译并运行——通过实际编译并运行这套宿主测试套件加以确认），而且这个仓库自己的 CI 确实会运行它：`.github/workflows/ci.yml` 的固件步骤会调用 `build_firmware.sh`，其第 2 步在触碰 STM32 构建之前，总是会编译并运行 `tests/`。宿主端的 `vision_companion` 软件包（`alignment.py`、`main.py`）同样是真实的，由 27 个通过的 pytest 用例支撑（在 `src/vision_companion/` 内运行 `pytest tests/`，已通过实际运行确认），但 CI 从来不会真正运行这套测试——顶层工作流只对每个 `.py` 文件做语法检查（`py_compile`），所以今天那里的一个回归并不会导致构建失败。正如 README 自己的介绍已经说明的那样：这块板子目前还没有 PCB/原理图，所以这里的代码从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只是证明了针对 Cortex-M4F 的交叉编译和链接能够在一个占位链接脚本上成功完成。具体已经交付了什么，请参见 `CHANGELOG.md`。
 
 ---
 
@@ -41,7 +41,7 @@
 * 📡 **统一 CAN API** —— 无缝集成到 URTC 25 种工具目录中。*（传感器侧的线缆协议本身——帧格式、CRC、范围校验——是真实的，见下文；仍需要真实的 CAN 收发器来实际承载它。）*
 * 🔒 **传感器协议安全性** —— 真实的版本化帧格式，带 CRC8 校验和，真实的测量范围校验，真实的速率限制，以及独立于控制决策的专用错误/延迟/总线复位诊断计数器。*（已实现）*
 * ✅ **Cortex-M4F 固件工具链** —— 一个真实的裸机镜像，使用与兄弟仓库 URTC 和 URTC-SMART-RACK 相同的工具链，通过 `arm-none-eabi-gcc` 交叉编译并链接。*（已实现——见下方"构建"）*
-* ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 21 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方"VISION COMPANION"）*
+* ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 27 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方"VISION COMPANION"）*
 
 ---
 
@@ -91,7 +91,7 @@ URTC-VISION-TOOL/
 │       ├── requirements.txt        # numpy + pillow
 │       ├── main.py                 # 真实可用的 CLI（版本/自检/analyze-roi）
 │       ├── alignment.py            # 真实：RGB<->热成像 ROI 映射 + 温度统计提取
-│       ├── tests/                  # 21 个真实 pytest 用例（main.py + alignment.py）
+│       ├── tests/                  # 27 个真实 pytest 用例（main.py + alignment.py）
 │       └── README.md               # 配套软件专属使用文档
 ├── tests/                          # 真实的主机原生固件测试套件（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、传感器场景）
 ├── docs/                           # 文档与标定参考
@@ -168,7 +168,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C (16 thermal px)
 ```
 
-21 个真实 pytest 用例覆盖了 `main.py` 和 `alignment.py`：
+27 个真实 pytest 用例覆盖了 `main.py` 和 `alignment.py`：
 
 ```bash
 pip install -e ".[dev]"

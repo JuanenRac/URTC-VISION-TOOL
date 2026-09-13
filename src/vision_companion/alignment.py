@@ -13,6 +13,7 @@
 # don't change shape, so nothing here has to be rewritten.
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -42,14 +43,24 @@ def rgb_roi_to_thermal_roi(
     rgb_height: int,
     thermal_width: int,
     thermal_height: int,
-) -> BoundingBox:
+) -> BoundingBox | None:
     """Rescales a bounding box detected in RGB-frame pixel space into
     thermal-frame pixel space, assuming both sensors share the same field
     of view (a reasonable v0 assumption for a single rigid tool head - a
     real per-pixel homography needs an actual calibration pass against
-    real hardware). Clamped to the thermal frame's bounds and widened by
-    at least one thermal pixel in each axis so a small RGB detection
-    (e.g. a single component) doesn't round away to a zero-size box."""
+    real hardware). A box that only partly overlaps the thermal frame is
+    clamped to that overlap and widened by at least one thermal pixel in
+    each axis so a small RGB detection (e.g. a single component) doesn't
+    round away to a zero-size box.
+
+    H043: a box that does not overlap the thermal frame AT ALL (e.g. a
+    detection entirely to one side, or a stale/bogus RGB-space box) used
+    to be clamped exactly the same way as a partially-overlapping one -
+    silently landing on a 1-pixel-wide sliver at whichever thermal edge
+    was nearest, so the caller got back a real-looking (if narrow)
+    thermal reading for a region the thermal sensor never actually saw.
+    That's returned as None here instead - "no data", not "the edge
+    pixel's temperature" - so a caller can tell the two cases apart."""
     if rgb_width <= 0 or rgb_height <= 0 or thermal_width <= 0 or thermal_height <= 0:
         raise AlignmentError("frame dimensions must be positive")
 
@@ -63,6 +74,9 @@ def rgb_roi_to_thermal_roi(
 
     tx1 = max(tx1, tx0 + 1)
     ty1 = max(ty1, ty0 + 1)
+
+    if tx1 <= 0 or tx0 >= thermal_width or ty1 <= 0 or ty0 >= thermal_height:
+        return None  # no real intersection with the thermal frame at all
 
     tx0 = max(0, min(tx0, thermal_width - 1))
     ty0 = max(0, min(ty0, thermal_height - 1))
@@ -78,6 +92,19 @@ class RoiStats:
     max_c: float
     mean_c: float
     pixel_count: int
+
+    @property
+    def is_empty(self) -> bool:
+        """True for H043's "no real data" result - a requested ROI that
+        does not overlap the thermal frame at all. `min_c`/`max_c`/`mean_c`
+        are NaN in that case (never a real temperature reading with
+        pixel_count == 0 sitting behind it), so a caller checking this
+        property first can't accidentally treat NaN as a real value."""
+        return self.pixel_count == 0
+
+    @staticmethod
+    def empty() -> "RoiStats":
+        return RoiStats(min_c=math.nan, max_c=math.nan, mean_c=math.nan, pixel_count=0)
 
 
 def extract_roi_stats(thermal_frame: np.ndarray, roi: BoundingBox) -> RoiStats:
@@ -107,7 +134,15 @@ def analyze_rgb_roi(
     """Convenience wrapper: given a bounding box detected in RGB space (e.g.
     from a component-detection model upstream), maps it into thermal space
     and returns real temperature stats for that exact region - the
-    end-to-end path the README's Eye-in-Hand Alignment feature describes."""
+    end-to-end path the README's Eye-in-Hand Alignment feature describes.
+
+    H043: when `rgb_roi` doesn't overlap the thermal frame at all, this
+    returns `RoiStats.empty()` (`is_empty` True, `pixel_count == 0`) rather
+    than ever calling `extract_roi_stats()` against a clamped edge sliver -
+    see `rgb_roi_to_thermal_roi()`'s own note on why that used to read as a
+    real, if narrow, temperature."""
     thermal_height, thermal_width = thermal_frame.shape
     thermal_roi = rgb_roi_to_thermal_roi(rgb_roi, rgb_width, rgb_height, thermal_width, thermal_height)
+    if thermal_roi is None:
+        return RoiStats.empty()
     return extract_roi_stats(thermal_frame, thermal_roi)

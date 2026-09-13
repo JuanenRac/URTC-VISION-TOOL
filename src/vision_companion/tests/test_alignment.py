@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+
 import numpy as np
 import pytest
 
@@ -45,6 +47,32 @@ def test_rgb_roi_to_thermal_roi_clamps_out_of_bounds_box() -> None:
     assert 0 <= thermal_roi.y0 < thermal_roi.y1 <= 24
 
 
+def test_rgb_roi_to_thermal_roi_returns_none_for_a_box_entirely_past_the_right_edge() -> None:
+    # H043: a detection box entirely to the right of the RGB frame used to
+    # clamp to a 1-pixel sliver at the thermal frame's own right edge,
+    # silently returning that edge pixel's stats as if they belonged to
+    # the (nonexistent, off-frame) requested region.
+    roi = BoundingBox(700, 0, 760, 60)
+    assert rgb_roi_to_thermal_roi(roi, 640, 480, 32, 24) is None
+
+
+def test_rgb_roi_to_thermal_roi_returns_none_for_a_box_entirely_left_of_or_above_the_frame() -> None:
+    assert rgb_roi_to_thermal_roi(BoundingBox(-100, 0, -10, 60), 640, 480, 32, 24) is None
+    assert rgb_roi_to_thermal_roi(BoundingBox(0, -100, 60, -10), 640, 480, 32, 24) is None
+    assert rgb_roi_to_thermal_roi(BoundingBox(0, 600, 60, 700), 640, 480, 32, 24) is None
+
+
+def test_rgb_roi_to_thermal_roi_still_clamps_a_box_that_partially_overlaps() -> None:
+    # A box straddling the right edge (only partly off-frame) is real,
+    # genuine partial coverage - still clamped to the overlapping part,
+    # not turned into "no data".
+    roi = BoundingBox(600, 460, 700, 500)
+    thermal_roi = rgb_roi_to_thermal_roi(roi, 640, 480, 32, 24)
+    assert thermal_roi is not None
+    assert 0 <= thermal_roi.x0 < thermal_roi.x1 <= 32
+    assert 0 <= thermal_roi.y0 < thermal_roi.y1 <= 24
+
+
 def test_rgb_roi_to_thermal_roi_rejects_non_positive_dimensions() -> None:
     roi = BoundingBox(0, 0, 10, 10)
     with pytest.raises(AlignmentError):
@@ -70,6 +98,27 @@ def test_extract_roi_stats_rejects_out_of_bounds_roi() -> None:
         extract_roi_stats(frame, BoundingBox(0, 0, 40, 10))
     with pytest.raises(AlignmentError):
         extract_roi_stats(frame, BoundingBox(-1, 0, 10, 10))
+
+
+def test_analyze_rgb_roi_returns_empty_stats_for_a_roi_outside_the_frame() -> None:
+    # H043 end to end: the public convenience wrapper must surface the
+    # same "no data" result, not a real-looking min/max/mean.
+    frame = np.full((24, 32), 24.0, dtype=np.float32)
+    off_frame_roi = BoundingBox(700, 0, 760, 60)
+
+    stats = analyze_rgb_roi(frame, off_frame_roi, rgb_width=640, rgb_height=480)
+
+    assert stats.is_empty
+    assert stats.pixel_count == 0
+    assert math.isnan(stats.min_c)
+    assert math.isnan(stats.max_c)
+    assert math.isnan(stats.mean_c)
+
+
+def test_roi_stats_is_empty_is_false_for_a_real_reading() -> None:
+    frame = np.full((24, 32), 24.0, dtype=np.float32)
+    stats = extract_roi_stats(frame, BoundingBox(0, 0, 4, 4))
+    assert not stats.is_empty
 
 
 def test_analyze_rgb_roi_finds_hotspot_higher_than_corner() -> None:

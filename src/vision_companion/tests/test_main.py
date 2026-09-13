@@ -96,6 +96,21 @@ def test_cmd_analyze_roi_reports_stats(capsys: pytest.CaptureFixture[str]) -> No
     assert "thermal stats" in captured.out
 
 
+def test_cmd_analyze_roi_reports_no_data_for_a_roi_entirely_outside_the_frame(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # H043: a detection box entirely past the right edge of the 640x480 RGB
+    # frame must be honestly reported as "no data", never a "thermal
+    # stats" line computed from whichever pixel sits at the thermal
+    # frame's own edge.
+    args = main.build_parser().parse_args(["analyze-roi", "700", "0", "760", "60"])
+    exit_code = args.func(args)
+    captured = capsys.readouterr()
+    assert exit_code == 1
+    assert "no thermal data" in captured.out
+    assert "thermal stats" not in captured.out
+
+
 def test_build_parser_requires_a_command() -> None:
     parser = main.build_parser()
     with pytest.raises(SystemExit):
