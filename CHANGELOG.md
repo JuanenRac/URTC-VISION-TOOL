@@ -108,7 +108,7 @@ production build step exists yet for a Python tool this small.
   real substitute host compiler, same technique already used for this
   repo's own 0.0.4 entry below - `All tests passed.`, 0 failures.
 
-## [0.0.5] - Removed dangling references to a private tracking document (DOC-56)
+## [0.0.5] - Removed dangling references to a private tracking document
 
 Found while auditing the code:
 `src/sensor_frame.h` and `src/sensor_reading.h` referenced a private
