@@ -3,7 +3,7 @@
 All notable work on **URTC-VISION-TOOL** is summarized here, newest first.
 This file intentionally omits calendar dates from individual entries.
 
-## vision_companion [0.0.2] - H043: an RGB ROI entirely outside the frame no longer reads as edge temperature
+## vision_companion [0.0.2] - An RGB ROI entirely outside the frame no longer reads as edge temperature
 
 - **The bug.** `rgb_roi_to_thermal_roi()` clamped ANY projected thermal-space
   box into the frame's bounds, whether it genuinely overlapped the thermal
