@@ -25,6 +25,7 @@
 #define FIRMWARE_VERSION_MAJOR 0
 #define FIRMWARE_VERSION_MINOR 0
 #define FIRMWARE_VERSION_PATCH 5
+#define FIRMWARE_VERSION_BUILD 0
 
 // Encodes MAJOR.MINOR.PATCH as a single monotonically-increasing integer
 // (major*10000 + minor*100 + patch) - same convention as URTC's own
