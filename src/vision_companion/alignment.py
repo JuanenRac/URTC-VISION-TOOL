@@ -53,7 +53,7 @@ def rgb_roi_to_thermal_roi(
     each axis so a small RGB detection (e.g. a single component) doesn't
     round away to a zero-size box.
 
-    H043: a box that does not overlap the thermal frame AT ALL (e.g. a
+    a box that does not overlap the thermal frame AT ALL (e.g. a
     detection entirely to one side, or a stale/bogus RGB-space box) used
     to be clamped exactly the same way as a partially-overlapping one -
     silently landing on a 1-pixel-wide sliver at whichever thermal edge
@@ -95,7 +95,7 @@ class RoiStats:
 
     @property
     def is_empty(self) -> bool:
-        """True for H043's "no real data" result - a requested ROI that
+        """True for 's "no real data" result - a requested ROI that
         does not overlap the thermal frame at all. `min_c`/`max_c`/`mean_c`
         are NaN in that case (never a real temperature reading with
         pixel_count == 0 sitting behind it), so a caller checking this
@@ -136,7 +136,7 @@ def analyze_rgb_roi(
     and returns real temperature stats for that exact region - the
     end-to-end path the README's Eye-in-Hand Alignment feature describes.
 
-    H043: when `rgb_roi` doesn't overlap the thermal frame at all, this
+    when `rgb_roi` doesn't overlap the thermal frame at all, this
     returns `RoiStats.empty()` (`is_empty` True, `pixel_count == 0`) rather
     than ever calling `extract_roi_stats()` against a clamped edge sliver -
     see `rgb_roi_to_thermal_roi()`'s own note on why that used to read as a

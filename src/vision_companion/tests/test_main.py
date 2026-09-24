@@ -99,7 +99,7 @@ def test_cmd_analyze_roi_reports_stats(capsys: pytest.CaptureFixture[str]) -> No
 def test_cmd_analyze_roi_reports_no_data_for_a_roi_entirely_outside_the_frame(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    # H043: a detection box entirely past the right edge of the 640x480 RGB
+    # a detection box entirely past the right edge of the 640x480 RGB
     # frame must be honestly reported as "no data", never a "thermal
     # stats" line computed from whichever pixel sits at the thermal
     # frame's own edge.
