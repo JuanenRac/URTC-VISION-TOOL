@@ -48,7 +48,7 @@ def test_rgb_roi_to_thermal_roi_clamps_out_of_bounds_box() -> None:
 
 
 def test_rgb_roi_to_thermal_roi_returns_none_for_a_box_entirely_past_the_right_edge() -> None:
-    # H043: a detection box entirely to the right of the RGB frame used to
+    # a detection box entirely to the right of the RGB frame used to
     # clamp to a 1-pixel sliver at the thermal frame's own right edge,
     # silently returning that edge pixel's stats as if they belonged to
     # the (nonexistent, off-frame) requested region.
@@ -101,7 +101,7 @@ def test_extract_roi_stats_rejects_out_of_bounds_roi() -> None:
 
 
 def test_analyze_rgb_roi_returns_empty_stats_for_a_roi_outside_the_frame() -> None:
-    # H043 end to end: the public convenience wrapper must surface the
+    # end to end: the public convenience wrapper must surface the
     # same "no data" result, not a real-looking min/max/mean.
     frame = np.full((24, 32), 24.0, dtype=np.float32)
     off_frame_roi = BoundingBox(700, 0, 760, 60)

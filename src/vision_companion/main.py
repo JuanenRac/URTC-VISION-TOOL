@@ -164,7 +164,7 @@ def cmd_analyze_roi(args: argparse.Namespace) -> int:
 
     print(f"RGB ROI ({roi.x0},{roi.y0})-({roi.x1},{roi.y1}) in a {RGB_WIDTH}x{RGB_HEIGHT} frame")
     if stats.is_empty:
-        # H043: this ROI does not overlap the thermal sensor's field of
+        # this ROI does not overlap the thermal sensor's field of
         # view at all - honestly report "no data", never a min/max/mean
         # computed from whatever pixel happened to sit at the nearest
         # thermal edge.
