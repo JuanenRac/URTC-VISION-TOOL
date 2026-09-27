@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "ecosystem": "HYDRA-UMC",
+  "ecosystem": "URTC",
   "name": "URTC-VISION-TOOL",
   "version": "0.0.5",
   "role": "firmware",

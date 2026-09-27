@@ -141,7 +141,7 @@ passed.`, 0 failures.
 
 ## [0.0.3]
 
-- Build version synchronized with `hydra-umc.project.json` and the repository-native version source.
+- Build version synchronized with `urtc.project.json` and the repository-native version source.
 
 ## [0.0.0] - Initial scaffolding
 

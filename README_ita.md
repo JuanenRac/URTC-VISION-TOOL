@@ -96,7 +96,7 @@ URTC-VISION-TOOL/
 │   ├── build_test.py               # Controllo build/compilazione senza incremento di versione
 │   └── ci_validate.py              # Validazione manifest/CHANGELOG/docs usata dalla CI
 ├── bump_version.py                 # Incremento versione stile contachilometri (generico, condiviso con URTC / URTC-SMART-RACK)
-├── bump_manifest_version.py        # Sincronizza la versione di hydra-umc.project.json con quella nativa (--sync)
+├── bump_manifest_version.py        # Sincronizza la versione di urtc.project.json con quella nativa (--sync)
 ├── build_firmware.sh / .bat        # Build reale: test host + incrementa versione + compila + collega + pubblica in firmware/
 ├── build-test.sh / .bat            # Controllo build/compilazione senza incremento di versione
 └── README.md
