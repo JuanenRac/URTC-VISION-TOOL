@@ -3,6 +3,14 @@
 All notable work on **URTC-VISION-TOOL** is summarized here, newest first.
 This file intentionally omits calendar dates from individual entries.
 
+## CI - the vision_companion test suite now runs on every push
+
+- `.github/workflows/ci.yml` installs `src/vision_companion/requirements.txt`
+  and runs its 27 pytest cases; before, CI only `py_compile`-checked them, so
+  a regression there could not fail a build. READMEs (all 7 languages)
+  updated to say so. No firmware or package code change, so no version
+  bump (firmware 0.0.5, vision_companion 0.0.2 unchanged).
+
 ## vision_companion [0.0.2] - An RGB ROI entirely outside the frame no longer reads as edge temperature
 
 - **The bug.** `rgb_roi_to_thermal_roi()` clamped ANY projected thermal-space
