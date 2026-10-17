@@ -70,6 +70,11 @@ if errorlevel 1 goto :error
 echo   OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_diagnostics.c pure-logic tests passed
 echo.
 
+echo === 2b. Build tooling tests ^(version odometer boundaries^) ===
+python -m unittest discover -s tests -p "test_*.py"
+if errorlevel 1 goto :error
+echo.
+
 echo === 3. Version bump (odometer, see bump_version.py) ===
 for /f "delims=" %%V in ('python bump_version.py src\firmware_common.h FIRMWARE_VERSION') do set VERSION=%%V
 if "%VERSION%"=="" goto :error
@@ -91,7 +96,10 @@ echo.
 
 echo === 4. Compile + link ===
 if not exist build mkdir build
-if not exist firmware mkdir firmware
+REM CI builds publish under build\ and never touch the versioned firmware\ files.
+set "FIRMWARE_OUT=firmware"
+if "%HYDRA_UMC_CI%"=="1" set "FIRMWARE_OUT=build\firmware"
+if not exist %FIRMWARE_OUT% mkdir %FIRMWARE_OUT%
 
 set CFLAGS=-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -ffreestanding -fno-builtin -Wall -Wextra -O2 -g -Isrc
 set LDFLAGS=-T src\STM32_MINIMAL.ld -nostdlib -Wl,--gc-sections -Wl,-Map=build\urtc-vision-tool.map
@@ -114,9 +122,9 @@ arm-none-eabi-size build\urtc-vision-tool.elf
 echo.
 
 echo === 6. Publish versioned artifacts to firmware\ ===
-copy /y build\urtc-vision-tool.elf firmware\URTC_VISION_TOOL_FIRMWARE_v%VERSION%.elf >nul
-copy /y build\urtc-vision-tool.bin firmware\URTC_VISION_TOOL_FIRMWARE_v%VERSION%.bin >nul
-copy /y build\urtc-vision-tool.hex firmware\URTC_VISION_TOOL_FIRMWARE_v%VERSION%.hex >nul
+copy /y build\urtc-vision-tool.elf %FIRMWARE_OUT%\URTC_VISION_TOOL_FIRMWARE_v%VERSION%.elf >nul
+copy /y build\urtc-vision-tool.bin %FIRMWARE_OUT%\URTC_VISION_TOOL_FIRMWARE_v%VERSION%.bin >nul
+copy /y build\urtc-vision-tool.hex %FIRMWARE_OUT%\URTC_VISION_TOOL_FIRMWARE_v%VERSION%.hex >nul
 echo   OK   firmware\URTC_VISION_TOOL_FIRMWARE_v%VERSION%.{elf,bin,hex}
 echo.
 

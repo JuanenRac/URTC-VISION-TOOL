@@ -56,6 +56,11 @@ fi
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD="$ROOT/build"
 FIRMWARE_OUT="$ROOT/firmware"
+if [ "$HYDRA_UMC_CI_MODE" = "1" ]; then
+    # CI builds never touch the versioned images in firmware/ - they are
+    # published under build/ instead.
+    FIRMWARE_OUT="$BUILD/firmware"
+fi
 if [ -t 0 ]; then
     trap 'echo ""; read -r -p "Press Enter to close this window..." _' EXIT
 fi
@@ -87,6 +92,11 @@ mkdir -p "$BUILD"
     src/sensor_frame.c src/sensor_reading.c src/rate_limiter.c src/sensor_diagnostics.c src/vision_sensor_link.c
 "$BUILD/host_tests"
 echo "  OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_diagnostics.c / vision_sensor_link.c pure-logic tests passed"
+
+echo ""
+echo "=== 2b. Build tooling tests (version odometer boundaries) ==="
+python3 -m unittest discover -s tests -p "test_*.py"
+echo "  OK   build tooling tests passed"
 
 echo ""
 echo "=== 3. Version bump (odometer, see bump_version.py) ==="
