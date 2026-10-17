@@ -20,6 +20,7 @@ typedef struct {
     uint32_t frame_errors;       // sensor_frame_parse() rejections (bad SOF/version/length/CRC/incomplete)
     uint32_t out_of_range_count; // sensor_reading_validate_*() rejections
     uint32_t rate_limited_count; // rate_limiter_allow() rejections
+    uint32_t unsupported_sensor_count; // well-formed frames from a sensor id this link does not read (an unknown id, or the RGB trigger)
     uint32_t disconnect_count;   // explicit "sensor went silent" events
     uint32_t bus_reset_count;
     uint32_t last_latency_ms;    // real time between the two most recent accepted frames
@@ -31,6 +32,7 @@ void sensor_diagnostics_init(sensor_diagnostics_t *diag);
 void sensor_diagnostics_note_frame_error(sensor_diagnostics_t *diag);
 void sensor_diagnostics_note_out_of_range(sensor_diagnostics_t *diag);
 void sensor_diagnostics_note_rate_limited(sensor_diagnostics_t *diag);
+void sensor_diagnostics_note_unsupported_sensor(sensor_diagnostics_t *diag);
 void sensor_diagnostics_note_disconnect(sensor_diagnostics_t *diag);
 void sensor_diagnostics_note_bus_reset(sensor_diagnostics_t *diag);
 

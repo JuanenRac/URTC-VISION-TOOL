@@ -123,6 +123,44 @@ void run_vision_sensor_scenario_tests(int *failures)
         TEST_ASSERT(diag.rate_limited_count == 1, "the real throttled frame is recorded distinctly from a framing or range error");
     }
 
+    // --- Scenario 5b: a frame of another sensor is never taken for a temperature ---
+    {
+        rate_limiter_t rl;
+        rate_limiter_init(&rl, 100);
+        sensor_diagnostics_t diag;
+        sensor_diagnostics_init(&diag);
+        uint8_t payload[2] = {0x10, 0x27}; // would be 100.00 C if read as thermal
+        uint8_t buf[SENSOR_FRAME_MAX_SIZE];
+        sensor_thermal_reading_t reading;
+
+        uint8_t len = sensor_frame_encode(SENSOR_ID_RGB_TRIGGER, 1, 0, payload, 2, buf);
+        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, len, 0, &reading) == false, "a well-formed RGB trigger frame is not a thermal reading");
+        len = sensor_frame_encode(0x77, 1, 1, payload, 2, buf);
+        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, len, 10, &reading) == false, "a frame of an unknown sensor id is not a thermal reading");
+        TEST_ASSERT(diag.unsupported_sensor_count == 2, "the frames of other sensors are counted apart");
+        TEST_ASSERT(diag.out_of_range_count == 0 && diag.frame_errors == 0 && diag.rate_limited_count == 0, "and not as range, framing or rate errors");
+        len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 2, payload, 2, buf);
+        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, len, 20, &reading) == true, "the first real thermal frame after them is accepted: they did not use up the rate window");
+    }
+
+    // --- Scenario 5c: a bad frame does not use up the rate window of the good one that follows ---
+    {
+        rate_limiter_t rl;
+        rate_limiter_init(&rl, 100);
+        sensor_diagnostics_t diag;
+        sensor_diagnostics_init(&diag);
+        uint8_t bad[2] = {0xFF, 0x7F}; // 327.67 C: out of range
+        uint8_t good[2] = {0xD0, 0x07}; // 20.00 C
+        uint8_t buf[SENSOR_FRAME_MAX_SIZE];
+        sensor_thermal_reading_t reading;
+
+        uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 0, bad, 2, buf);
+        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, len, 0, &reading) == false, "an out-of-range reading is refused");
+        len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 1, good, 2, buf);
+        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, len, 10, &reading) == true, "the good frame 10 ms later is accepted, not rate limited by the bad one");
+        TEST_ASSERT(diag.out_of_range_count == 1 && diag.rate_limited_count == 0, "one range error and no rate limiting recorded");
+    }
+
     // --- Scenario 6: a real explicit disconnection is recorded, never crashes the parser ---
     {
         rate_limiter_t rl;

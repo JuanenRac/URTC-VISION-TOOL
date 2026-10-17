@@ -28,14 +28,22 @@ bool vision_sensor_link_process_frame(
         return false; // a bad/truncated/corrupted frame never reaches reading validation
     }
 
-    if (!rate_limiter_allow(rl, now_ms)) {
-        sensor_diagnostics_note_rate_limited(diag);
-        return false; // a real frame arriving too fast is throttled, not trusted
+    // Only the thermal camera is read on this link. A frame of any other sensor (the RGB trigger, or an id nobody knows) used to be taken for a temperature as soon as its
+    // payload had two bytes; it is counted apart and never reaches the reading validation.
+    if (frame.sensor_id != SENSOR_ID_THERMAL) {
+        sensor_diagnostics_note_unsupported_sensor(diag);
+        return false;
     }
 
+    // The content is checked BEFORE the rate limiter is spent: a bad frame (out of range, wrong length) must not use up the window and make the next, good frame look too fast.
     if (sensor_reading_validate_thermal(frame.payload, frame.len, out_reading) != SENSOR_READING_OK) {
         sensor_diagnostics_note_out_of_range(diag);
         return false; // a well-formed frame carrying an impossible reading is refused
+    }
+
+    if (!rate_limiter_allow(rl, now_ms)) {
+        sensor_diagnostics_note_rate_limited(diag);
+        return false; // a real frame arriving too fast is throttled, not trusted
     }
 
     sensor_diagnostics_note_accepted_frame(diag, now_ms);

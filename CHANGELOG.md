@@ -61,6 +61,12 @@ production build step exists yet for a Python tool this small.
   so. No firmware or package code change, so no version bump (firmware 0.0.5,
   vision_companion 0.0.2 unchanged).
 
+## [0.0.6] - A frame of another sensor is never taken for a temperature, and a bad frame does not use up the good one's window
+
+- **Only the thermal camera is read on this link:** the sensor id of a frame was never checked, so any frame with a valid CRC and two bytes of payload (the RGB trigger, or an id nobody knows) was taken for a temperature. They are now counted apart (`unsupported_sensor_count`) and never reach the reading validation.
+- **The content is checked before the rate limiter is spent:** a frame with an out-of-range reading used to use up the window and make the next, good frame look too fast and be dropped.
+- Two new scenarios in the host tests (another sensor's frame; a bad frame followed by a good one).
+
 ## [0.0.5] - Removed dangling references to a file that is not in this repository
 
 `src/sensor_frame.h` and `src/sensor_reading.h` had comments that pointed to a

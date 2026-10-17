@@ -14,6 +14,7 @@ void sensor_diagnostics_init(sensor_diagnostics_t *diag)
     diag->frame_errors = 0;
     diag->out_of_range_count = 0;
     diag->rate_limited_count = 0;
+    diag->unsupported_sensor_count = 0;
     diag->disconnect_count = 0;
     diag->bus_reset_count = 0;
     diag->last_latency_ms = 0;
@@ -37,6 +38,12 @@ void sensor_diagnostics_note_rate_limited(sensor_diagnostics_t *diag)
 {
     if (diag == NULL) return;
     diag->rate_limited_count++;
+}
+
+void sensor_diagnostics_note_unsupported_sensor(sensor_diagnostics_t *diag)
+{
+    if (diag == NULL) return;
+    diag->unsupported_sensor_count++;
 }
 
 void sensor_diagnostics_note_disconnect(sensor_diagnostics_t *diag)
