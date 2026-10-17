@@ -57,8 +57,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD="$ROOT/build"
 FIRMWARE_OUT="$ROOT/firmware"
 if [ "$HYDRA_UMC_CI_MODE" = "1" ]; then
-    # CI builds never touch the versioned images in firmware/ - they are
-    # published under build/ instead.
+    # Release mode writes the images to firmware/ (git-ignored, published only
+    # as assets of the GitHub release - see tools/publish_release_assets.py);
+    # CI mode writes them under build/ and touches no tracked file.
     FIRMWARE_OUT="$BUILD/firmware"
 fi
 if [ -t 0 ]; then
@@ -139,7 +140,7 @@ echo "=== 5. Size report ==="
 arm-none-eabi-size "$BUILD/urtc-vision-tool.elf"
 
 echo ""
-echo "=== 6. Publish versioned artifacts to firmware/ ==="
+echo "=== 6. Write versioned artifacts to firmware/ (git-ignored) ==="
 cp "$BUILD/urtc-vision-tool.elf" "$FIRMWARE_OUT/URTC_VISION_TOOL_FIRMWARE_v${VERSION}.elf"
 cp "$BUILD/urtc-vision-tool.bin" "$FIRMWARE_OUT/URTC_VISION_TOOL_FIRMWARE_v${VERSION}.bin"
 cp "$BUILD/urtc-vision-tool.hex" "$FIRMWARE_OUT/URTC_VISION_TOOL_FIRMWARE_v${VERSION}.hex"

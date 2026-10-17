@@ -89,11 +89,12 @@ URTC-VISION-TOOL/
 ├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios)
 ├── docs/                           # Documentation and calibration reference
 ├── hardware/                       # Hardware design files (PCB, Case) - empty, no schematic yet
-├── firmware/                       # Versioned build output (.bin/.elf/.hex), committed like sibling repo URTC
+├── firmware/                       # Saída de compilação (.bin/.elf/.hex), ignorada pelo git - publicada apenas como assets da release do GitHub
 ├── build/                          # Intermediate build objects (gitignored)
 ├── images/                         # Media and diagrams
 ├── tools/
 │   ├── build_test.py               # Non-versioning build/compile check
+│   ├── publish_release_assets.py   # Lista os assets da release e imprime o comando gh
 │   └── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
 ├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC / URTC-SMART-RACK)
 ├── bump_manifest_version.py        # Syncs urtc.project.json's version to the native one (--sync)
@@ -118,6 +119,8 @@ build_firmware.bat
 ```
 
 A compilação incrementa a versão de `src/firmware_common.h` (regra do conta-quilómetros), compila `main.c` e `startup_stm32_minimal.c` para Cortex-M4F, liga-os ao mapa de memória provisório `STM32_MINIMAL.ld` e publica ficheiros `.elf`/`.bin`/`.hex` versionados em `firmware/`. Ainda não há nada para gravar em hardware real — não existe PCB que confirme o componente STM32 de destino, a disposição de pinos, a cablagem do MLX9064x nem a interface da câmara RGB.
+
+As imagens de firmware (`.bin`, `.hex`, `.elf`) não são versionadas no git: uma compilação de release escreve `firmware/URTC_VISION_TOOL_FIRMWARE_v<versão>.*` (ignorado pelo git; `build/firmware` em modo CI, `HYDRA_UMC_CI=1`) e são publicadas apenas como assets da release do GitHub de cada versão. `python tools/publish_release_assets.py` verifica os ficheiros, escreve o ficheiro `.sha256` em falta e imprime o comando `gh release create` exato com os ficheiros a anexar.
 
 ## 5. 🐍 COMPANION DE VISÃO (Python do lado do anfitrião)
 

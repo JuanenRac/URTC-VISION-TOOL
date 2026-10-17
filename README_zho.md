@@ -96,11 +96,12 @@ URTC-VISION-TOOL/
 ├── tests/                          # 真实的主机原生固件测试套件（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、传感器场景）
 ├── docs/                           # 文档与标定参考
 ├── hardware/                       # 硬件设计文件（PCB、外壳）—— 目前为空，尚无原理图
-├── firmware/                       # 版本化构建输出（.bin/.elf/.hex），与兄弟仓库 URTC 一样被提交
+├── firmware/                       # 构建输出（.bin/.elf/.hex），被 git 忽略——仅作为 GitHub 发布的资源发布
 ├── build/                          # 中间构建对象（已被 gitignore）
 ├── images/                         # 媒体与图表
 ├── tools/
 │   ├── build_test.py               # 不递增版本号的构建/编译检查
+│   ├── publish_release_assets.py   # 列出要附加的发布资源并输出 gh 命令
 │   └── ci_validate.py              # CI 使用的 manifest/CHANGELOG/docs 校验
 ├── bump_version.py                 # 里程表式版本递增（通用脚本，与 URTC / URTC-SMART-RACK 共享）
 ├── bump_manifest_version.py        # 将 urtc.project.json 的版本与原生版本同步（--sync）
@@ -131,6 +132,8 @@ Cortex-M4F 编译 `main.c` 和 `startup_stm32_minimal.c`，将其与占位性质
 `.elf`/`.bin`/`.hex` 文件发布到 `firmware/`。目前尚无内容可刷写到真实
 硬件——因为没有 PCB 可以确认目标 STM32 型号、引脚布局、MLX9064x 接线，
 或 RGB 摄像头接口。
+
+固件映像（`.bin`、`.hex`、`.elf`）不纳入 git 版本管理：发布构建会写入 `firmware/URTC_VISION_TOOL_FIRMWARE_v<版本>.*`（已被 git 忽略；CI 模式即 `HYDRA_UMC_CI=1` 时写入 `build/firmware`），它们仅作为每个版本的 GitHub 发布资源发布。`python tools/publish_release_assets.py` 会检查这些文件、补写缺失的 `.sha256` 文件，并输出带有待附加文件的准确 `gh release create` 命令。
 
 ## 5. 🐍 视觉配套软件（主机端 Python）
 

@@ -89,11 +89,12 @@ URTC-VISION-TOOL/
 ├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios)
 ├── docs/                           # Documentation and calibration reference
 ├── hardware/                       # Hardware design files (PCB, Case) - empty, no schematic yet
-├── firmware/                       # Versioned build output (.bin/.elf/.hex), committed like sibling repo URTC
+├── firmware/                       # Build output (.bin/.elf/.hex), git-ignored - published only as assets of the GitHub release
 ├── build/                          # Intermediate build objects (gitignored)
 ├── images/                         # Media and diagrams
 ├── tools/
 │   ├── build_test.py               # Non-versioning build/compile check
+│   ├── publish_release_assets.py   # Lists the release assets to attach and prints the gh command
 │   └── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
 ├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC / URTC-SMART-RACK)
 ├── bump_manifest_version.py        # Syncs urtc.project.json's version to the native one (--sync)
@@ -118,6 +119,8 @@ build_firmware.bat
 ```
 
 The build bumps `src/firmware_common.h`'s version (odometer rule), compiles `main.c` and `startup_stm32_minimal.c` for Cortex-M4F, links them against the placeholder `STM32_MINIMAL.ld` memory map, and publishes versioned `.elf`/`.bin`/`.hex` files to `firmware/`. There is nothing to flash to real hardware yet — no PCB exists to confirm the target STM32 part, pinout, MLX9064x wiring, or the RGB camera interface.
+
+The firmware images (`.bin`, `.hex`, `.elf`) are not versioned in git: a release build writes `firmware/URTC_VISION_TOOL_FIRMWARE_v<version>.*` (git-ignored; `build/firmware` in CI mode, `HYDRA_UMC_CI=1`) and they are published only as assets of the GitHub release of each version. `python tools/publish_release_assets.py` checks the files, writes the missing `.sha256` sidecar and prints the exact `gh release create` command with the files to attach.
 
 ## 5. 🐍 VISION COMPANION (host-side Python)
 

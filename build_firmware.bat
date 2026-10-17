@@ -96,7 +96,7 @@ echo.
 
 echo === 4. Compile + link ===
 if not exist build mkdir build
-REM CI builds publish under build\ and never touch the versioned firmware\ files.
+REM Release mode writes to firmware\ (git-ignored, published only as release assets); CI mode writes to build\firmware.
 set "FIRMWARE_OUT=firmware"
 if "%HYDRA_UMC_CI%"=="1" set "FIRMWARE_OUT=build\firmware"
 if not exist %FIRMWARE_OUT% mkdir %FIRMWARE_OUT%

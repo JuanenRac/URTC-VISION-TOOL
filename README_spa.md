@@ -89,11 +89,12 @@ URTC-VISION-TOOL/
 ├── tests/                          # Arnes real de pruebas de firmware nativo del host (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, escenarios de sensor)
 ├── docs/                           # Documentación y referencia de calibración
 ├── hardware/                       # Archivos de diseño de hardware (PCB, carcasa) - vacío, sin esquemático todavía
-├── firmware/                       # Salida de build versionada (.bin/.elf/.hex), commiteada igual que el repo hermano URTC
+├── firmware/                       # Salida de build (.bin/.elf/.hex), ignorada por git - se publica solo como assets de la release de GitHub
 ├── build/                          # Objetos intermedios de build (ignorado por git)
 ├── images/                         # Medios y diagramas
 ├── tools/
 │   ├── build_test.py               # Comprobación de build/compilación sin subir versión
+│   ├── publish_release_assets.py   # Lista los assets de la release y imprime el comando gh
 │   └── ci_validate.py              # Validación de manifest/CHANGELOG/docs usada por la CI
 ├── bump_version.py                 # Incremento de versión estilo cuentakilómetros (genérico, compartido con URTC / URTC-SMART-RACK)
 ├── bump_manifest_version.py        # Sincroniza la versión de urtc.project.json con la nativa (--sync)
@@ -118,6 +119,8 @@ build_firmware.bat
 ```
 
 El build incrementa la versión de `src/firmware_common.h` (regla cuentakilómetros), compila `main.c` y `startup_stm32_minimal.c` para Cortex-M4F, los enlaza contra el mapa de memoria placeholder `STM32_MINIMAL.ld`, y publica archivos `.elf`/`.bin`/`.hex` versionados en `firmware/`. Todavía no hay nada que flashear a hardware real - no existe PCB que confirme la pieza STM32 objetivo, el pinout, el cableado del MLX9064x, o la interfaz de la cámara RGB.
+
+Las imágenes de firmware (`.bin`, `.hex`, `.elf`) no se versionan en git: un build de release escribe `firmware/URTC_VISION_TOOL_FIRMWARE_v<versión>.*` (ignorado por git; `build/firmware` en modo CI, `HYDRA_UMC_CI=1`) y se publican solo como assets de la release de GitHub de cada versión. `python tools/publish_release_assets.py` comprueba los ficheros, escribe el fichero `.sha256` que falte e imprime el comando `gh release create` exacto con los ficheros a adjuntar.
 
 ## 5. 🐍 COMPANION DE VISIÓN (Python del lado host)
 

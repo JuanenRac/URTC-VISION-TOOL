@@ -25,6 +25,12 @@ The firmware is bumped by every run of `build_firmware.sh` / `build_firmware.bat
 
 # Firmware
 
+## [0.0.8] - Firmware published only as release assets
+
+- Firmware binaries (bin, elf, hex) are no longer versioned in git; they are published only as assets of the GitHub release of each version. build_firmware.sh and build_firmware.bat write them to firmware/ (git-ignored) in release mode and to build/firmware in CI mode.
+- New tools/publish_release_assets.py checks the files in firmware/, writes the missing sha256 sidecar and prints the exact gh release create command with the files to attach; tests/test_publish_release_assets.py covers it. The READMEs (8 languages) describe the new flow.
+- Verified: unit tests, the repository validation and a full ARM build in release mode. No behaviour of the firmware itself changed.
+
 ## [0.0.7] - Firmware version boundaries and side-effect-free CI builds
 
 - The firmware version scripts keep their own three-component odometer (0.7.9 -> 0.8.0, 0.9.9 -> 1.0.0, 9.9.9 -> 10.0.0) and no longer hand over to the shared manifest utility, which broke the build at the boundary versions; the successor rule is now a pure function covered by boundary tests that run in CI and as a step of the build script.
