@@ -1,192 +1,126 @@
 # Changelog
 
-All notable work on **URTC-VISION-TOOL** is summarized here, newest first.
-This file intentionally omits calendar dates from individual entries.
+All notable work on **URTC-VISION-TOOL**, newest first. This file leaves out calendar dates.
 
-Two components are versioned on their own: the **firmware** (entries headed `[x.y.z]`) and
-**vision_companion** (entries headed `vision_companion [x.y.z]`). Work that has not been given
-a version yet is under **Unreleased**, first. After it come the firmware entries, newest first,
-and then the vision_companion entries, newest first.
+The repository has two parts with their own versions:
+
+| Part | Where | Entries |
+|---|---|---|
+| **Firmware** (STM32, Cortex-M4F) | `src/*.c`, `src/*.h` | headed `## [x.y.z]` |
+| **vision_companion** (Python, runs on a computer or the CM5) | `src/vision_companion/` | headed `## vision_companion [x.y.z]` |
+
+The firmware entries come first, then those of vision_companion. Every entry says what was **Added**, **Changed**, **Fixed** and **Verified**, in that order, and only the headings that apply.
 
 ## Versioning scheme
 
-**Firmware** (`src/firmware_common.h`'s `FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH`)
-and **vision_companion** (`src/vision_companion/pyproject.toml`'s `version`)
-are versioned independently - they build, ship, and run on entirely
-different targets (STM32 vs. host/CM5). Both follow the same ecosystem-wide
-base-10 "odometer" rule:
+The firmware (`FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` in `src/firmware_common.h`) and vision_companion (`version` in `src/vision_companion/pyproject.toml`) are versioned independently: they are built, shipped and run on entirely different targets. Both follow the family's "odometer" rule:
 
-- the relevant component's `PATCH` +1 on every real build of that component
-- when `PATCH` would exceed 9, it resets to 0 and `MINOR` +1 instead (e.g. `0.0.9` -> `0.1.0`, never `0.0.10`)
-- the same carry cascades into `MAJOR` if `MINOR` would exceed 9
+- the `PATCH` of the part that was built goes up by 1;
+- when `PATCH` would pass 9 it goes back to 0 and `MINOR` goes up by 1 (`0.0.9` becomes `0.1.0`, never `0.0.10`);
+- the same carry goes from `MINOR` into `MAJOR`.
 
-Firmware bumps automatically on every `build_firmware.sh`/`.bat` run (see
-`bump_version.py`, the same generic script sibling repos URTC and
-URTC-SMART-RACK use). `vision_companion` is bumped by hand today - no
-production build step exists yet for a Python tool this small.
+The firmware is bumped by every run of `build_firmware.sh` / `build_firmware.bat` (`bump_version.py`, the same script URTC and URTC-SMART-RACK use). vision_companion is bumped by hand: there is no production build step for a Python tool this small yet.
 
-## Unreleased
+---
 
-**Firmware**
-
-- **Fix standalone receive-path compilation.** Include `<stddef.h>` explicitly
-  in `src/vision_sensor_link.c` so its disconnected-frame check has a definition
-  of `NULL` when compiled as a separate translation unit. Fixes the GCC
-  host-test build failure without changing receive-path behavior or
-  incrementing either component version.
-- **The real receive-path decision is now a real `src/` module.** New
-  `src/vision_sensor_link.h`/`.c` (`vision_sensor_link_process_frame()`): the
-  dispatch that chains the sensor frame, the reading check, the rate limiter and
-  the diagnostics together existed only as a `static` function inside
-  `tests/test_vision_sensor_scenarios.c`, not as a module anything else could
-  call. It is promoted verbatim (same logic, same behavior) - the same gap and
-  the same fix as in sibling repo URTC-SMART-RACK's `rack_link.c` - so the
-  MLX9064x receive path is ready to wire into a real I2C/SPI ISR the day the PCB
-  exists. `tests/test_vision_sensor_scenarios.c` now calls into this module
-  instead of defining its own private copy of the logic under test, and the
-  host-test step of `build_firmware.sh`/`.bat` compiles the new file alongside
-  the existing ones.
-  Verified: with no host `gcc`/`cc` on `PATH`, the whole host-side test suite
-  (all 6 test files, all 5 `src/` modules including the new one) was compiled
-  and run with the installed MSVC toolchain (`cl.exe`, VS2019 Build Tools) as a
-  substitute host compiler, the same technique used for the 0.0.4 entry below:
-  `All tests passed.`, 0 failures.
-
-**Repository**
-
-- **CI runs the vision_companion test suite on every push.**
-  `.github/workflows/ci.yml` installs `src/vision_companion/requirements.txt`
-  and runs its 27 pytest cases; before, CI only `py_compile`-checked them, so
-  a regression there could not fail a build. The READMEs (all 7 languages) say
-  so. No firmware or package code change, so no version bump (firmware 0.0.5,
-  vision_companion 0.0.2 unchanged).
+# Firmware
 
 ## [0.0.6] - A frame of another sensor is never taken for a temperature, and a bad frame does not use up the good one's window
 
-- **Only the thermal camera is read on this link:** the sensor id of a frame was never checked, so any frame with a valid CRC and two bytes of payload (the RGB trigger, or an id nobody knows) was taken for a temperature. They are now counted apart (`unsupported_sensor_count`) and never reach the reading validation.
-- **The content is checked before the rate limiter is spent:** a frame with an out-of-range reading used to use up the window and make the next, good frame look too fast and be dropped.
-- Two new scenarios in the host tests (another sensor's frame; a bad frame followed by a good one).
+**Fixed**
+- **Only the thermal camera is read on this link.** The sensor id of a frame was never checked, so any frame with a valid CRC and two bytes of payload (the RGB trigger, or an id nobody knows) was taken for a temperature. Those frames are now counted apart (`unsupported_sensor_count`) and never reach the reading validation.
+- **The content is checked before the rate limiter is spent.** A frame with an out-of-range reading used to use up the window, so the next, good frame looked too fast and was dropped.
+
+**Added**
+- **The receive-path decision is a module of `src/`.** `src/vision_sensor_link.h`/`.c` (`vision_sensor_link_process_frame()`) chains the sensor frame, the reading check, the rate limiter and the diagnostics. Until now it existed only as a `static` function inside `tests/test_vision_sensor_scenarios.c`, so nothing else could call it. It was promoted with the same logic (the same fix as `rack_link.c` in URTC-SMART-RACK), so the MLX9064x receive path is ready to be wired to an I2C/SPI interrupt the day the PCB exists. The scenario tests now call into the module instead of carrying a private copy, and the host-test step of `build_firmware.sh`/`.bat` compiles it.
+- Two scenarios in the host tests: a frame of another sensor, and a bad frame followed by a good one.
+
+**Fixed (build)**
+- `src/vision_sensor_link.c` includes `<stddef.h>` explicitly, so its disconnected-frame check has `NULL` when compiled as a separate unit (it broke the host-test build with GCC; the behaviour did not change).
+
+**Repository**
+- CI runs the 27 pytest cases of vision_companion on every push (`.github/workflows/ci.yml` installs `src/vision_companion/requirements.txt`); before, it only byte-compiled them, so a regression there could not fail a build. The READMEs, in all the languages, say so.
+
+**Verified**
+- The whole host-side suite (6 test files, 5 `src/` modules plus the new one) was compiled and run: `All tests passed.`
 
 ## [0.0.5] - Removed dangling references to a file that is not in this repository
 
-`src/sensor_frame.h` and `src/sensor_reading.h` had comments that pointed to a
-document (for the real MLX9064x I2C register map, still pending real
-hardware) that is not tracked in this repo. The dangling pointer is removed;
-the reasoning each comment already gave (a v0 convention, not a copy of the
-real register map, pending real hardware/datasheet) stays intact and
-self-sufficient without it.
+**Changed**
+- `src/sensor_frame.h` and `src/sensor_reading.h` had comments pointing to a document (the real MLX9064x I2C register map, still pending real hardware) that is not tracked here. The pointer is gone; the reasoning of each comment (a v0 convention, not a copy of the real register map, pending hardware and datasheet) stays whole without it.
+- The READMEs lost a stale hard-coded `FIRMWARE_VERSION_MAJOR/MINOR/PATCH = 0.0.0` in the Directory Structure comment.
 
-Also carries a README (6 languages) correction - a stale hardcoded
-`FIRMWARE_VERSION_MAJOR/MINOR/PATCH = 0.0.0` in the Directory Structure
-comment, from earlier work, bundled here rather than left stranded.
-
-Verified: the exact host-test command was compiled and run with MSVC
-(`cl.exe`, VS2019 Build Tools) as the substitute host compiler (no `gcc`/`cc`
-on `PATH`), as for the 0.0.4 entry below - `All tests passed.`, 0 failures.
+**Verified**
+- The exact host-test command was compiled and run with MSVC (`cl.exe`, VS2019 Build Tools) as the host compiler, as for 0.0.4: `All tests passed.`
 
 ## [0.0.4] - Real sensor protocol: framing, CRC, range limits, rate limiting, field diagnostics
 
-- **`src/sensor_frame.h`/`.c`** (new) - real wire framing for the sensor->MCU link (MLX9064x thermal camera / RGB trigger, once the PCB exists): `[SOF][VERSION][SENSOR_ID][SEQ][TIMESTAMP_MS][LEN][PAYLOAD][CRC8]`, with a real sensor-side millisecond timestamp field and the same CRC-8 (poly 0x07) sibling repo URTC-SMART-RACK's own `protocol.c` uses. `sensor_frame_parse()` never partially trusts a frame - bad SOF, unsupported version, an out-of-range length, an incomplete/truncated buffer, and a corrupted CRC (byte- or payload-level) are each their own distinct error. `sensor_frame_encode()` is the exact inverse.
-- **`src/sensor_reading.h`/`.c`** (new) - `sensor_reading_validate_thermal()` decodes and range-checks a thermal payload against this project's own v0 bounds (-40.00C to 300.00C, hundredths of a degree), separate from the framing layer - a well-formed frame can still carry a physically impossible reading (an ADC glitch, a disconnected sensor reporting rail voltage).
-- **`src/rate_limiter.h`/`.c`** (new) - `rate_limiter_allow()` enforces a minimum interval between accepted frames, so a malfunctioning or flooding sensor is throttled rather than trusted at whatever rate it happens to send.
-- **`src/sensor_diagnostics.h`/`.c`** (new) - dedicated field-support counters (`frame_errors`, `out_of_range_count`, `rate_limited_count`, `disconnect_count`, `bus_reset_count`, `last_latency_ms`) that never make an accept/reject decision themselves - only `sensor_frame.c`/`sensor_reading.c`/`rate_limiter.c` do that, this module only records what they decided.
-- **`tests/`** (new directory) - a minimal, dependency-free host-side test harness (`test_runner.h`, copied from sibling repo URTC-SMART-RACK's convention), compiled with the *host's* C compiler, never `arm-none-eabi-gcc`. 65 assertions across `test_sensor_frame.c` (19), `test_sensor_reading.c` (9), `test_rate_limiter.c` (6), `test_sensor_diagnostics.c` (14). **`test_vision_sensor_scenarios.c`** (17 assertions) is a host-side sensor simulator: it plays encoded frames - valid, truncated, CRC-corrupted, a well-formed but out-of-range reading, a too-fast resend, and an explicit disconnection - through the whole pipeline, confirming no reading is ever produced from corrupt or invalid data and that each failure reason is recorded distinctly in the diagnostics counters.
-- **`build_firmware.sh`/`.bat`** gained a new step 2 (renumbering the rest): builds and runs the host-native test suite before the version bump and the ARM cross-compile, failing the whole build if any assertion fails - the same pattern sibling repo URTC-SMART-RACK already uses.
-- Verification note: the shell used had no host `gcc`/`cc` on `PATH` (an environment condition, previously documented for sibling repo URTC-SMART-RACK - not a project defect). The exact same host-side test sources were compiled and run with the installed MSVC toolchain (`cl.exe`, VS2019 Build Tools) as a substitute host compiler - `All tests passed.`, 0 failures. The `arm-none-eabi-gcc` cross-compile/link step (unaffected - `main.c` is untouched) was independently re-verified, producing `firmware/URTC_VISION_TOOL_FIRMWARE_v0.0.4.{bin,elf,hex}`.
-- Still out of scope, on purpose: wiring `sensor_frame.c`/`sensor_reading.c`/`rate_limiter.c`/`sensor_diagnostics.c` into a real I2C/SPI receive path in `main.c` - there is still no PCB/MLX9064x/RGB trigger to receive real frames from.
+**Added**
+- **`src/sensor_frame.h`/`.c`** - the wire framing of the sensor-to-MCU link (MLX9064x thermal camera and RGB trigger, once the PCB exists): `[SOF][VERSION][SENSOR_ID][SEQ][TIMESTAMP_MS][LEN][PAYLOAD][CRC8]`, with a sensor-side millisecond timestamp and the CRC-8 (polynomial 0x07) that URTC-SMART-RACK's `protocol.c` uses. `sensor_frame_parse()` never half-trusts a frame: a bad SOF, an unsupported version, an out-of-range length, a truncated buffer and a corrupted CRC are each their own error. `sensor_frame_encode()` is its exact inverse.
+- **`src/sensor_reading.h`/`.c`** - `sensor_reading_validate_thermal()` decodes a thermal payload and checks it against this project's v0 limits (-40.00 to 300.00 C, in hundredths), apart from the framing: a well-formed frame can still carry an impossible reading (an ADC glitch, a disconnected sensor reporting the rail voltage).
+- **`src/rate_limiter.h`/`.c`** - `rate_limiter_allow()` keeps a minimum interval between accepted frames, so a faulty or flooding sensor is throttled instead of trusted at whatever rate it sends.
+- **`src/sensor_diagnostics.h`/`.c`** - counters for field support (`frame_errors`, `out_of_range_count`, `rate_limited_count`, `disconnect_count`, `bus_reset_count`, `last_latency_ms`). They never decide anything; they only record what the other modules decided.
+- **`tests/`** - a small harness with no dependencies (`test_runner.h`, the convention of URTC-SMART-RACK), built with the host's C compiler and never with `arm-none-eabi-gcc`: 65 assertions in `test_sensor_frame.c` (19), `test_sensor_reading.c` (9), `test_rate_limiter.c` (6) and `test_sensor_diagnostics.c` (14), and `test_vision_sensor_scenarios.c` (17), a sensor simulator that plays valid, truncated, CRC-corrupted, out-of-range and too-fast frames and an explicit disconnection through the whole chain.
+- **`build_firmware.sh`/`.bat`** have a new step 2 that builds and runs the host tests before the version bump and the ARM cross-compile, and fail the whole build if one assertion fails.
+
+**Verified**
+- The shell had no host `gcc`/`cc`; the same sources were compiled and run with MSVC (`cl.exe`, VS2019 Build Tools): `All tests passed.` The ARM cross-compile and link (`main.c` is untouched) produced `firmware/URTC_VISION_TOOL_FIRMWARE_v0.0.4.{bin,elf,hex}`.
+
+**Not done on purpose**
+- Wiring those modules to an I2C/SPI receive path in `main.c`: there is no PCB, MLX9064x or RGB trigger to receive real frames from yet.
 
 ## [0.0.3]
 
-- Build version synchronized with `urtc.project.json` and the repository-native version source.
+**Changed**
+- The build version follows `urtc.project.json` and the repository's own version source.
 
 ## [0.0.0] - Initial scaffolding (firmware)
 
-**Firmware (STM32, Cortex-M4F):**
-- **`src/firmware_common.h`** - version identity. No pinout/hardware ID
-  defined yet - there is no PCB for this board.
-- **`src/startup_stm32_minimal.c`** / **`src/STM32_MINIMAL.ld`** - same
-  hand-written vector table / placeholder linker script pattern as
-  sibling repo URTC-SMART-RACK (copied rather than reinvented - identical
-  situation: no real PCB yet to pin down the exact STM32 part).
-- **`src/main.c`** - minimal proof-of-life entry point (heartbeat counter).
-- **`build_firmware.sh` / `build_firmware.bat`** - real build: version
-  bump, cross-compile with `arm-none-eabi-gcc` for Cortex-M4F, link,
-  `objcopy` to `.bin`/`.hex`, size report, publish versioned artifacts to
-  `firmware/`.
+**Added**
+- `src/firmware_common.h` - the version identity. No pinout or hardware id yet: there is no PCB for this board.
+- `src/startup_stm32_minimal.c` and `src/STM32_MINIMAL.ld` - the hand-written vector table and placeholder linker script of URTC-SMART-RACK, copied instead of reinvented (the same situation: no PCB yet to fix the exact STM32 part).
+- `src/main.c` - a minimal proof of life (a heartbeat counter).
+- `build_firmware.sh` / `build_firmware.bat` - the build: version bump, cross-compile with `arm-none-eabi-gcc` for Cortex-M4F, link, `objcopy` to `.bin`/`.hex`, size report, versioned artifacts published to `firmware/`.
 
-The dual-modal capture (RGB camera + MLX9064x over I2C, synchronized
-with the STM32 firmware over CAN) is the next milestone - it needs a real
-PCB first.
+**Next milestone**
+- The dual-modal capture (RGB camera plus MLX9064x over I2C, synchronised with the STM32 firmware over CAN); it needs a real PCB first.
 
-## vision_companion [0.0.2] - An RGB ROI entirely outside the frame no longer reads as edge temperature
+---
 
-- **The bug.** `rgb_roi_to_thermal_roi()` clamped ANY projected thermal-space
-  box into the frame's bounds, whether it genuinely overlapped the thermal
-  frame or not. An RGB-space detection box entirely outside the RGB frame
-  (or otherwise projecting somewhere with zero real overlap with the
-  thermal sensor's field of view) still came back as a real, if narrow,
-  in-bounds `BoundingBox` sitting right at whichever thermal edge was
-  nearest - so `analyze_rgb_roi()` silently returned that edge pixel's
-  temperature as if it were a real reading of the (nonexistent, off-frame)
-  requested region, instead of reporting that there was no data at all.
-- **The fix.** `rgb_roi_to_thermal_roi()` now returns `None` when the
-  projected box has no real intersection with the thermal frame at all
-  (a partially-overlapping box is still clamped to its real overlap, as
-  before). `analyze_rgb_roi()` returns a new `RoiStats.empty()` sentinel
-  in that case (`is_empty` True, `pixel_count == 0`, `min_c`/`max_c`/
-  `mean_c` all NaN) instead of ever computing stats from a bogus clamped
-  box. The `analyze-roi` CLI command reports "no thermal data" and exits
-  1 for this case, instead of printing a real-looking temperature.
-- 6 new tests across `test_alignment.py`/`test_main.py` (a box entirely
-  past each frame edge, a genuinely partial-overlap box still clamping
-  correctly, the empty-stats sentinel end to end, and the CLI's own
-  no-data reporting) - confirmed to fail against the pre-fix code (5
-  failures) via a local revert of just `alignment.py`/`main.py`, tests
-  kept. 27/27 pytest cases pass with the fix (up from 21).
-- Version 0.0.1 -> 0.0.2 (`vision_companion`'s own hand-bumped odometer -
-  no production build step exists yet for this Python tool, see the
-  Versioning scheme above).
+# vision_companion
 
-## vision_companion [0.0.1] - Real RGB->thermal ROI alignment + temperature stats
+## vision_companion [0.0.2] - An RGB region entirely outside the frame no longer reads as edge temperature
 
-- **`src/vision_companion/alignment.py`** (new) - the README's "Eye-in-Hand
-  Alignment" feature, made real: `rgb_roi_to_thermal_roi()` rescales a
-  bounding box detected in RGB-frame pixel space into the thermal sensor's
-  much lower native resolution (assumes a shared field of view - a real
-  per-pixel homography needs actual cameras to calibrate against, which
-  don't exist yet), clamped and widened so it never collapses to a
-  zero-size box; `extract_roi_stats()` pulls real min/max/mean temperature
-  out of a thermal-frame region; `analyze_rgb_roi()` chains both into the
-  end-to-end path a real component detection would drive.
-- **`main.py`** - new `analyze-roi X0 Y0 X1 Y1` CLI command, runs the above
-  against the existing synthetic thermal frame and prints real stats.
-- **`tests/`** (new) - 21 pytest cases across `test_main.py` (synthetic
-  frame generation, false-color rendering, all 3 CLI commands) and
-  `test_alignment.py` (ROI coordinate mapping, degenerate/out-of-bounds
-  input guards, ROI stats extraction against real numpy arrays).
-- **`pyproject.toml`** - added a `dev` extra (`pytest>=8`) and registered
-  `alignment` as a packaged module; version bumped by hand to 0.0.1 per
-  this package's own documented policy (no production build step exists
-  yet for a Python tool this small - see the Versioning scheme above).
-- Verified: `pip install -e ".[dev]"` + `pytest` -> 21/21 passed;
-  `vision-companion analyze-roi 280 210 360 270` against the synthetic
-  thermal frame -> min/max/mean temperature output.
-- Still out of scope: real dual-modal capture (RGB camera + MLX9064x over
-  I2C) and a real per-pixel calibration between the two sensors - both need
-  a real PCB and real cameras that don't exist yet.
+**Fixed**
+- `rgb_roi_to_thermal_roi()` clamped any projected box into the bounds of the thermal frame, whether it overlapped it or not. A detection box entirely outside the RGB frame (or projecting where the thermal sensor sees nothing) still came back as a narrow box at the nearest thermal edge, so `analyze_rgb_roi()` returned that edge pixel's temperature as if it were a reading of the requested, non-existent region.
+- It now returns `None` when the projected box has no real overlap with the thermal frame (a box that partly overlaps is still clamped to its real overlap, as before). `analyze_rgb_roi()` then returns a new `RoiStats.empty()` (`is_empty` true, `pixel_count == 0`, `min_c`/`max_c`/`mean_c` all NaN) instead of computing statistics from an invented box. The `analyze-roi` command says "no thermal data" and exits with 1, instead of printing a temperature that looks real.
 
-## vision_companion [0.0.0] - Initial CLI
+**Verified**
+- 6 new tests in `test_alignment.py` and `test_main.py` (a box past each edge, a box that partly overlaps, the empty result from end to end, and what the command says). They fail against the old code (5 failures, checked by reverting only `alignment.py` and `main.py`) and pass with the fix: 27 of 27 (before 21).
 
-**vision_companion (Python, host-side / CM5):**
-- **`src/vision_companion/main.py`** - working CLI (`version`,
-  `selftest`). `selftest` generates a synthetic MLX9064x-shaped thermal
-  frame and a synthetic RGB color-bar test pattern, renders the thermal
-  frame in false color, saves all outputs as real files, and prints
-  stats - runs end-to-end today with zero hardware attached.
-- **`src/vision_companion/pyproject.toml`** - packaging, registers the
-  `vision-companion` console script (`pip install -e .`).
-- **`src/vision_companion/requirements.txt`** - plain `pip install -r`
-  alternative (numpy + pillow).
-- Both install paths verified: `pip install -r requirements.txt`
-  and `pip install -e .` (console script), `python main.py selftest` and
-  `vision-companion selftest` both produce `.npy`/`.png` output.
+**Version**
+- 0.0.1 to 0.0.2, bumped by hand (see the versioning scheme above).
+
+## vision_companion [0.0.1] - RGB-to-thermal region alignment and temperature statistics
+
+**Added**
+- `src/vision_companion/alignment.py` - the "Eye-in-Hand Alignment" of the README, made real: `rgb_roi_to_thermal_roi()` rescales a box detected in RGB pixels to the much lower native resolution of the thermal sensor (it assumes a shared field of view: a per-pixel homography needs real cameras to calibrate against), clamped and widened so it never collapses to zero size; `extract_roi_stats()` takes the minimum, maximum and mean temperature of a region of a thermal frame; `analyze_rgb_roi()` chains both into the path a real component detection will drive.
+- `main.py` - the `analyze-roi X0 Y0 X1 Y1` command, which runs the above on the synthetic thermal frame and prints the statistics.
+- `tests/` - 21 pytest cases in `test_main.py` (synthetic frame, false-colour rendering, the three commands) and `test_alignment.py` (coordinate mapping, degenerate and out-of-bounds inputs, statistics on real numpy arrays).
+- `pyproject.toml` - a `dev` extra (`pytest>=8`) and `alignment` registered as a packaged module.
+
+**Verified**
+- `pip install -e ".[dev]"` and `pytest`: 21 of 21. `vision-companion analyze-roi 280 210 360 270` on the synthetic frame printed the minimum, maximum and mean temperature.
+
+**Not done on purpose**
+- The dual-modal capture (RGB camera plus MLX9064x over I2C) and a per-pixel calibration between the two sensors: both need a real PCB and real cameras.
+
+## vision_companion [0.0.0] - Initial command line
+
+**Added**
+- `src/vision_companion/main.py` - a working command line (`version`, `selftest`). `selftest` makes a synthetic MLX9064x-shaped thermal frame and an RGB colour-bar test pattern, renders the thermal frame in false colour, saves every output as a file and prints statistics: it runs from end to end with no hardware.
+- `src/vision_companion/pyproject.toml` - the packaging, with the `vision-companion` console script (`pip install -e .`).
+- `src/vision_companion/requirements.txt` - the plain `pip install -r` alternative (numpy and pillow).
+
+**Verified**
+- Both ways of installing work, and `python main.py selftest` and `vision-companion selftest` write the `.npy` and `.png` outputs.
