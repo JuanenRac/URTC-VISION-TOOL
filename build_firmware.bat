@@ -63,7 +63,7 @@ if errorlevel 1 (
     goto :error
 )
 if not exist build mkdir build
-gcc -std=c11 -Wall -Wextra -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_sensor_frame.c tests\test_sensor_reading.c tests\test_rate_limiter.c tests\test_sensor_diagnostics.c tests\test_vision_sensor_scenarios.c src\sensor_frame.c src\sensor_reading.c src\rate_limiter.c src\sensor_diagnostics.c src\vision_sensor_link.c
+gcc -std=c11 -Wall -Wextra -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_sensor_frame.c tests\test_sensor_reading.c tests\test_rate_limiter.c tests\test_sensor_diagnostics.c tests\test_vision_sensor_scenarios.c tests\test_robustness.c src\sensor_frame.c src\sensor_reading.c src\rate_limiter.c src\sensor_diagnostics.c src\vision_sensor_link.c
 if errorlevel 1 goto :error
 build\host_tests.exe
 if errorlevel 1 goto :error
