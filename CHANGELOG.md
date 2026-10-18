@@ -19,11 +19,16 @@ The firmware (`FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` in `src/firmware_common
 - when `PATCH` would pass 9 it goes back to 0 and `MINOR` goes up by 1 (`0.0.9` becomes `0.1.0`, never `0.0.10`);
 - the same carry goes from `MINOR` into `MAJOR`.
 
-The firmware is bumped by every run of `build_firmware.sh` / `build_firmware.bat` (`bump_version.py`, the same script URTC and URTC-SMART-RACK use). vision_companion is bumped by hand: there is no production build step for a Python tool this small yet.
+The firmware is raised only by the explicit `python bump.py` step (`bump_version.py`, the same script URTC and URTC-SMART-RACK use); building never changes it. vision_companion is bumped by hand: there is no production build step for a Python tool this small yet.
 
 ---
 
 # Firmware
+
+## [0.1.1] - An explicit bump command: building never changes the version
+
+- Building no longer changes the firmware version: build_firmware.sh and build_firmware.bat only read it from src/firmware_common.h, and raising it is the explicit `python bump.py` step.
+- Every licence statement and source header says GPL-3.0-or-later.
 
 ## [0.1.0] - A repeated or frozen frame is not a new reading, and builds undo a failed version bump
 

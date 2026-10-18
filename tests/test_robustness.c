@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Robustness tests: test_robustness.c
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // What the logic does with input that should never arrive: missing state
 // (a null pointer fails closed, it never lets a frame through), every

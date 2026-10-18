@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Sensor frame rate limiting: rate_limiter.c
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 #include "rate_limiter.h"
 #include <stddef.h>

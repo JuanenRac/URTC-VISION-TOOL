@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - tests for sensor_freshness.c
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 #include "test_runner.h"
 #include "../src/sensor_freshness.h"

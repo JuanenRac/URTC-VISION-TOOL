@@ -1,7 +1,7 @@
 # =============================================================================
 # URTC-VISION-TOOL - vision_companion package: __main__.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 """``python -m vision_companion ...`` runs the same command line as the
 installed ``vision-companion`` script."""

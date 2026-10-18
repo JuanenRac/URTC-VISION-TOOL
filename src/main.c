@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Application entry point: main.c
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // STARTING POINT ONLY - proves the ARM Cortex-M4F toolchain (same
 // arm-none-eabi-gcc used by sibling repos URTC/src/F303-master and

@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Sensor field diagnostics: sensor_diagnostics.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // Real, dedicated field-support counters - the review's own
 // "separar diagnostico de salida de control y mantener contadores de

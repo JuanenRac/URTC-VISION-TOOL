@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Minimal host-side test harness: test_runner.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // No external test framework dependency, on purpose - same convention as
 // sibling repo URTC-SMART-RACK's own tests/test_runner.h: these tests

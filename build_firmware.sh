@@ -7,19 +7,19 @@
 # Author    : JuanenRac (Electro Hobby 3D)
 # Email     : electrohobby3d@gmail.com
 # Copyright : (C) 2026 JuanenRac
-# License   : GPL-3.0 - see LICENSE
+# License   : GPL-3.0-or-later - see LICENSE
 # *****************************************************************************
 # HYDRA_UMC_SCRIPT_STANDARD_HEADER_END
 # HYDRA_UMC_SCRIPT_STANDARD_BANNER_BEGIN
 printf '\n*******************************************************************************\n'
 printf '%s\n' "* URTC-VISION-TOOL - build_firmware.sh"
-printf '%s\n' "* Mode      : INCREMENTAL BUILD"
+printf '%s\n' "* Mode      : BUILD (no version change)"
 printf '%s\n' "* Author    : JuanenRac (Electro Hobby 3D)"
 printf '%s\n' "* Email     : electrohobby3d@gmail.com"
 printf '%s\n' "* Copyright : (C) 2026 JuanenRac"
-printf '%s\n' "* License   : GPL-3.0 - see LICENSE"
+printf '%s\n' "* License   : GPL-3.0-or-later - see LICENSE"
 printf '%s\n' "* ------------------------------------------------------------------------- *"
-printf '%s\n' "* 1. Increment the project version and synchronise its manifest."
+printf '%s\n' "* 1. Read the project version (compiling never changes it; run bump.py to raise it)."
 printf '%s\n' "* 2. Run this project's declared build, verification and packaging commands."
 printf '%s\n' "* 3. Report the result and keep an interactive terminal open."
 printf '%s\n' "*******************************************************************************"
@@ -57,7 +57,7 @@ if [ "$URTC_CI_MODE" = "1" ]; then
     FIRMWARE_OUT="$BUILD/firmware"
 else
     # HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
-    printf '%s\n' "[1/3] Incrementing project version and synchronising its manifest..."
+    printf '%s\n' "[1/3] Reading the project version (compiling never changes it; raise it with bump.py first)..."
     # HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
     HYDRA_UMC_VERSION_BEFORE="$(python3 -c 'import json, pathlib, sys; print(json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["version"])' "$ROOT/urtc.project.json")"
 fi
@@ -122,28 +122,10 @@ python3 -m unittest discover -s tests -p "test_*.py"
 echo "  OK   build tooling tests passed"
 
 echo ""
-echo "=== 3. Version bump (odometer, see bump_version.py) ==="
-# bump_version.py prints exactly "MAJOR.MINOR.PATCH" to stdout on success -
-# captured directly instead of re-parsing the header back out.
-if [ "$URTC_CI_MODE" = "1" ]; then
-    VERSION="$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_MAJOR[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$').$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_MINOR[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$').$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_PATCH[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$')"
-else
-    mkdir -p "$VERSION_BACKUP/src"
-    for f in $VERSION_FILES; do
-        cp -f "$ROOT/$f" "$VERSION_BACKUP/$f"
-    done
-    VERSION_BUMPED=1
-    VERSION="$(python3 bump_version.py src/firmware_common.h FIRMWARE_VERSION)"
-    python3 "$ROOT/bump_manifest_version.py" --sync
-    # HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_AFTER
-    HYDRA_UMC_VERSION_AFTER="$(python3 -c 'import json, pathlib, sys; print(json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["version"])' "$ROOT/urtc.project.json")"
-    printf '\n*******************************************************************************\n'
-    printf '%s\n' '* VERSION INCREMENT COMPLETED'
-    printf '%s\n' "* v${HYDRA_UMC_VERSION_BEFORE:-unknown} -> v${HYDRA_UMC_VERSION_AFTER:-unknown}"
-    printf '%s\n' '* Project manifest synchronized with the firmware version.'
-    printf '%s\n' '*******************************************************************************'
-    printf '\n'
-fi
+echo "=== 3. Firmware version (read from the header; bump.py raises it, building never does) ==="
+# Compiling never changes the version: it is read from the header. Raise it first
+# with "python3 bump.py".
+VERSION="$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_MAJOR[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$').$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_MINOR[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$').$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_PATCH[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$')"
 echo "  Firmware version: $VERSION"
 
 echo ""

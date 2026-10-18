@@ -52,10 +52,12 @@ class BuildScriptTests(unittest.TestCase):
             text = read(script)
             self.assertRegex(text, r"src[/\\]\*\.c", f"{script} must compile every src/*.c for the target")
 
-    def test_the_bat_honours_the_ci_switch_and_restores_the_version(self):
-        text = read("build_firmware.bat")
-        self.assertIn('"%URTC_CI%"=="1" goto :version_from_header', text)
-        self.assertIn("version_backup", text)
+    def test_the_scripts_only_read_the_version(self):
+        for script in ("build_firmware.sh", "build_firmware.bat"):
+            text = read(script)
+            self.assertNotIn("bump_manifest_version", text, script)
+            self.assertNotRegex(text, r"(?m)^[^#\n]*\bpython3? bump_version\.py", script)
+            self.assertIn("FIRMWARE_VERSION_PATCH", text, script)
 
 
 class PublishedNumbersTests(unittest.TestCase):

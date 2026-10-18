@@ -7,20 +7,20 @@ REM Purpose   : Incremental firmware build and versioned artifact packaging work
 REM Author    : JuanenRac (Electro Hobby 3D)
 REM Email     : electrohobby3d@gmail.com
 REM Copyright : (C) 2026 JuanenRac
-REM License   : GPL-3.0 - see LICENSE
+REM License   : GPL-3.0-or-later - see LICENSE
 REM *****************************************************************************
 REM HYDRA_UMC_SCRIPT_STANDARD_HEADER_END
 REM HYDRA_UMC_SCRIPT_STANDARD_BANNER_BEGIN
 echo.
 echo *****************************************************************************
 echo * URTC-VISION-TOOL - build_firmware.bat
-echo * Mode      : INCREMENTAL BUILD
+echo * Mode      : BUILD (no version change)
 echo * Author    : JuanenRac (Electro Hobby 3D)
 echo * Email     : electrohobby3d@gmail.com
 echo * Copyright : (C) 2026 JuanenRac
-echo * License   : GPL-3.0 - see LICENSE
+echo * License   : GPL-3.0-or-later - see LICENSE
 echo * ------------------------------------------------------------------------- *
-echo * 1. Increment the project version and synchronise its manifest.
+echo * 1. Read the project version (compiling never changes it; run bump.py to raise it).
 echo * 2. Run this project's declared build, verification and packaging commands.
 echo * 3. Report the result and keep an interactive terminal open.
 echo *****************************************************************************
@@ -49,7 +49,7 @@ cd /d "%~dp0"
 set "VERSION_BUMPED=0"
 if "%URTC_CI%"=="1" goto :banner_ci
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
-echo [1/3] Incrementing project version and synchronising its manifest...
+echo [1/3] Reading the project version (compiling never changes it; raise it with bump.py first)...
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
 for /f "usebackq delims=" %%V in (`python -c "import json; print(json.load(open(r'%~dp0urtc.project.json', encoding='utf-8'))['version'])"`) do set "HYDRA_UMC_VERSION_BEFORE=%%V"
 goto :banner_done
@@ -86,40 +86,13 @@ python -m unittest discover -s tests -p "test_*.py"
 if errorlevel 1 goto :error
 echo.
 
-echo === 3. Version bump (odometer, see bump_version.py) ===
-if "%URTC_CI%"=="1" goto :version_from_header
-rem The files a version bump rewrites are copied aside first and put back if anything fails afterwards.
-if not exist build\version_backup\src mkdir build\version_backup\src
-copy /y src\firmware_common.h build\version_backup\src\firmware_common.h >nul
-copy /y urtc.project.json build\version_backup\urtc.project.json >nul
-copy /y CHANGELOG.md build\version_backup\CHANGELOG.md >nul
-set "VERSION_BUMPED=1"
-set "VERSION="
-for /f "delims=" %%V in ('python bump_version.py src\firmware_common.h FIRMWARE_VERSION') do set VERSION=%%V
-if "%VERSION%"=="" goto :error
-python "%~dp0bump_manifest_version.py" --sync
-if errorlevel 1 goto :error
-REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_AFTER
-for /f "usebackq delims=" %%V in (`python -c "import json; print(json.load(open(r'%~dp0urtc.project.json', encoding='utf-8'))['version'])"`) do set "HYDRA_UMC_VERSION_AFTER=%%V"
-if not defined HYDRA_UMC_VERSION_BEFORE set "HYDRA_UMC_VERSION_BEFORE=unknown"
-if not defined HYDRA_UMC_VERSION_AFTER set "HYDRA_UMC_VERSION_AFTER=unknown"
-echo.
-echo *****************************************************************************
-echo * VERSION INCREMENT COMPLETED
-echo * v%HYDRA_UMC_VERSION_BEFORE% ^> v%HYDRA_UMC_VERSION_AFTER%
-echo * Project manifest synchronized with the firmware version.
-echo *****************************************************************************
-echo.
-goto :version_done
-
-:version_from_header
-rem CI mode: the version is read from the header and nothing is rewritten.
+echo === 3. Firmware version (read from the header; bump.py raises it, building never does) ===
+rem Compiling never changes the version: it is read from the header (raise it first with bump.py).
 for /f "tokens=3" %%A in ('findstr /b /c:"#define FIRMWARE_VERSION_MAJOR" src\firmware_common.h') do set "V_MAJOR=%%A"
 for /f "tokens=3" %%A in ('findstr /b /c:"#define FIRMWARE_VERSION_MINOR" src\firmware_common.h') do set "V_MINOR=%%A"
 for /f "tokens=3" %%A in ('findstr /b /c:"#define FIRMWARE_VERSION_PATCH" src\firmware_common.h') do set "V_PATCH=%%A"
 set "VERSION=%V_MAJOR%.%V_MINOR%.%V_PATCH%"
 
-:version_done
 echo   Firmware version: %VERSION%
 echo.
 

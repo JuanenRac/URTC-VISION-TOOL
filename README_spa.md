@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Versión | `0.1.0` |
+| Versión | `0.1.1` |
 | Madurez | Funcional |
 | Tecnología | C / STM32 / Python vision companion |
 | Destino | Una placa con microcontrolador (el firmware); se compila en un PC |
@@ -111,6 +111,7 @@ URTC-VISION-TOOL/
 │   ├── build_test.py               # Comprobación de build/compilación sin subir versión
 │   ├── publish_release_assets.py   # Lista los assets de la release y imprime el comando gh
 │   └── ci_validate.py              # Validación de manifest/CHANGELOG/docs usada por la CI
+├── bump.py                         # Orden explícita de subir versión (compilar nunca la sube)
 ├── bump_version.py                 # Incremento de versión estilo cuentakilómetros (genérico, compartido con URTC / URTC-SMART-RACK)
 ├── bump_manifest_version.py        # Sincroniza la versión de urtc.project.json con la nativa (--sync)
 ├── build_firmware.sh / .bat        # Build real: pruebas de host + incrementa versión + compila + enlaza + publica en firmware/
@@ -294,4 +295,4 @@ Este proyecto es parte del ecosistema de robótica HYDRA-UMC del mismo autor (Ju
 📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
 
 ## 📜 LICENCIA
-GPL-3.0 - Ver LICENSE para más detalles.
+GPL-3.0-or-later - Ver LICENSE para más detalles.

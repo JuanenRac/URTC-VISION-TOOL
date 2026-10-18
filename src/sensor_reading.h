@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Sensor reading validation: sensor_reading.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // Turns a real, CRC-valid sensor_frame_t (see sensor_frame.h) into a real,
 // range-checked reading - separate from the wire-framing layer, since a

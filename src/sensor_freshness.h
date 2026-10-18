@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Frame freshness: sensor_freshness.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // A frame carries a sequence number and a sensor-side timestamp. Without a
 // check on them, a frame repeated verbatim, an old frame that arrives late, or

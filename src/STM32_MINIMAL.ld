@@ -1,7 +1,7 @@
 /* =============================================================================
  * URTC-VISION-TOOL Firmware - Minimal linker script: STM32_MINIMAL.ld
  * Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
- * GPL-3.0 - see LICENSE
+ * GPL-3.0-or-later - see LICENSE
  * =============================================================================
  * PLACEHOLDER memory map - there is no real PCB/schematic for
  * URTC-VISION-TOOL yet (see hardware/ and firmware_common.h's own header

@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Host-side sensor/link scenarios
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // The review's own "añadir capa simulada de sensor que reproduzca
 // desconexion, frame truncado y medidas fuera de rango sin requerir

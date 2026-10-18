@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Real receive-path decision: vision_sensor_link.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // The real dispatch chaining sensor-frame / sensor id / reading validation /
 // freshness / rate limiting / diagnostics together, as a src/ module that the

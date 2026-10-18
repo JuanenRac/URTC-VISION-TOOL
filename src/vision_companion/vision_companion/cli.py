@@ -2,7 +2,7 @@
 # =============================================================================
 # URTC-VISION-TOOL - vision_companion command line: cli.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 # Host-side (CM5 / dev machine, NOT the STM32 - see ../../src/main.c's own
 # header comment) companion for URTC-VISION-TOOL's dual-modal thermal+RGB tool

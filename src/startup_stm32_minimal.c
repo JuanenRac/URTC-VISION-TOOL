@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Minimal Cortex-M4F startup: startup_stm32_minimal.c
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // Hand-written vector table + reset entry, standing in for ST's own
 // CMSIS/HAL startup code until a real PCB pins down the exact STM32 part

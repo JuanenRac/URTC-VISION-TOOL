@@ -2,7 +2,7 @@
 # =============================================================================
 # URTC-VISION-TOOL - bump_version.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 # Identical, generic script to sibling repo URTC's own bump_version.py
 # (copied rather than reinvented - it already takes the header path and

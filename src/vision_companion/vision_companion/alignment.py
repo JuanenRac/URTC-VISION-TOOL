@@ -2,7 +2,7 @@
 # =============================================================================
 # URTC-VISION-TOOL - vision_companion alignment/ROI module: alignment.py
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-# GPL-3.0 - see LICENSE
+# GPL-3.0-or-later - see LICENSE
 # =============================================================================
 # Real, hardware-independent logic for the README's "Eye-in-Hand Alignment"
 # feature: mapping a region of interest between the RGB frame's resolution

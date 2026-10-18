@@ -1,7 +1,7 @@
 // =============================================================================
 // URTC-VISION-TOOL Firmware - Sensor frame protocol: sensor_frame.h
 // Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
-// GPL-3.0 - see LICENSE
+// GPL-3.0-or-later - see LICENSE
 // =============================================================================
 // Real wire framing for the sensor->MCU link (MLX9064x thermal camera /
 // RGB trigger, once the PCB wiring exists - see main.c's own note). This
