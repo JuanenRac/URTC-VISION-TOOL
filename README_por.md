@@ -19,6 +19,16 @@
 
 ---
 
+## 📋 Num relance
+
+| | |
+|---|---|
+| Versão | `0.0.8` |
+| Maturidade | Estabelecido |
+| Tecnologia | C / STM32 / Python vision companion |
+| Destino | Uma placa com microcontrolador (o firmware); compila-se num PC |
+| Em hardware real | Ainda não: não há registo de execução em hardware real para esta versão |
+
 ## 1. 🛠️ VISÃO TÉCNICA GERAL
 
 **URTC-VISION-TOOL** é uma cabeça de ferramenta robótica especializada que funde a perceção visual e térmica num único efetuador compatível com URTC. Foi concebida para QA avançada, inspeção térmica de PCBs e alinhamento Pick-and-Place de alta precisão.

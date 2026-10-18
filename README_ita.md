@@ -19,6 +19,16 @@
 
 ---
 
+## 📋 In breve
+
+| | |
+|---|---|
+| Versione | `0.0.8` |
+| Maturità | Consolidato |
+| Tecnologia | C / STM32 / Python vision companion |
+| Destinazione | Una scheda con microcontrollore (il firmware); compilato su un PC |
+| Su hardware reale | Non ancora: per questa versione non risulta alcuna esecuzione su hardware reale |
+
 ## 1. 🛠️ PANORAMICA TECNICA
 
 **URTC-VISION-TOOL** è una testina robotica specializzata che fonde percezione visiva e termica in un unico effettore compatibile URTC. Progettata per QA avanzato, ispezione termica di PCB e allineamento Pick-and-Place ad alta precisione.

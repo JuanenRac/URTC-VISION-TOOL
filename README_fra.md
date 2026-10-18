@@ -19,6 +19,16 @@
 
 ---
 
+## 📋 En un coup d'œil
+
+| | |
+|---|---|
+| Version | `0.0.8` |
+| Maturité | Établi |
+| Technologie | C / STM32 / Python vision companion |
+| Cible | Une carte à microcontrôleur (le firmware) ; compilé sur un PC |
+| Sur matériel réel | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
+
 ## 1. 🛠️ APERÇU TECHNIQUE
 
 **URTC-VISION-TOOL** est une tête d'outil robotique spécialisée qui fusionne la perception visuelle et thermique en un seul effecteur compatible URTC. Conçue pour le contrôle qualité avancé, l'inspection thermique de PCB et l'alignement Pick-and-Place haute précision.
