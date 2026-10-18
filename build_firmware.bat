@@ -40,6 +40,10 @@ REM This builds the FIRMWARE side only. The vision-side companion (Python,
 REM runs on a host/CM5, not on the STM32) lives in src\vision_companion\ -
 REM see that directory's own README for its build/run instructions.
 setlocal enabledelayedexpansion
+rem Keep the window open for people, never in automation (CI / HYDRA_UMC_CI).
+set "KEEP_OPEN=pause"
+if defined CI set "KEEP_OPEN=ver >nul"
+if "%HYDRA_UMC_CI%"=="1" set "KEEP_OPEN=ver >nul"
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
 echo [1/3] Incrementing project version and synchronising its manifest...
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
@@ -145,5 +149,5 @@ REM HYDRA_UMC_SCRIPT_STANDARD_SAFE_PAUSE
 if not defined HYDRA_UMC_SCRIPT_RESULT set "HYDRA_UMC_SCRIPT_RESULT=%ERRORLEVEL%"
 echo.
 echo [INFO] Script completed. Exit code: %HYDRA_UMC_SCRIPT_RESULT%.
-pause
+%KEEP_OPEN%
 exit /b %HYDRA_UMC_SCRIPT_RESULT%
