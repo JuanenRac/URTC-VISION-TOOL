@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C で、65 件の `TEST_ASSERT` チェック（`tests/test_*.c`、ホストの C コンパイラでコンパイル・実行）がすべて通過しており、このリポジトリの CI が実際に実行しています：`.github/workflows/ci.yml` のファームウェアステップが `build_firmware.sh` を呼び出し、そのステップ 2 が STM32 ビルドの前に必ず `tests/` をコンパイル・実行します。ホスト側の `vision_companion` パッケージ（`alignment.py`、`main.py`）も本物で、27 件の pytest ケースがすべて通過しており、CI はこのスイートも実行します（専用ステップが `src/vision_companion/requirements.txt` をインストールし、そこで `pytest tests/` を実行）。したがって、どちらの側の退行もビルドを失敗させます。README の冒頭にある通り、このボードの PCB／回路図はまだ存在しないため、ここにあるものは本物の MLX9064x センサーや RGB カメラを読んだことも、本物の CAN トランシーバーを駆動したこともありません——`main.c`/`startup_stm32_minimal.c` は、仮のリンカースクリプトで Cortex-M4F のクロスコンパイルとリンクが成功することを示すだけです。何がリリースされたかは `CHANGELOG.md` を参照してください。
+**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C で、154 件の `TEST_ASSERT` チェック（`tests/test_*.c`、ホストの C コンパイラでコンパイル・実行）がすべて通過しており、このリポジトリの CI が実際に実行しています：`.github/workflows/ci.yml` のファームウェアステップが `build_firmware.sh` を呼び出し、そのステップ 2 が STM32 ビルドの前に必ず `tests/` をコンパイル・実行します。ホスト側の `vision_companion` パッケージ（`alignment.py`、`cli.py`）も本物で、50 件の pytest ケースがすべて通過しており、CI はこのスイートも実行します（専用ステップが `src/vision_companion/requirements.txt` をインストールし、そこで `pytest tests/` を実行）。したがって、どちらの側の退行もビルドを失敗させます。README の冒頭にある通り、このボードの PCB／回路図はまだ存在しないため、ここにあるものは本物の MLX9064x センサーや RGB カメラを読んだことも、本物の CAN トランシーバーを駆動したこともありません——`main.c`/`startup_stm32_minimal.c` は、仮のリンカースクリプトで Cortex-M4F のクロスコンパイルとリンクが成功することを示すだけです。何がリリースされたかは `CHANGELOG.md` を参照してください。
 
 ---
 
@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| バージョン | `0.0.9` |
+| バージョン | `0.1.0` |
 | 成熟度 | 機能する |
 | 技術 | C / STM32 / Python vision companion |
 | 対象 | マイコン基板（ファームウェア）。ビルドは PC で行います |
@@ -51,10 +51,10 @@ RGB グローバルシャッターカメラと MLX9064x ファミリーの熱セ
 * 🔬 **デュアルモーダル知覚** — 同期された熱画像と RGB 画像のキャプチャ。*（両フレームが供給する処理パイプライン自体は本物です——下記参照。実際の同期キャプチャには PCB とセンサーが必要です。）*
 * 🌡️ **高精度熱画像** — 統合された MLX90640/41/42 センサーサポート。*（疑似カラーレンダリングと領域ごとの統計抽出は本物です——下記参照。実際の MLX9064x を I2C 経由で読み取るには PCB が必要です。）*
 * 🎯 **Eye-in-Hand アライメント** — サブミリメートル単位の PnP と AOI（自動光学検査）。*（RGB->熱画像 ROI 座標マッピングと温度統計抽出は本物でテスト済みです——下記の `vision_companion/alignment.py` 参照。サブミリメートル精度には実際に校正されたカメラが必要です。）*
-* 📡 **統一 CAN API** — URTC の 25 種類の工具カタログにシームレスに統合。*（センサー側のワイヤープロトコル自体——フレーミング、CRC、範囲検証——は本物です。下記参照。それを実際に伝送する実際の CAN トランシーバーはまだ必要です。）*
-* 🔒 **センサープロトコルの範囲チェック** — バージョン管理されたフレーミング、CRC8 チェックサム、測定範囲検証、レート制限、そして制御判断とは独立した専用のエラー/レイテンシ/バスリセット診断カウンター。*（純粋な C として実装され、PC 上でのみテスト済みです。ボードや実際のセンサーで動作したことはなく、安全機能でもありません）*
+* 📡 **URTC との統合（計画中）** — このヘッドにはまだ URTC の 25 種類の工具カタログ内の工具 ID も CAN 識別子もありません。URTC にはすでに独自の CAN メッセージを持つ熱画像検査ツール（ID 22、MLX90640）があり、このヘッドがどちらの方式をとるかは未決定です。*（センサー側のワイヤープロトコル自体——フレーミング、CRC、範囲検証——は本物です。下記参照。それを実際に伝送する実際の CAN トランシーバーはまだ必要です。）*
+* 🔒 **センサープロトコルの範囲チェック** — バージョン管理されたフレーミング、CRC8 チェックサム、測定範囲検証、レート制限、フレームの鮮度チェック（シーケンスとタイムスタンプ）、そして制御判断とは独立した専用のエラー/レイテンシ/バスリセット診断カウンター。*（純粋な C として実装され、PC 上でのみテスト済みです。ボードや実際のセンサーで動作したことはなく、安全機能でもありません）*
 * ✅ **Cortex-M4F ファームウェアツールチェーン** — 兄弟リポジトリ URTC と URTC-SMART-RACK と同じツールチェーンを用いて、`arm-none-eabi-gcc` でクロスコンパイルおよびリンクされる実際のベアメタルイメージ。*（実装済み——下記の「ビルド」を参照）*
-* ✅ **`vision_companion` 処理パイプライン** — 実際に動作する Python パッケージ：合成された熱画像+RGB フレーム生成、疑似カラー熱画像レンダリング、RGB->熱画像 ROI アライメント + 温度統計抽出、統計レポート、27 件の実際の pytest ケースでカバー、ハードウェア接続なしでエンドツーエンドに実行可能。*（実装済み——下記の「VISION COMPANION」を参照）*
+* ✅ **`vision_companion` 処理パイプライン** — 実際に動作する Python パッケージ：合成された熱画像+RGB フレーム生成、疑似カラー熱画像レンダリング、RGB->熱画像 ROI アライメント + 温度統計抽出、統計レポート、50 件の実際の pytest ケースでカバー、ハードウェア接続なしでエンドツーエンドに実行可能。*（実装済み——下記の「VISION COMPANION」を参照）*
 
 ---
 
@@ -75,11 +75,11 @@ flowchart LR
 
 ## 3. 🧱 アーキテクチャと設計上の決定
 
-* **本プロジェクトが 2 つの独立したバージョン管理系統を持つ理由。** `src/firmware_common.h`（STM32 側のファームウェア）と `src/vision_companion/pyproject.toml`（独立したホスト側 Python パッケージ）は独立してバージョン管理されています——異なるハードウェア（MCU 対ホストの CM5/PC）上で動作し、異なるスケジュールで出荷されるためです。
-* **URTC 自体の子プロジェクトではない理由。** URTC-SMART-RACK 自身の README と同じ理由です——URTC の CAN バス/ファームウェアの慣例を共有する補完ツールであり、その統合階層の一部ではありません。
-* **そもそもホスト側のコンパニオンパッケージが必要な理由。** 熱画像/RGB のデュアルモーダルキャプチャには、STM32 自体で実行する場所のない実際の画像処理（numpy/Pillow）が必要です——このコンパニオンパッケージは、CAN 経由で基板と通信しながら、実際にその処理が行われる場所です。
+* **本プロジェクトが 2 つの独立したバージョン管理系統を持つ理由。** `src/firmware_common.h`（STM32 側のファームウェア）と `src/vision_companion/vision_companion/__init__.py`（独立したホスト側 Python パッケージ）は独立してバージョン管理されています——異なるハードウェア（MCU 対ホストの CM5/PC）上で動作し、異なるスケジュールで出荷されるためです。
+* **URTC 自体の子プロジェクトではない理由。** URTC-SMART-RACK 自身の README と同じ理由です——URTC のファームウェアの慣例を共有する補完ツールであり、その統合階層の一部ではありません。
+* **そもそもホスト側のコンパニオンパッケージが必要な理由。** 熱画像/RGB のデュアルモーダルキャプチャには、STM32 自体で実行する場所のない実際の画像処理（numpy/Pillow）が必要です——このコンパニオンパッケージは、実際にその処理が行われる場所です。まだ通信コードはなく、実際のフレームがどのように届くか（URTC の熱画像検査ツールのような CAN か、別のリンクか）は、上記の未決定の統合に含まれます。
 * **`alignment.py` が実際のホモグラフィではなく共有視野を前提とする理由。** 両方のセンサーは同じ剛体の工具ヘッド上にあるため、RGB 空間と熱画像空間のピクセル座標間で軸ごとの線形再スケーリングを行うのは妥当な v0 近似です——実際のピクセル単位のキャリブレーション（チェッカーボード、レンズ歪み）には、まだ存在しない実際のカメラでの校正が必要です。
-* **エコシステムの他の部分との関係。** URTC 自身の CAN バス/工具エコシステムを共有しており、URTC-SMART-RACK も担っているのと同じ視覚認識の役割を果たす HYDRA-UMC-DETECTION-HEF と自然に組み合わされます。
+* **エコシステムの他の部分との関係。** URTC 自身の工具エコシステムの一員であり（CAN 統合は未決定、上記参照）、URTC-SMART-RACK も担っているのと同じ視覚認識の役割を果たす HYDRA-UMC-DETECTION-HEF と自然に組み合わされます。
 * **センサーフレームプロトコルが独自のタイムスタンプフィールドを持つ理由。** 実際のセンサー側ミリ秒単位のタイムスタンプにより、呼び出し元は、MCU がいつそのフレームの解析にたどり着くかとは無関係に、読み取りが実際に*いつ*行われたかを知ることができます——単に「たった今届いた」という前提では失われてしまう、履歴管理/診断における実際の価値です。
 * **診断カウンター（`sensor_diagnostics.c`）が自ら受理/拒否の判断を一切行わない理由。** フレームが信頼できるかどうかを決定するのは `sensor_frame.c`（フレーミング）、`sensor_reading.c`（範囲）、`rate_limiter.c`（レート制限）のみであり——診断はそれらが決定した結果を記録するだけです。この境界を厳格に保つことで、診断側のバグが誤って不正なデータを通過させてしまうことは決してなくなります。これは診断ノート自身が言う「separar diagnostico de salida de control」そのものです。
 
@@ -94,6 +94,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_frame.h / .c         # 本物：バージョン管理されたフレーム形式 + CRC8 パース/エンコード
 │   ├── sensor_reading.h / .c       # 本物：熱画像読み取りのデコード + 範囲検証
 │   ├── rate_limiter.h / .c         # 本物：最小間隔によるフレームのスロットリング
+│   ├── sensor_freshness.h / .c     # 本物：シーケンス/タイムスタンプによる鮮度チェック（重複・固着センサーの検出）
 │   ├── sensor_diagnostics.h / .c   # 本物：エラー/レイテンシ/バスリセットのカウンター、制御からは分離
 │   ├── vision_sensor_link.h / .c   # 本物：sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics を結びつけるフレームディスパッチの判断
 │   ├── main.c                      # 最小限のエントリポイント（生存証明のハートビートループ）
@@ -102,13 +103,15 @@ URTC-VISION-TOOL/
 │   └── vision_companion/           # ホスト側（CM5/開発機）の Python 視覚パイプライン
 │       ├── pyproject.toml          # パッケージング + `vision-companion` コンソールスクリプト
 │       ├── requirements.txt        # numpy + pillow
-│       ├── main.py                 # 実際に動作する CLI（バージョン/自己診断/analyze-roi）
-│       ├── alignment.py            # 本物：RGB<->熱画像 ROI マッピング + 温度統計抽出
-│       ├── tests/                  # 27 件の実際の pytest ケース（main.py + alignment.py）
+│       ├── vision_companion/
+│       │   ├── __init__.py         # コンパニオンのバージョン（1 か所だけで定義）
+│       │   ├── cli.py              # 実際に動作する CLI（バージョン/自己診断/analyze-roi）
+│       │   └── alignment.py        # 本物：RGB<->熱画像 ROI マッピング + 温度統計抽出
+│       ├── tests/                  # 50 件の実際の pytest ケース（cli.py + alignment.py）
 │       └── README.md               # コンパニオン専用の使用方法ドキュメント
-├── tests/                          # 実際のホストネイティブなファームウェアテストハーネス（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、センサーシナリオ）
-├── docs/                           # ドキュメントとキャリブレーションリファレンス
-├── hardware/                       # ハードウェア設計ファイル（PCB、筐体）—— 現時点では空、回路図なし
+├── tests/                          # 実際のホストネイティブなファームウェアテストハーネス（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、センサーシナリオ、鮮度、堅牢性）
+├── docs/                           # コマンドラインリファレンス（CLI_REFERENCE.md）
+├── hardware/                       # ハードウェアに関するメモ（README.md）—— 設計ファイルはまだなし（回路図も PCB もなし）
 ├── firmware/                       # ビルド出力（.bin/.elf/.hex）、git の無視対象——GitHub リリースのアセットとしてのみ公開
 ├── build/                          # 中間ビルドオブジェクト（gitignore 対象）
 ├── images/                         # メディアと図表
@@ -139,15 +142,22 @@ chmod +x build_firmware.sh   # 初回のみ
 build_firmware.bat
 ```
 
-このビルドは `src/firmware_common.h` のバージョンを増加させ（オドメーター
-規則）、`main.c` と `startup_stm32_minimal.c` を Cortex-M4F 向けにコン
-パイルし、プレースホルダーである `STM32_MINIMAL.ld` のメモリマップと
-リンクし、バージョン管理された `.elf`/`.bin`/`.hex` ファイルを
-`firmware/` に公開します。実際のハードウェアにフラッシュできるものは
+このビルドはまず *ホスト自身* の C コンパイラ（`arm-none-eabi-gcc` では
+ありません——これらは純粋なロジックテストであり、MCU レジスタには一切
+触れません）で `tests/` をコンパイルして実行し、アサーションが一つでも
+失敗すればビルド全体を失敗させます。それが終わって初めて `src/firmware_common.h`
+のバージョンを増加させ（オドメーター規則、エコシステムの他の部分と同じ）、
+`main.c` と `startup_stm32_minimal.c` を Cortex-M4F 向けにコンパイルし、
+プレースホルダーである `STM32_MINIMAL.ld` のメモリマップとリンクし、
+バージョン管理された `.elf`/`.bin`/`.hex` ファイルを `firmware/` に公開します。
+
+`src/` のすべてのモジュールも Cortex-M4F 向けにコンパイルされ、確認のためにすべてをまとめてリンクします（ターゲットには C ライブラリがありません）。現時点でイメージに含まれるのは `main.c` と起動ファイルだけです。バージョンを上げた後にビルドが失敗した場合、バージョン、マニフェスト、変更履歴は元の状態に戻されます。`URTC_CI=1` では追跡対象のファイルは一切変更されません。
+
+実際のハードウェアにフラッシュできるものは
 今のところ何もありません——対象の STM32 部品、ピン配置、MLX9064x の配線、
 RGB カメラインターフェースを確認できる PCB が存在しないためです。
 
-ファームウェアイメージ（`.bin`、`.hex`、`.elf`）は git で管理されません。リリースビルドは `firmware/URTC_VISION_TOOL_FIRMWARE_v<バージョン>.*` に書き出し（git の無視対象。CI モード、つまり `HYDRA_UMC_CI=1` では `build/firmware`）、各バージョンの GitHub リリースのアセットとしてのみ公開されます。`python tools/publish_release_assets.py` がファイルを検査し、不足している `.sha256` ファイルを書き出して、添付するファイルを含む正確な `gh release create` コマンドを表示します。
+ファームウェアイメージ（`.bin`、`.hex`、`.elf`）は git で管理されません。リリースビルドは `firmware/URTC_VISION_TOOL_FIRMWARE_v<バージョン>.*` に書き出し（git の無視対象。CI モード、つまり `URTC_CI=1` では `build/firmware`）、各バージョンの GitHub リリースのアセットとしてのみ公開されます。`python tools/publish_release_assets.py` がファイルを検査し、不足している `.sha256` ファイルを書き出して、添付するファイルを含む正確な `gh release create` コマンドを表示します。
 
 ## 5. 🐍 ビジョンコンパニオン（ホスト側 Python）
 
@@ -158,11 +168,11 @@ cd src/vision_companion
 python3 -m venv .venv
 # Linux/macOS：
 .venv/bin/pip install -r requirements.txt
-.venv/bin/python main.py selftest
+.venv/bin/python -m vision_companion selftest
 
 # Windows：
 .venv\Scripts\pip install -r requirements.txt
-.venv\Scripts\python main.py selftest
+.venv\Scripts\python -m vision_companion selftest
 ```
 
 `selftest` は、MLX9064x 形式に合わせた合成熱画像フレーム（32x24、はんだ
@@ -178,17 +188,17 @@ python3 -m venv .venv
 実際に動作します：
 
 ```bash
-.venv/bin/python main.py analyze-roi 280 210 360 270
+.venv/bin/python -m vision_companion analyze-roi 280 210 360 270
 ```
 
 実際の出力例：
 
 ```text
 RGB ROI (280,210)-(360,270) in a 640x480 frame
-  -> thermal stats: min=75.67C max=78.97C mean=77.69C (16 thermal px)
+  -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-27 件の実際の pytest ケースが `main.py` と `alignment.py` の両方をカバー
+50 件の実際の pytest ケースが `cli.py` と `alignment.py` の両方をカバー
 します：
 
 ```bash

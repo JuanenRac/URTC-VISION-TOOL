@@ -43,28 +43,45 @@ printf '\n'
 #   chmod +x build_firmware.sh   (one-time)
 #   ./build_firmware.sh
 set -e
-HYDRA_UMC_CI_MODE="${HYDRA_UMC_CI:-0}"
-if [ "$HYDRA_UMC_CI_MODE" = "1" ]; then
-    echo "URTC-VISION-TOOL CI: version sources are read-only."
-else
-    # HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
-    printf '%s\n' "[1/3] Incrementing project version and synchronising its manifest..."
-    # HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
-    HYDRA_UMC_VERSION_BEFORE="$(python3 -c 'import json, pathlib, sys; print(json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["version"])' "$(dirname "$0")/urtc.project.json")"
-fi
-
+URTC_CI_MODE="${URTC_CI:-0}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Every path below is relative to the repository root, whatever the directory the script is started from.
+cd "$ROOT"
 BUILD="$ROOT/build"
 FIRMWARE_OUT="$ROOT/firmware"
-if [ "$HYDRA_UMC_CI_MODE" = "1" ]; then
+if [ "$URTC_CI_MODE" = "1" ]; then
+    echo "URTC-VISION-TOOL CI: version sources are read-only."
     # Release mode writes the images to firmware/ (git-ignored, published only
     # as assets of the GitHub release - see tools/publish_release_assets.py);
     # CI mode writes them under build/ and touches no tracked file.
     FIRMWARE_OUT="$BUILD/firmware"
+else
+    # HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
+    printf '%s\n' "[1/3] Incrementing project version and synchronising its manifest..."
+    # HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
+    HYDRA_UMC_VERSION_BEFORE="$(python3 -c 'import json, pathlib, sys; print(json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["version"])' "$ROOT/urtc.project.json")"
 fi
-if [ -t 0 ]; then
-    trap 'echo ""; read -r -p "Press Enter to close this window..." _' EXIT
-fi
+
+# The files a version bump rewrites. They are copied aside before the bump and
+# put back if anything fails afterwards, so a build that does not produce an
+# image never leaves a newer version, manifest or changelog behind.
+VERSION_FILES="src/firmware_common.h urtc.project.json CHANGELOG.md"
+VERSION_BACKUP="$BUILD/version_backup"
+VERSION_BUMPED=0
+on_exit() {
+    status=$?
+    if [ "$VERSION_BUMPED" = "1" ] && [ "$status" -ne 0 ]; then
+        for f in $VERSION_FILES; do
+            cp -f "$VERSION_BACKUP/$f" "$ROOT/$f"
+        done
+        echo "Build failed: version, manifest and changelog restored to their previous state."
+    fi
+    if [ -t 0 ]; then
+        echo ""
+        read -r -p "Press Enter to close this window..." _ || true
+    fi
+}
+trap on_exit EXIT
 
 echo ""
 echo "=== 1. Toolchain ==="
@@ -87,12 +104,17 @@ if ! command -v "$HOST_CC" >/dev/null 2>&1; then
     exit 1
 fi
 mkdir -p "$BUILD"
-"$HOST_CC" -std=c11 -Wall -Wextra -Isrc -Itests \
+# URTC_SANITIZE=1 (set by CI) builds the host tests with AddressSanitizer and UBSan.
+SANITIZE_FLAGS=""
+if [ "${URTC_SANITIZE:-0}" = "1" ]; then
+    SANITIZE_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=undefined"
+fi
+"$HOST_CC" -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests $SANITIZE_FLAGS \
     -o "$BUILD/host_tests" \
-    tests/test_main.c tests/test_sensor_frame.c tests/test_sensor_reading.c tests/test_rate_limiter.c tests/test_sensor_diagnostics.c tests/test_vision_sensor_scenarios.c tests/test_robustness.c \
-    src/sensor_frame.c src/sensor_reading.c src/rate_limiter.c src/sensor_diagnostics.c src/vision_sensor_link.c
+    tests/test_main.c tests/test_sensor_frame.c tests/test_sensor_reading.c tests/test_rate_limiter.c tests/test_sensor_diagnostics.c tests/test_vision_sensor_scenarios.c tests/test_robustness.c tests/test_sensor_freshness.c \
+    src/sensor_frame.c src/sensor_reading.c src/rate_limiter.c src/sensor_diagnostics.c src/vision_sensor_link.c src/sensor_freshness.c
 "$BUILD/host_tests"
-echo "  OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_diagnostics.c / vision_sensor_link.c pure-logic tests passed"
+echo "  OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_freshness.c / sensor_diagnostics.c / vision_sensor_link.c pure-logic tests passed"
 
 echo ""
 echo "=== 2b. Build tooling tests (version odometer boundaries) ==="
@@ -103,13 +125,18 @@ echo ""
 echo "=== 3. Version bump (odometer, see bump_version.py) ==="
 # bump_version.py prints exactly "MAJOR.MINOR.PATCH" to stdout on success -
 # captured directly instead of re-parsing the header back out.
-if [ "$HYDRA_UMC_CI_MODE" = "1" ]; then
+if [ "$URTC_CI_MODE" = "1" ]; then
     VERSION="$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_MAJOR[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$').$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_MINOR[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$').$(grep -oE 'define[[:space:]]+FIRMWARE_VERSION_PATCH[[:space:]]+[0-9]+' src/firmware_common.h | grep -oE '[0-9]+$')"
 else
+    mkdir -p "$VERSION_BACKUP/src"
+    for f in $VERSION_FILES; do
+        cp -f "$ROOT/$f" "$VERSION_BACKUP/$f"
+    done
+    VERSION_BUMPED=1
     VERSION="$(python3 bump_version.py src/firmware_common.h FIRMWARE_VERSION)"
-    python3 "$(dirname "$0")/bump_manifest_version.py" --sync
+    python3 "$ROOT/bump_manifest_version.py" --sync
     # HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_AFTER
-    HYDRA_UMC_VERSION_AFTER="$(python3 -c 'import json, pathlib, sys; print(json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["version"])' "$(dirname "$0")/urtc.project.json")"
+    HYDRA_UMC_VERSION_AFTER="$(python3 -c 'import json, pathlib, sys; print(json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["version"])' "$ROOT/urtc.project.json")"
     printf '\n*******************************************************************************\n'
     printf '%s\n' '* VERSION INCREMENT COMPLETED'
     printf '%s\n' "* v${HYDRA_UMC_VERSION_BEFORE:-unknown} -> v${HYDRA_UMC_VERSION_AFTER:-unknown}"
@@ -123,13 +150,25 @@ echo ""
 echo "=== 4. Compile + link ==="
 mkdir -p "$BUILD" "$FIRMWARE_OUT"
 
-CFLAGS="-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -ffreestanding -fno-builtin -Wall -Wextra -O2 -g -Isrc"
+CFLAGS="-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -ffreestanding -fno-builtin -ffunction-sections -fdata-sections -Wall -Wextra -Wconversion -O2 -g -Isrc"
 LDFLAGS="-T src/STM32_MINIMAL.ld -nostdlib -Wl,--gc-sections -Wl,-Map=$BUILD/urtc-vision-tool.map"
 
-arm-none-eabi-gcc $CFLAGS -c src/startup_stm32_minimal.c -o "$BUILD/startup_stm32_minimal.o"
-arm-none-eabi-gcc $CFLAGS -c src/main.c -o "$BUILD/main.o"
-arm-none-eabi-gcc $CFLAGS $LDFLAGS "$BUILD/startup_stm32_minimal.o" "$BUILD/main.o" -o "$BUILD/urtc-vision-tool.elf"
+# Every module is compiled for the Cortex-M4F target, not only the two that the
+# image links today: a warning or a missing C-library function in a logic module
+# shows up now and not on the day the board exists.
+mkdir -p "$BUILD/arm"
+for source in src/*.c; do
+    arm-none-eabi-gcc $CFLAGS -c "$source" -o "$BUILD/arm/$(basename "$source" .c).o"
+done
+echo "  OK   every src/*.c compiled for Cortex-M4F"
+
+arm-none-eabi-gcc $CFLAGS $LDFLAGS "$BUILD/arm/startup_stm32_minimal.o" "$BUILD/arm/main.o" -o "$BUILD/urtc-vision-tool.elf"
 echo "  OK   Linked $BUILD/urtc-vision-tool.elf"
+
+# All modules must also resolve against each other without a C library; this
+# link is only a check and produces no image.
+arm-none-eabi-gcc $CFLAGS -T src/STM32_MINIMAL.ld -nostdlib -Wl,--gc-sections "$BUILD"/arm/*.o -o "$BUILD/all-modules-check.elf"
+echo "  OK   all modules link together without a C library"
 
 arm-none-eabi-objcopy -O binary "$BUILD/urtc-vision-tool.elf" "$BUILD/urtc-vision-tool.bin"
 arm-none-eabi-objcopy -O ihex "$BUILD/urtc-vision-tool.elf" "$BUILD/urtc-vision-tool.hex"

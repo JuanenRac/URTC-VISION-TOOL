@@ -15,11 +15,15 @@
 // own README/main.py.
 #include "firmware_common.h"
 
-// Read by a debugger/reset inspection without needing a CAN link (this
-// board has no confirmed CAN wiring yet - see firmware_common.h) - kept
-// `volatile` so the compiler can never optimize it away even though
-// nothing in this minimal image reads it back yet.
-volatile uint32_t g_firmware_version_code = FIRMWARE_VERSION_CODE;
+// Read by a debugger/flasher/bootloader straight from the image, without a CAN
+// link (this board has no confirmed CAN wiring yet - see firmware_common.h).
+// Nothing in the program reads it, so `volatile` alone would not keep it: the
+// linker (--gc-sections) discards unreferenced sections. `used` keeps the
+// symbol through the compiler and the dedicated `.fw_version` section is KEPT
+// by the linker script, right after the vector table, so the value sits at a
+// fixed place in the image.
+__attribute__((used, section(".fw_version")))
+const uint32_t g_firmware_version_code = FIRMWARE_VERSION_CODE;
 
 // Free-running counter incremented in the main loop below - the simplest
 // possible proof-of-life a debugger or future watchdog can observe

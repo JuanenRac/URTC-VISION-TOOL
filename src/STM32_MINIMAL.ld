@@ -33,6 +33,15 @@ SECTIONS
         . = ALIGN(4);
     } > FLASH
 
+    /* The firmware version word (main.c, g_firmware_version_code): kept by the
+     * linker and placed right after the vector table, at a fixed place. */
+    .fw_version :
+    {
+        . = ALIGN(4);
+        KEEP(*(.fw_version))
+        . = ALIGN(4);
+    } > FLASH
+
     .text :
     {
         . = ALIGN(4);
@@ -66,6 +75,16 @@ SECTIONS
         *(COMMON)
         . = ALIGN(4);
         _ebss = .;
+    } > RAM
+
+    /* RAM that start-up neither initializes nor clears: the record of the last
+     * hard fault (startup_stm32_minimal.c) survives a reset here. */
+    .noinit (NOLOAD) :
+    {
+        . = ALIGN(4);
+        *(.noinit)
+        *(.noinit*)
+        . = ALIGN(4);
     } > RAM
 
     /DISCARD/ :

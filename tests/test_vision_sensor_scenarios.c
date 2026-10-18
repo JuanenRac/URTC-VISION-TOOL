@@ -27,6 +27,7 @@
 #include "../src/sensor_reading.h"
 #include "../src/rate_limiter.h"
 #include "../src/sensor_diagnostics.h"
+#include "../src/sensor_freshness.h"
 #include "../src/vision_sensor_link.h"
 
 void run_vision_sensor_scenario_tests(int *failures)
@@ -37,13 +38,15 @@ void run_vision_sensor_scenario_tests(int *failures)
         rate_limiter_init(&rl, 50);
         sensor_diagnostics_t diag;
         sensor_diagnostics_init(&diag);
+        sensor_freshness_t fresh;
+        sensor_freshness_init(&fresh);
 
         uint8_t payload[2] = {0xD0, 0x07}; // 20.00C
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 1000, payload, 2, buf);
 
         sensor_thermal_reading_t reading;
-        bool accepted = vision_sensor_link_process_frame(&rl, &diag, buf, len, 1000, &reading);
+        bool accepted = vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, len, 1000, &reading);
         TEST_ASSERT(accepted == true, "a real, valid, in-range frame is accepted");
         TEST_ASSERT(reading.temp_centidegrees_c == 2000, "the real accepted reading carries the real requested temperature");
         TEST_ASSERT(diag.frame_errors == 0, "no frame errors are recorded for a real valid frame");
@@ -56,13 +59,15 @@ void run_vision_sensor_scenario_tests(int *failures)
         rate_limiter_init(&rl, 50);
         sensor_diagnostics_t diag;
         sensor_diagnostics_init(&diag);
+        sensor_freshness_t fresh;
+        sensor_freshness_init(&fresh);
 
         uint8_t payload[2] = {0xD0, 0x07};
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 1000, payload, 2, buf);
 
         sensor_thermal_reading_t reading;
-        bool accepted = vision_sensor_link_process_frame(&rl, &diag, buf, (uint8_t)(len - 3), 1000, &reading);
+        bool accepted = vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, (uint8_t)(len - 3), 1000, &reading);
         TEST_ASSERT(accepted == false, "a real truncated frame never produces an accepted reading");
         TEST_ASSERT(diag.frame_errors == 1, "the real truncation is recorded as a frame error");
     }
@@ -73,6 +78,8 @@ void run_vision_sensor_scenario_tests(int *failures)
         rate_limiter_init(&rl, 50);
         sensor_diagnostics_t diag;
         sensor_diagnostics_init(&diag);
+        sensor_freshness_t fresh;
+        sensor_freshness_init(&fresh);
 
         uint8_t payload[2] = {0xD0, 0x07};
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
@@ -80,7 +87,7 @@ void run_vision_sensor_scenario_tests(int *failures)
         buf[len - 1] ^= 0xFFu; // real bit-level CRC corruption
 
         sensor_thermal_reading_t reading;
-        bool accepted = vision_sensor_link_process_frame(&rl, &diag, buf, len, 1000, &reading);
+        bool accepted = vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, len, 1000, &reading);
         TEST_ASSERT(accepted == false, "a real CRC-corrupted frame never produces an accepted reading");
         TEST_ASSERT(diag.frame_errors == 1, "the real corruption is recorded as a frame error");
     }
@@ -91,6 +98,8 @@ void run_vision_sensor_scenario_tests(int *failures)
         rate_limiter_init(&rl, 50);
         sensor_diagnostics_t diag;
         sensor_diagnostics_init(&diag);
+        sensor_freshness_t fresh;
+        sensor_freshness_init(&fresh);
 
         int16_t too_hot = SENSOR_READING_MAX_TEMP_CENTIDEGREES_C + 100;
         uint8_t payload[2] = {(uint8_t)((uint16_t)too_hot & 0xFF), (uint8_t)(((uint16_t)too_hot >> 8) & 0xFF)};
@@ -98,7 +107,7 @@ void run_vision_sensor_scenario_tests(int *failures)
         uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 1000, payload, 2, buf);
 
         sensor_thermal_reading_t reading;
-        bool accepted = vision_sensor_link_process_frame(&rl, &diag, buf, len, 1000, &reading);
+        bool accepted = vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, len, 1000, &reading);
         TEST_ASSERT(accepted == false, "a real, CRC-valid frame carrying an out-of-range temperature is refused - no output is ever activated on it");
         TEST_ASSERT(diag.frame_errors == 0, "the frame itself was real and well-formed - this is not counted as a framing error");
         TEST_ASSERT(diag.out_of_range_count == 1, "the real out-of-range reading is recorded distinctly from a framing error");
@@ -110,16 +119,20 @@ void run_vision_sensor_scenario_tests(int *failures)
         rate_limiter_init(&rl, 100);
         sensor_diagnostics_t diag;
         sensor_diagnostics_init(&diag);
+        sensor_freshness_t fresh;
+        sensor_freshness_init(&fresh);
 
         uint8_t payload[2] = {0xD0, 0x07};
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 0, payload, 2, buf);
+        uint8_t second_buf[SENSOR_FRAME_MAX_SIZE];
+        uint8_t second_len = sensor_frame_encode(SENSOR_ID_THERMAL, 2, 20, payload, 2, second_buf);
 
         sensor_thermal_reading_t reading;
-        bool first = vision_sensor_link_process_frame(&rl, &diag, buf, len, 0, &reading);
-        bool second = vision_sensor_link_process_frame(&rl, &diag, buf, len, 20, &reading);
+        bool first = vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, len, 0, &reading);
+        bool second = vision_sensor_link_process_frame(&rl, &fresh, &diag, second_buf, second_len, 20, &reading);
         TEST_ASSERT(first == true, "the first real frame is accepted");
-        TEST_ASSERT(second == false, "a real second frame only 20ms later, under a 100ms rate limit, is throttled");
+        TEST_ASSERT(second == false, "a real, newer second frame only 20ms later, under a 100ms rate limit, is throttled");
         TEST_ASSERT(diag.rate_limited_count == 1, "the real throttled frame is recorded distinctly from a framing or range error");
     }
 
@@ -129,18 +142,20 @@ void run_vision_sensor_scenario_tests(int *failures)
         rate_limiter_init(&rl, 100);
         sensor_diagnostics_t diag;
         sensor_diagnostics_init(&diag);
+        sensor_freshness_t fresh;
+        sensor_freshness_init(&fresh);
         uint8_t payload[2] = {0x10, 0x27}; // would be 100.00 C if read as thermal
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         sensor_thermal_reading_t reading;
 
         uint8_t len = sensor_frame_encode(SENSOR_ID_RGB_TRIGGER, 1, 0, payload, 2, buf);
-        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, len, 0, &reading) == false, "a well-formed RGB trigger frame is not a thermal reading");
+        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, len, 0, &reading) == false, "a well-formed RGB trigger frame is not a thermal reading");
         len = sensor_frame_encode(0x77, 1, 1, payload, 2, buf);
-        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, len, 10, &reading) == false, "a frame of an unknown sensor id is not a thermal reading");
+        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, len, 10, &reading) == false, "a frame of an unknown sensor id is not a thermal reading");
         TEST_ASSERT(diag.unsupported_sensor_count == 2, "the frames of other sensors are counted apart");
         TEST_ASSERT(diag.out_of_range_count == 0 && diag.frame_errors == 0 && diag.rate_limited_count == 0, "and not as range, framing or rate errors");
         len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 2, payload, 2, buf);
-        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, len, 20, &reading) == true, "the first real thermal frame after them is accepted: they did not use up the rate window");
+        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, len, 20, &reading) == true, "the first real thermal frame after them is accepted: they did not use up the rate window");
     }
 
     // --- Scenario 5c: a bad frame does not use up the rate window of the good one that follows ---
@@ -149,15 +164,17 @@ void run_vision_sensor_scenario_tests(int *failures)
         rate_limiter_init(&rl, 100);
         sensor_diagnostics_t diag;
         sensor_diagnostics_init(&diag);
+        sensor_freshness_t fresh;
+        sensor_freshness_init(&fresh);
         uint8_t bad[2] = {0xFF, 0x7F}; // 327.67 C: out of range
         uint8_t good[2] = {0xD0, 0x07}; // 20.00 C
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         sensor_thermal_reading_t reading;
 
         uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 0, bad, 2, buf);
-        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, len, 0, &reading) == false, "an out-of-range reading is refused");
+        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, len, 0, &reading) == false, "an out-of-range reading is refused");
         len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 1, good, 2, buf);
-        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, len, 10, &reading) == true, "the good frame 10 ms later is accepted, not rate limited by the bad one");
+        TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, len, 10, &reading) == true, "the good frame 10 ms later is accepted, not rate limited by the bad one");
         TEST_ASSERT(diag.out_of_range_count == 1 && diag.rate_limited_count == 0, "one range error and no rate limiting recorded");
     }
 
@@ -167,9 +184,11 @@ void run_vision_sensor_scenario_tests(int *failures)
         rate_limiter_init(&rl, 50);
         sensor_diagnostics_t diag;
         sensor_diagnostics_init(&diag);
+        sensor_freshness_t fresh;
+        sensor_freshness_init(&fresh);
 
         sensor_thermal_reading_t reading;
-        bool accepted = vision_sensor_link_process_frame(&rl, &diag, NULL, 0, 1000, &reading);
+        bool accepted = vision_sensor_link_process_frame(&rl, &fresh, &diag, NULL, 0, 1000, &reading);
         TEST_ASSERT(accepted == false, "a real disconnection (no frame at all) never produces an accepted reading");
         TEST_ASSERT(diag.disconnect_count == 1, "the real disconnection is recorded distinctly from any framing/range/rate error");
         TEST_ASSERT(diag.frame_errors == 0, "a real disconnection is not miscounted as a framing error");

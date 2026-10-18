@@ -103,4 +103,21 @@ void run_sensor_frame_tests(int *failures)
         uint8_t buf[SENSOR_FRAME_MAX_SIZE + 1];
         TEST_ASSERT(sensor_frame_encode(SENSOR_ID_THERMAL, 1, 0, oversized_payload, sizeof(oversized_payload), buf) == 0, "encode refuses a payload longer than SENSOR_FRAME_MAX_PAYLOAD rather than silently truncating it");
     }
+
+    // --- The bytes past the declared length are cleared, not left over from an earlier frame ---
+    {
+        sensor_frame_t frame;
+        for (uint8_t i = 0; i < SENSOR_FRAME_MAX_PAYLOAD; i++) {
+            frame.payload[i] = 0xAA;
+        }
+        uint8_t payload[2] = {0x11, 0x22};
+        uint8_t buf[SENSOR_FRAME_MAX_SIZE];
+        uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 100, payload, 2, buf);
+        TEST_ASSERT(sensor_frame_parse(buf, len, &frame) == SENSOR_FRAME_OK, "the frame parses");
+        int tail_clear = 1;
+        for (uint8_t i = 2; i < SENSOR_FRAME_MAX_PAYLOAD; i++) {
+            if (frame.payload[i] != 0) tail_clear = 0;
+        }
+        TEST_ASSERT(frame.payload[0] == 0x11 && frame.payload[1] == 0x22 && tail_clear, "the payload keeps its bytes and the tail after them is zero");
+    }
 }

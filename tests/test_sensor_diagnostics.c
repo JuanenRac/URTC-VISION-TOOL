@@ -38,17 +38,17 @@ void run_sensor_diagnostics_tests(int *failures)
         TEST_ASSERT(diag.bus_reset_count == 1, "one real bus reset is counted");
     }
 
-    // --- Real latency tracking ---
+    // --- Real inter-arrival tracking ---
     {
         sensor_diagnostics_t diag;
         sensor_diagnostics_init(&diag);
         sensor_diagnostics_note_accepted_frame(&diag, 1000);
-        TEST_ASSERT(diag.last_latency_ms == 0, "the very first accepted frame has no real prior frame to measure latency against");
+        TEST_ASSERT(diag.last_interarrival_ms == 0, "the very first accepted frame has no real prior frame to measure the interval against");
 
         sensor_diagnostics_note_accepted_frame(&diag, 1250);
-        TEST_ASSERT(diag.last_latency_ms == 250, "the real latency between two accepted frames is tracked correctly");
+        TEST_ASSERT(diag.last_interarrival_ms == 250, "the real interval between two accepted frames is tracked correctly");
 
         sensor_diagnostics_note_accepted_frame(&diag, 1400);
-        TEST_ASSERT(diag.last_latency_ms == 150, "a real subsequent accepted frame updates the latency again");
+        TEST_ASSERT(diag.last_interarrival_ms == 150, "a real subsequent accepted frame updates the interval again");
     }
 }

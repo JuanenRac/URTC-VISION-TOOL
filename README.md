@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 65 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `main.py`) is likewise real and backed by 27 passing pytest cases, and CI runs that suite too (its own step installs `src/vision_companion/requirements.txt` and runs `pytest tests/` there), so a regression in either half fails the build. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
+**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 154 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `cli.py`) is likewise real and backed by 50 passing pytest cases, and CI runs that suite too (its own step installs `src/vision_companion/requirements.txt` and runs `pytest tests/` there), so a regression in either half fails the build. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
 
 ---
 
@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Version | `0.0.9` |
+| Version | `0.1.0` |
 | Maturity | Functional |
 | Stack | C / STM32 / Python vision companion |
 | Target | A microcontroller board (the firmware); built on a PC |
@@ -43,10 +43,10 @@ No PCB/schematic exists for this board yet (see `hardware/`), so nothing below c
 * 🔬 **Dual-Modal Perception** — synchronized Thermal and RGB image capture. *(the processing pipeline both frames feed is real - see below; synchronized real capture needs the PCB and sensors.)*
 * 🌡️ **High-Precision Thermal** — integrated MLX90640/41/42 sensor support. *(false-color rendering and per-region stats extraction are real - see below; reading a real MLX9064x over I2C needs the PCB.)*
 * 🎯 **Eye-in-Hand Alignment** — sub-millimetric PnP and AOI (Automated Optical Inspection). *(the RGB->thermal ROI coordinate mapping and temperature-stats extraction are real and tested - see `vision_companion/alignment.py` below; sub-millimetric precision needs a real calibrated camera.)*
-* 📡 **Unified CAN API** — seamlessly integrated into the URTC 25-tool catalog. *(the sensor-side wire protocol itself - framing, CRC, range validation - is real, see below; a real CAN transceiver to actually carry it is still needed.)*
-* 🔒 **Sensor Protocol Range Checks** — versioned framing with a CRC8 checksum, measurement-range validation, rate limiting, and dedicated error/latency/bus-reset diagnostics counters. *(implemented as pure C and tested on a PC only; never run on a board or with a real sensor, and not a safety function)*
+* 📡 **URTC integration (planned)** — this head has no tool ID in URTC's 25-tool catalogue and no CAN identifiers yet; URTC already has a thermal inspection tool (ID 22, MLX90640) with its own CAN messages, and which of the two paths this head follows is undecided. *(the sensor-side wire protocol itself - framing, CRC, range validation - is real, see below; a real CAN transceiver to actually carry it is still needed.)*
+* 🔒 **Sensor Protocol Range Checks** — versioned framing with a CRC8 checksum, measurement-range validation, rate limiting, frame freshness checks (sequence and timestamp), and dedicated error/latency/bus-reset diagnostics counters. *(implemented as pure C and tested on a PC only; never run on a board or with a real sensor, and not a safety function)*
 * ✅ **Cortex-M4F firmware toolchain** — a real bare-metal image that cross-compiles and links with `arm-none-eabi-gcc`, same toolchain as sibling repos URTC and URTC-SMART-RACK. *(implemented — see BUILD below)*
-* ✅ **`vision_companion` processing pipeline** — a real, working Python package: synthetic thermal+RGB frame generation, false-color thermal rendering, RGB->thermal ROI alignment + temperature-stats extraction, stats reporting, all covered by 27 real pytest cases, runs end-to-end with no hardware attached. *(implemented — see VISION COMPANION below)*
+* ✅ **`vision_companion` processing pipeline** — a real, working Python package: synthetic thermal+RGB frame generation, false-color thermal rendering, RGB->thermal ROI alignment + temperature-stats extraction, stats reporting, all covered by 50 real pytest cases, runs end-to-end with no hardware attached. *(implemented — see VISION COMPANION below)*
 
 ---
 
@@ -67,11 +67,11 @@ flowchart LR
 
 ## 3. 🧱 ARCHITECTURE & DESIGN DECISIONS
 
-* **Why this project has 2 independent version tracks.** `src/firmware_common.h` (the STM32-side firmware) and `src/vision_companion/pyproject.toml` (a separate host-side Python package) are versioned independently - they run on different hardware (MCU vs. host CM5/PC) and ship on different schedules.
-* **Why it isn't a child of URTC itself.** Same reasoning as URTC-SMART-RACK's own README - a Complementary Tool that shares URTC's CAN bus/firmware conventions, not part of its integration hierarchy.
-* **Why a host-side companion package at all.** Thermal/RGB dual-modal capture needs real image processing (numpy/Pillow) that has no place running on the STM32 itself - the companion package is where that actually happens, talking to the board over CAN.
+* **Why this project has 2 independent version tracks.** `src/firmware_common.h` (the STM32-side firmware) and `src/vision_companion/vision_companion/__init__.py` (a separate host-side Python package) are versioned independently - they run on different hardware (MCU vs. host CM5/PC) and ship on different schedules.
+* **Why it isn't a child of URTC itself.** Same reasoning as URTC-SMART-RACK's own README - a Complementary Tool that shares URTC's firmware conventions, not part of its integration hierarchy.
+* **Why a host-side companion package at all.** Thermal/RGB dual-modal capture needs real image processing (numpy/Pillow) that has no place running on the STM32 itself - the companion package is where that actually happens. It has no transport code yet: how real frames reach it (CAN, as URTC's thermal inspection tool does, or another link) is part of the undecided integration above.
 * **Why `alignment.py` assumes a shared field of view rather than a real homography.** Both sensors sit on the same rigid tool head, so a per-axis linear rescale between RGB-space and thermal-space pixel coordinates is a reasonable v0 approximation - a real per-pixel calibration (checkerboard, lens distortion) needs actual cameras to calibrate against, which don't exist yet.
-* **How this fits the rest of the ecosystem.** Shares URTC's own CAN bus/tool ecosystem, and is a natural pairing with HYDRA-UMC-DETECTION-HEF for the same visual-recognition role URTC-SMART-RACK also serves.
+* **How this fits the rest of the ecosystem.** Belongs to URTC's own tool ecosystem (its CAN integration is still undecided, see above), and is a natural pairing with HYDRA-UMC-DETECTION-HEF for the same visual-recognition role URTC-SMART-RACK also serves.
 * **Why the sensor frame protocol carries its own timestamp field.** A real sensor-side millisecond timestamp lets a caller know *when* a reading was actually taken, independent of whenever the MCU happens to get around to parsing the frame - real historian/diagnostic value that a bare "just arrived" assumption would lose.
 * **Why diagnostics counters (`sensor_diagnostics.c`) never make an accept/reject decision themselves.** Only `sensor_frame.c` (framing), `sensor_reading.c` (range) and `rate_limiter.c` (throttling) decide whether a frame is trusted - diagnostics only records what they decided. Keeping that boundary strict means a diagnostics bug can never accidentally let bad data through, the diagnosis notes' own "separar diagnostico de salida de control".
 
@@ -86,6 +86,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_frame.h / .c         # Real: versioned frame format + CRC8 parse/encode
 │   ├── sensor_reading.h / .c       # Real: thermal reading decode + range validation
 │   ├── rate_limiter.h / .c         # Real: minimum-interval frame throttling
+│   ├── sensor_freshness.h / .c     # Real: sequence/timestamp freshness (replay and stale-sensor detection)
 │   ├── sensor_diagnostics.h / .c   # Real: error/latency/bus-reset counters, separate from control
 │   ├── vision_sensor_link.h / .c   # Real: frame-dispatch decision tying sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics together
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
@@ -94,13 +95,15 @@ URTC-VISION-TOOL/
 │   └── vision_companion/           # Host-side (CM5/dev machine) Python vision pipeline
 │       ├── pyproject.toml          # Packaging + `vision-companion` console script
 │       ├── requirements.txt        # numpy + pillow
-│       ├── main.py                 # Real, working CLI (version / selftest / analyze-roi)
-│       ├── alignment.py            # Real: RGB<->thermal ROI mapping + temperature-stats extraction
-│       ├── tests/                  # 27 real pytest cases (main.py + alignment.py)
+│       ├── vision_companion/
+│       │   ├── __init__.py         # The companion's version, defined once
+│       │   ├── cli.py              # Real, working CLI (version / selftest / analyze-roi)
+│       │   └── alignment.py        # Real: RGB<->thermal ROI mapping + temperature-stats extraction
+│       ├── tests/                  # 50 real pytest cases (cli.py + alignment.py)
 │       └── README.md               # Companion-specific usage docs
-├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios)
-├── docs/                           # Documentation and calibration reference
-├── hardware/                       # Hardware design files (PCB, Case) - empty, no schematic yet
+├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios, freshness, robustness)
+├── docs/                           # Command line reference (CLI_REFERENCE.md)
+├── hardware/                       # Hardware notes (README.md) - no design files yet (no schematic, no PCB)
 ├── firmware/                       # Build output (.bin/.elf/.hex), git-ignored - published only as assets of the GitHub release
 ├── build/                          # Intermediate build objects (gitignored)
 ├── images/                         # Media and diagrams
@@ -130,9 +133,13 @@ chmod +x build_firmware.sh   # one-time
 build_firmware.bat
 ```
 
-The build bumps `src/firmware_common.h`'s version (odometer rule), compiles `main.c` and `startup_stm32_minimal.c` for Cortex-M4F, links them against the placeholder `STM32_MINIMAL.ld` memory map, and publishes versioned `.elf`/`.bin`/`.hex` files to `firmware/`. There is nothing to flash to real hardware yet — no PCB exists to confirm the target STM32 part, pinout, MLX9064x wiring, or the RGB camera interface.
+The build first compiles and runs `tests/` against the *host's own* C compiler (never `arm-none-eabi-gcc` - these are pure-logic tests, no MCU registers touched) and fails the whole build if any assertion fails. Only then does it bump `src/firmware_common.h`'s version (odometer rule, same as the rest of the ecosystem), compile `main.c` and `startup_stm32_minimal.c` for Cortex-M4F, link them against the placeholder `STM32_MINIMAL.ld` memory map, and publish versioned `.elf`/`.bin`/`.hex` files to `firmware/`.
 
-The firmware images (`.bin`, `.hex`, `.elf`) are not versioned in git: a release build writes `firmware/URTC_VISION_TOOL_FIRMWARE_v<version>.*` (git-ignored; `build/firmware` in CI mode, `HYDRA_UMC_CI=1`) and they are published only as assets of the GitHub release of each version. `python tools/publish_release_assets.py` checks the files, writes the missing `.sha256` sidecar and prints the exact `gh release create` command with the files to attach.
+Every module under `src/` is also compiled for Cortex-M4F, and all of them are linked together as a check (no C library is available on the target), even though the image only contains `main.c` and the start-up file today. If the build fails after the version was raised, the version, manifest and changelog are put back as they were. With `URTC_CI=1` nothing tracked is touched.
+
+There is nothing to flash to real hardware yet — no PCB exists to confirm the target STM32 part, pinout, MLX9064x wiring, or the RGB camera interface.
+
+The firmware images (`.bin`, `.hex`, `.elf`) are not versioned in git: a release build writes `firmware/URTC_VISION_TOOL_FIRMWARE_v<version>.*` (git-ignored; `build/firmware` in CI mode, `URTC_CI=1`) and they are published only as assets of the GitHub release of each version. `python tools/publish_release_assets.py` checks the files, writes the missing `.sha256` sidecar and prints the exact `gh release create` command with the files to attach.
 
 ## 5. 🐍 VISION COMPANION (host-side Python)
 
@@ -143,11 +150,11 @@ cd src/vision_companion
 python3 -m venv .venv
 # Linux/macOS:
 .venv/bin/pip install -r requirements.txt
-.venv/bin/python main.py selftest
+.venv/bin/python -m vision_companion selftest
 
 # Windows:
 .venv\Scripts\pip install -r requirements.txt
-.venv\Scripts\python main.py selftest
+.venv\Scripts\python -m vision_companion selftest
 ```
 
 `selftest` generates a synthetic MLX9064x-shaped thermal frame (32x24, with a soldering-tip-like hotspot) and a synthetic RGB color-bar test pattern, renders/saves both as real files, and prints their stats — proof the numpy/Pillow processing pipeline genuinely works, independent of the real sensor capture step that lands once hardware exists.
@@ -155,17 +162,17 @@ python3 -m venv .venv
 `analyze-roi X0 Y0 X1 Y1` maps an RGB-space bounding box into thermal-space and reports real temperature stats for that region — the alignment logic behind the README's Eye-in-Hand Alignment feature, real today:
 
 ```bash
-.venv/bin/python main.py analyze-roi 280 210 360 270
+.venv/bin/python -m vision_companion analyze-roi 280 210 360 270
 ```
 
 Real example output:
 
 ```text
 RGB ROI (280,210)-(360,270) in a 640x480 frame
-  -> thermal stats: min=75.67C max=78.97C mean=77.69C (16 thermal px)
+  -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-27 real pytest cases cover both `main.py` and `alignment.py`:
+50 real pytest cases cover both `cli.py` and `alignment.py`:
 
 ```bash
 pip install -e ".[dev]"

@@ -8,7 +8,7 @@
 # feature: mapping a region of interest between the RGB frame's resolution
 # and the thermal sensor's much lower native resolution, then pulling real
 # temperature statistics out of that region. There is no real dual-modal
-# capture yet (no PCB - see main.py's own header comment), but once real
+# capture yet (no PCB - see cli.py's own header comment), but once real
 # RGB/thermal frames replace the synthetic generators, this module's inputs
 # don't change shape, so nothing here has to be rewritten.
 from __future__ import annotations
@@ -88,40 +88,62 @@ def rgb_roi_to_thermal_roi(
 
 @dataclass(frozen=True)
 class RoiStats:
+    """Temperature statistics of one region of a thermal frame.
+
+    Only finite pixels count: a dead pixel or a failed read (NaN, infinity) is
+    left out of ``min_c``/``max_c``/``mean_c``/``p95_c`` and of ``pixel_count``,
+    and shows up in ``invalid_pixel_count`` instead, so one bad pixel can neither
+    turn the whole region into NaN nor pass unnoticed.
+    """
     min_c: float
     max_c: float
     mean_c: float
     pixel_count: int
+    invalid_pixel_count: int = 0
+    # 95th percentile: a hot-spot figure that one spurious hot pixel cannot move
+    # the way it moves ``max_c``.
+    p95_c: float = math.nan
 
     @property
     def is_empty(self) -> bool:
-        """True for 's "no real data" result - a requested ROI that
-        does not overlap the thermal frame at all. `min_c`/`max_c`/`mean_c`
-        are NaN in that case (never a real temperature reading with
-        pixel_count == 0 sitting behind it), so a caller checking this
-        property first can't accidentally treat NaN as a real value."""
+        """True for a "no real data" result - a requested ROI that does not
+        overlap the thermal frame at all, or one whose pixels are all invalid.
+        ``min_c``/``max_c``/``mean_c`` are NaN in that case (never a real
+        temperature reading with ``pixel_count == 0`` sitting behind it), so a
+        caller checking this property first can't accidentally treat NaN as a
+        real value."""
         return self.pixel_count == 0
 
     @staticmethod
-    def empty() -> "RoiStats":
+    def empty() -> RoiStats:
         return RoiStats(min_c=math.nan, max_c=math.nan, mean_c=math.nan, pixel_count=0)
 
 
 def extract_roi_stats(thermal_frame: np.ndarray, roi: BoundingBox) -> RoiStats:
-    """Pulls real min/max/mean temperature out of a region of the thermal
-    frame - the actual "does this component run hot" answer the README's
-    thermal-inspection use case needs, once fed a real MLX9064x frame
-    instead of the synthetic one."""
+    """Pulls real min/max/mean/95th-percentile temperature out of a region of
+    the thermal frame - the actual "does this component run hot" answer the
+    README's thermal-inspection use case needs, once fed a real MLX9064x frame
+    instead of the synthetic one. Pixels that are not finite are excluded and
+    counted in ``invalid_pixel_count``."""
     height, width = thermal_frame.shape
     if roi.x0 < 0 or roi.y0 < 0 or roi.x1 > width or roi.y1 > height:
         raise AlignmentError(f"roi {roi!r} is out of bounds for a {width}x{height} frame")
 
     region = thermal_frame[roi.y0:roi.y1, roi.x0:roi.x1]
+    finite = region[np.isfinite(region)]
+    invalid = int(region.size - finite.size)
+    if finite.size == 0:
+        return RoiStats(
+            min_c=math.nan, max_c=math.nan, mean_c=math.nan, pixel_count=0,
+            invalid_pixel_count=invalid,
+        )
     return RoiStats(
-        min_c=float(region.min()),
-        max_c=float(region.max()),
-        mean_c=float(region.mean()),
-        pixel_count=int(region.size),
+        min_c=float(finite.min()),
+        max_c=float(finite.max()),
+        mean_c=float(finite.mean()),
+        pixel_count=int(finite.size),
+        invalid_pixel_count=invalid,
+        p95_c=float(np.percentile(finite, 95)),
     )
 
 

@@ -40,16 +40,23 @@ REM This builds the FIRMWARE side only. The vision-side companion (Python,
 REM runs on a host/CM5, not on the STM32) lives in src\vision_companion\ -
 REM see that directory's own README for its build/run instructions.
 setlocal enabledelayedexpansion
-rem Keep the window open for people, never in automation (CI / HYDRA_UMC_CI).
+rem Keep the window open for people, never in automation (CI / URTC_CI).
 set "KEEP_OPEN=pause"
 if defined CI set "KEEP_OPEN=ver >nul"
-if "%HYDRA_UMC_CI%"=="1" set "KEEP_OPEN=ver >nul"
+if "%URTC_CI%"=="1" set "KEEP_OPEN=ver >nul"
+rem Every path below is relative to the repository root, whatever the directory the script is started from.
+cd /d "%~dp0"
+set "VERSION_BUMPED=0"
+if "%URTC_CI%"=="1" goto :banner_ci
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
 echo [1/3] Incrementing project version and synchronising its manifest...
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_CAPTURE_BEFORE
 for /f "usebackq delims=" %%V in (`python -c "import json; print(json.load(open(r'%~dp0urtc.project.json', encoding='utf-8'))['version'])"`) do set "HYDRA_UMC_VERSION_BEFORE=%%V"
+goto :banner_done
+:banner_ci
+echo URTC-VISION-TOOL CI: version sources are read-only.
+:banner_done
 echo.
-cd /d "%~dp0"
 where arm-none-eabi-gcc >nul 2>nul
 if errorlevel 1 (
     echo FAIL: arm-none-eabi-gcc not found. Install the ARM GNU Toolchain
@@ -59,19 +66,19 @@ if errorlevel 1 (
 echo   OK   arm-none-eabi-gcc found
 echo.
 
-echo === 2. Real logic tests (host gcc, not arm-none-eabi-gcc) ===
+echo === 2. Real logic tests (host cl/gcc, not arm-none-eabi-gcc) ===
+if not exist build mkdir build
 where gcc >nul 2>nul
 if errorlevel 1 (
     echo FAIL: no host C compiler found ^(gcc^). Install MinGW/MSYS2 or run
     echo       this from a shell that has a native gcc on PATH.
     goto :error
 )
-if not exist build mkdir build
-gcc -std=c11 -Wall -Wextra -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_sensor_frame.c tests\test_sensor_reading.c tests\test_rate_limiter.c tests\test_sensor_diagnostics.c tests\test_vision_sensor_scenarios.c tests\test_robustness.c src\sensor_frame.c src\sensor_reading.c src\rate_limiter.c src\sensor_diagnostics.c src\vision_sensor_link.c
+gcc -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_sensor_frame.c tests\test_sensor_reading.c tests\test_rate_limiter.c tests\test_sensor_diagnostics.c tests\test_vision_sensor_scenarios.c tests\test_robustness.c tests\test_sensor_freshness.c src\sensor_frame.c src\sensor_reading.c src\rate_limiter.c src\sensor_diagnostics.c src\vision_sensor_link.c src\sensor_freshness.c
 if errorlevel 1 goto :error
 build\host_tests.exe
 if errorlevel 1 goto :error
-echo   OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_diagnostics.c pure-logic tests passed
+echo   OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_freshness.c / sensor_diagnostics.c / vision_sensor_link.c pure-logic tests passed
 echo.
 
 echo === 2b. Build tooling tests ^(version odometer boundaries^) ===
@@ -80,6 +87,14 @@ if errorlevel 1 goto :error
 echo.
 
 echo === 3. Version bump (odometer, see bump_version.py) ===
+if "%URTC_CI%"=="1" goto :version_from_header
+rem The files a version bump rewrites are copied aside first and put back if anything fails afterwards.
+if not exist build\version_backup\src mkdir build\version_backup\src
+copy /y src\firmware_common.h build\version_backup\src\firmware_common.h >nul
+copy /y urtc.project.json build\version_backup\urtc.project.json >nul
+copy /y CHANGELOG.md build\version_backup\CHANGELOG.md >nul
+set "VERSION_BUMPED=1"
+set "VERSION="
 for /f "delims=" %%V in ('python bump_version.py src\firmware_common.h FIRMWARE_VERSION') do set VERSION=%%V
 if "%VERSION%"=="" goto :error
 python "%~dp0bump_manifest_version.py" --sync
@@ -95,6 +110,16 @@ echo * v%HYDRA_UMC_VERSION_BEFORE% ^> v%HYDRA_UMC_VERSION_AFTER%
 echo * Project manifest synchronized with the firmware version.
 echo *****************************************************************************
 echo.
+goto :version_done
+
+:version_from_header
+rem CI mode: the version is read from the header and nothing is rewritten.
+for /f "tokens=3" %%A in ('findstr /b /c:"#define FIRMWARE_VERSION_MAJOR" src\firmware_common.h') do set "V_MAJOR=%%A"
+for /f "tokens=3" %%A in ('findstr /b /c:"#define FIRMWARE_VERSION_MINOR" src\firmware_common.h') do set "V_MINOR=%%A"
+for /f "tokens=3" %%A in ('findstr /b /c:"#define FIRMWARE_VERSION_PATCH" src\firmware_common.h') do set "V_PATCH=%%A"
+set "VERSION=%V_MAJOR%.%V_MINOR%.%V_PATCH%"
+
+:version_done
 echo   Firmware version: %VERSION%
 echo.
 
@@ -102,22 +127,33 @@ echo === 4. Compile + link ===
 if not exist build mkdir build
 REM Release mode writes to firmware\ (git-ignored, published only as release assets); CI mode writes to build\firmware.
 set "FIRMWARE_OUT=firmware"
-if "%HYDRA_UMC_CI%"=="1" set "FIRMWARE_OUT=build\firmware"
+if "%URTC_CI%"=="1" set "FIRMWARE_OUT=build\firmware"
 if not exist %FIRMWARE_OUT% mkdir %FIRMWARE_OUT%
+if not exist build\arm mkdir build\arm
 
-set CFLAGS=-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -ffreestanding -fno-builtin -Wall -Wextra -O2 -g -Isrc
+set CFLAGS=-mcpu=cortex-m4 -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -ffreestanding -fno-builtin -ffunction-sections -fdata-sections -Wall -Wextra -Wconversion -O2 -g -Isrc
 set LDFLAGS=-T src\STM32_MINIMAL.ld -nostdlib -Wl,--gc-sections -Wl,-Map=build\urtc-vision-tool.map
 
-arm-none-eabi-gcc %CFLAGS% -c src\startup_stm32_minimal.c -o build\startup_stm32_minimal.o
-if errorlevel 1 goto :error
-arm-none-eabi-gcc %CFLAGS% -c src\main.c -o build\main.o
-if errorlevel 1 goto :error
-arm-none-eabi-gcc %CFLAGS% %LDFLAGS% build\startup_stm32_minimal.o build\main.o -o build\urtc-vision-tool.elf
+rem Every module is compiled for the Cortex-M4F target, not only the two that the image links today.
+for %%S in (src\*.c) do (
+    arm-none-eabi-gcc %CFLAGS% -c %%S -o build\arm\%%~nS.o
+    if errorlevel 1 goto :error
+)
+echo   OK   every src\*.c compiled for Cortex-M4F
+
+arm-none-eabi-gcc %CFLAGS% %LDFLAGS% build\arm\startup_stm32_minimal.o build\arm\main.o -o build\urtc-vision-tool.elf
 if errorlevel 1 goto :error
 echo   OK   Linked build\urtc-vision-tool.elf
 
+rem All modules must also resolve against each other without a C library; this link is only a check and produces no image.
+arm-none-eabi-gcc %CFLAGS% -T src\STM32_MINIMAL.ld -nostdlib -Wl,--gc-sections build\arm\*.o -o build\all-modules-check.elf
+if errorlevel 1 goto :error
+echo   OK   all modules link together without a C library
+
 arm-none-eabi-objcopy -O binary build\urtc-vision-tool.elf build\urtc-vision-tool.bin
+if errorlevel 1 goto :error
 arm-none-eabi-objcopy -O ihex build\urtc-vision-tool.elf build\urtc-vision-tool.hex
+if errorlevel 1 goto :error
 echo   OK   build\urtc-vision-tool.bin / .hex
 echo.
 
@@ -135,19 +171,17 @@ echo.
 echo =============================================================================
 echo  Build complete - v%VERSION%
 echo =============================================================================
-set "HYDRA_UMC_SCRIPT_RESULT=0"
-goto :HYDRA_UMC_SCRIPT_STANDARD_FINISH
+%KEEP_OPEN%
+exit /b 0
 
 :error
 echo.
+if "%VERSION_BUMPED%"=="1" (
+    copy /y build\version_backup\src\firmware_common.h src\firmware_common.h >nul
+    copy /y build\version_backup\urtc.project.json urtc.project.json >nul
+    copy /y build\version_backup\CHANGELOG.md CHANGELOG.md >nul
+    echo Version, manifest and changelog restored to their previous state.
+)
 echo BUILD FAILED - see the output above.
-set "HYDRA_UMC_SCRIPT_RESULT=1"
-goto :HYDRA_UMC_SCRIPT_STANDARD_FINISH
-
-REM HYDRA_UMC_SCRIPT_STANDARD_SAFE_PAUSE
-:HYDRA_UMC_SCRIPT_STANDARD_FINISH
-if not defined HYDRA_UMC_SCRIPT_RESULT set "HYDRA_UMC_SCRIPT_RESULT=%ERRORLEVEL%"
-echo.
-echo [INFO] Script completed. Exit code: %HYDRA_UMC_SCRIPT_RESULT%.
 %KEEP_OPEN%
-exit /b %HYDRA_UMC_SCRIPT_RESULT%
+exit /b 1

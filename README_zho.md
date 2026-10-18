@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**诚实核查 - 今天真正能运行的部分：** 固件侧的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）是真实的纯 C 代码，有 65 个通过的 `TEST_ASSERT` 检查（`tests/test_*.c`，用主机自身的 C 编译器编译并运行），并且本仓库的 CI 确实会运行它们：`.github/workflows/ci.yml` 的固件步骤调用 `build_firmware.sh`，其第 2 步总是在进行 STM32 构建之前编译并运行 `tests/`。主机侧的 `vision_companion` 包（`alignment.py`、`main.py`）同样是真实的，有 27 个通过的 pytest 用例，CI 也会运行这套测试（专门的步骤安装 `src/vision_companion/requirements.txt` 并在该目录运行 `pytest tests/`），因此任何一半出现回归都会导致构建失败。正如 README 开头所说：这块板卡还没有 PCB/原理图，因此这里的任何东西都从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只证明 Cortex-M4F 的交叉编译和链接在占位链接脚本下能够成功。已发布的内容请参见 `CHANGELOG.md`。
+**诚实核查 - 今天真正能运行的部分：** 固件侧的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）是真实的纯 C 代码，有 154 个通过的 `TEST_ASSERT` 检查（`tests/test_*.c`，用主机自身的 C 编译器编译并运行），并且本仓库的 CI 确实会运行它们：`.github/workflows/ci.yml` 的固件步骤调用 `build_firmware.sh`，其第 2 步总是在进行 STM32 构建之前编译并运行 `tests/`。主机侧的 `vision_companion` 包（`alignment.py`、`cli.py`）同样是真实的，有 50 个通过的 pytest 用例，CI 也会运行这套测试（专门的步骤安装 `src/vision_companion/requirements.txt` 并在该目录运行 `pytest tests/`），因此任何一半出现回归都会导致构建失败。正如 README 开头所说：这块板卡还没有 PCB/原理图，因此这里的任何东西都从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只证明 Cortex-M4F 的交叉编译和链接在占位链接脚本下能够成功。已发布的内容请参见 `CHANGELOG.md`。
 
 ---
 
@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| 版本 | `0.0.9` |
+| 版本 | `0.1.0` |
 | 成熟度 | 可用 |
 | 技术栈 | C / STM32 / Python vision companion |
 | 目标 | 微控制器板（固件）；在电脑上构建 |
@@ -50,10 +50,10 @@
 * 🔬 **双模态感知** —— 同步的热成像与 RGB 图像捕获。*（两路帧所馈送的处理流水线是真实的——见下文；真正的同步捕获需要 PCB 和传感器。）*
 * 🌡️ **高精度热成像** —— 集成 MLX90640/41/42 传感器支持。*（伪彩色渲染和按区域统计提取是真实的——见下文；通过 I2C 读取真实的 MLX9064x 需要 PCB。）*
 * 🎯 **Eye-in-Hand 对位** —— 亚毫米级 PnP 与 AOI（自动光学检测）。*（RGB->热成像 ROI 坐标映射与温度统计提取是真实的并已测试——见下文的 `vision_companion/alignment.py`；亚毫米级精度需要真实的已标定摄像头。）*
-* 📡 **统一 CAN API** —— 无缝集成到 URTC 25 种工具目录中。*（传感器侧的线缆协议本身——帧格式、CRC、范围校验——是真实的，见下文；仍需要真实的 CAN 收发器来实际承载它。）*
-* 🔒 **传感器协议范围检查** —— 版本化帧格式，带 CRC8 校验和，测量范围校验，速率限制，以及独立于控制决策的专用错误/延迟/总线复位诊断计数器。*（以纯 C 实现，仅在 PC 上测试过；从未在板卡上或配合真实传感器运行过，也不是安全功能）*
+* 📡 **与 URTC 的集成（计划中）** —— 该刀头在 URTC 的 25 种工具目录中尚无工具 ID，也没有 CAN 标识符；URTC 已有一个带有自己 CAN 消息的热成像检测工具（ID 22，MLX90640），本刀头走哪条路线尚未决定。*（传感器侧的线缆协议本身——帧格式、CRC、范围校验——是真实的，见下文；仍需要真实的 CAN 收发器来实际承载它。）*
+* 🔒 **传感器协议范围检查** —— 版本化帧格式，带 CRC8 校验和，测量范围校验，速率限制，帧新鲜度检查（序列号与时间戳），以及独立于控制决策的专用错误/延迟/总线复位诊断计数器。*（以纯 C 实现，仅在 PC 上测试过；从未在板卡上或配合真实传感器运行过，也不是安全功能）*
 * ✅ **Cortex-M4F 固件工具链** —— 一个真实的裸机镜像，使用与兄弟仓库 URTC 和 URTC-SMART-RACK 相同的工具链，通过 `arm-none-eabi-gcc` 交叉编译并链接。*（已实现——见下方"构建"）*
-* ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 27 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方"VISION COMPANION"）*
+* ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 50 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方"VISION COMPANION"）*
 
 ---
 
@@ -74,11 +74,11 @@ flowchart LR
 
 ## 3. 🧱 架构与设计决策
 
-* **为什么本项目拥有 2 条独立的版本跟踪线。** `src/firmware_common.h`（STM32 端固件）和 `src/vision_companion/pyproject.toml`（独立的主机端 Python 包）分别独立进行版本管理——它们运行在不同的硬件上（MCU 与主机 CM5/PC），并按不同的发布节奏交付。
-* **为什么它不是 URTC 自身的子项目。** 与 URTC-SMART-RACK 自身 README 中的理由相同——它是一个共享 URTC 的 CAN 总线/固件惯例的配套工具，而非其集成层级结构的一部分。
-* **为什么需要一个主机端配套软件包。** 热成像/RGB 双模态捕获需要真正的图像处理（numpy/Pillow），而这不适合直接运行在 STM32 上——该配套软件包正是执行这些处理的地方，通过 CAN 与板卡通信。
+* **为什么本项目拥有 2 条独立的版本跟踪线。** `src/firmware_common.h`（STM32 端固件）和 `src/vision_companion/vision_companion/__init__.py`（独立的主机端 Python 包）分别独立进行版本管理——它们运行在不同的硬件上（MCU 与主机 CM5/PC），并按不同的发布节奏交付。
+* **为什么它不是 URTC 自身的子项目。** 与 URTC-SMART-RACK 自身 README 中的理由相同——它是一个共享 URTC 固件惯例的配套工具，而非其集成层级结构的一部分。
+* **为什么需要一个主机端配套软件包。** 热成像/RGB 双模态捕获需要真正的图像处理（numpy/Pillow），而这不适合直接运行在 STM32 上——该配套软件包正是执行这些处理的地方。它目前还没有传输代码：真实帧如何到达它（像 URTC 的热成像检测工具那样走 CAN，还是其他链路）属于上文尚未决定的集成问题。
 * **为什么 `alignment.py` 假设两个传感器共享同一视场，而非使用真实单应变换。** 两个传感器安装在同一个刚性工具头上，因此在 RGB 空间与热成像空间之间对像素坐标做逐轴线性缩放是合理的 v0 近似——真正的逐像素标定（棋盘格、镜头畸变）需要真实摄像头才能进行，而这些目前还不存在。
-* **这如何融入生态系统的其余部分。** 共享 URTC 自身的 CAN 总线/工具生态系统，并与 HYDRA-UMC-DETECTION-HEF 自然搭配，承担与 URTC-SMART-RACK 相同的视觉识别角色。
+* **这如何融入生态系统的其余部分。** 属于 URTC 自身的工具生态系统（其 CAN 集成尚未决定，见上文），并与 HYDRA-UMC-DETECTION-HEF 自然搭配，承担与 URTC-SMART-RACK 相同的视觉识别角色。
 * **为什么传感器帧协议携带自己的时间戳字段。** 真实的传感器端毫秒级时间戳让调用方知道一次读数*实际上是何时*采集的，而与 MCU 何时才能解析该帧无关——这是历史记录/诊断方面真实的价值，若只是简单地假设“刚刚到达”则会丢失这一价值。
 * **为什么诊断计数器（`sensor_diagnostics.c`）自身从不做出接受/拒绝的决策。** 只有 `sensor_frame.c`（帧格式）、`sensor_reading.c`（范围）和 `rate_limiter.c`（速率限制）决定一帧数据是否可信——诊断模块只记录它们的决策结果。严格保持这一边界意味着诊断模块中的 bug 永远不可能意外放行错误数据，这正是诊断笔记自身所说的"separar diagnostico de salida de control"。
 
@@ -93,6 +93,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_frame.h / .c         # 真实：版本化帧格式 + CRC8 解析/编码
 │   ├── sensor_reading.h / .c       # 真实：热成像读数解码 + 范围校验
 │   ├── rate_limiter.h / .c         # 真实：最小间隔帧限速
+│   ├── sensor_freshness.h / .c     # 真实：基于序列号/时间戳的新鲜度检查（检测重复帧与冻结的传感器）
 │   ├── sensor_diagnostics.h / .c   # 真实：错误/延迟/总线复位计数器，与控制分离
 │   ├── vision_sensor_link.h / .c   # 真实：连接 sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics 的帧分发决策
 │   ├── main.c                      # 最小入口点（存活证明心跳循环）
@@ -101,13 +102,15 @@ URTC-VISION-TOOL/
 │   └── vision_companion/           # 主机端（CM5/开发机）Python 视觉流水线
 │       ├── pyproject.toml          # 打包配置 + `vision-companion` 控制台脚本
 │       ├── requirements.txt        # numpy + pillow
-│       ├── main.py                 # 真实可用的 CLI（版本/自检/analyze-roi）
-│       ├── alignment.py            # 真实：RGB<->热成像 ROI 映射 + 温度统计提取
-│       ├── tests/                  # 27 个真实 pytest 用例（main.py + alignment.py）
+│       ├── vision_companion/
+│       │   ├── __init__.py         # 配套软件的版本号（仅在此处定义）
+│       │   ├── cli.py              # 真实可用的 CLI（版本/自检/analyze-roi）
+│       │   └── alignment.py        # 真实：RGB<->热成像 ROI 映射 + 温度统计提取
+│       ├── tests/                  # 50 个真实 pytest 用例（cli.py + alignment.py）
 │       └── README.md               # 配套软件专属使用文档
-├── tests/                          # 真实的主机原生固件测试套件（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、传感器场景）
-├── docs/                           # 文档与标定参考
-├── hardware/                       # 硬件设计文件（PCB、外壳）—— 目前为空，尚无原理图
+├── tests/                          # 真实的主机原生固件测试套件（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、传感器场景、新鲜度、健壮性）
+├── docs/                           # 命令行参考（CLI_REFERENCE.md）
+├── hardware/                       # 硬件说明（README.md）—— 尚无设计文件（没有原理图，也没有 PCB）
 ├── firmware/                       # 构建输出（.bin/.elf/.hex），被 git 忽略——仅作为 GitHub 发布的资源发布
 ├── build/                          # 中间构建对象（已被 gitignore）
 ├── images/                         # 媒体与图表
@@ -138,14 +141,21 @@ chmod +x build_firmware.sh   # 仅需一次
 build_firmware.bat
 ```
 
-该构建会递增 `src/firmware_common.h` 中的版本号（里程表规则），针对
-Cortex-M4F 编译 `main.c` 和 `startup_stm32_minimal.c`，将其与占位性质
-的 `STM32_MINIMAL.ld` 内存映射进行链接，并将版本化的
-`.elf`/`.bin`/`.hex` 文件发布到 `firmware/`。目前尚无内容可刷写到真实
+该构建首先使用*宿主机自身*的 C 编译器（绝不是 `arm-none-eabi-gcc`——这些
+是纯逻辑测试，不涉及任何 MCU 寄存器）编译并运行 `tests/`，若任何断言失败
+则整个构建失败。只有在此之后，它才会递增 `src/firmware_common.h` 中的
+版本号（里程表规则，与生态系统其余部分一致），针对 Cortex-M4F 编译
+`main.c` 和 `startup_stm32_minimal.c`，将其与占位性质的
+`STM32_MINIMAL.ld` 内存映射进行链接，并将版本化的 `.elf`/`.bin`/`.hex`
+文件发布到 `firmware/`。
+
+`src/` 下的每个模块也会针对 Cortex-M4F 编译，并作为检查一并链接在一起（目标上没有 C 库），尽管目前映像中只包含 `main.c` 和启动文件。如果在版本号递增之后构建失败，版本号、清单和变更日志会恢复原状。使用 `URTC_CI=1` 时不会改动任何受版本控制的文件。
+
+目前尚无内容可刷写到真实
 硬件——因为没有 PCB 可以确认目标 STM32 型号、引脚布局、MLX9064x 接线，
 或 RGB 摄像头接口。
 
-固件映像（`.bin`、`.hex`、`.elf`）不纳入 git 版本管理：发布构建会写入 `firmware/URTC_VISION_TOOL_FIRMWARE_v<版本>.*`（已被 git 忽略；CI 模式即 `HYDRA_UMC_CI=1` 时写入 `build/firmware`），它们仅作为每个版本的 GitHub 发布资源发布。`python tools/publish_release_assets.py` 会检查这些文件、补写缺失的 `.sha256` 文件，并输出带有待附加文件的准确 `gh release create` 命令。
+固件映像（`.bin`、`.hex`、`.elf`）不纳入 git 版本管理：发布构建会写入 `firmware/URTC_VISION_TOOL_FIRMWARE_v<版本>.*`（已被 git 忽略；CI 模式即 `URTC_CI=1` 时写入 `build/firmware`），它们仅作为每个版本的 GitHub 发布资源发布。`python tools/publish_release_assets.py` 会检查这些文件、补写缺失的 `.sha256` 文件，并输出带有待附加文件的准确 `gh release create` 命令。
 
 ## 5. 🐍 视觉配套软件（主机端 Python）
 
@@ -156,11 +166,11 @@ cd src/vision_companion
 python3 -m venv .venv
 # Linux/macOS：
 .venv/bin/pip install -r requirements.txt
-.venv/bin/python main.py selftest
+.venv/bin/python -m vision_companion selftest
 
 # Windows：
 .venv\Scripts\pip install -r requirements.txt
-.venv\Scripts\python main.py selftest
+.venv\Scripts\python -m vision_companion selftest
 ```
 
 `selftest` 会生成一个合成的、符合 MLX9064x 格式的热成像帧（32x24，带有
@@ -173,17 +183,17 @@ python3 -m venv .venv
 背后的对位逻辑，今天就是真实的：
 
 ```bash
-.venv/bin/python main.py analyze-roi 280 210 360 270
+.venv/bin/python -m vision_companion analyze-roi 280 210 360 270
 ```
 
 真实示例输出：
 
 ```text
 RGB ROI (280,210)-(360,270) in a 640x480 frame
-  -> thermal stats: min=75.67C max=78.97C mean=77.69C (16 thermal px)
+  -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-27 个真实 pytest 用例覆盖了 `main.py` 和 `alignment.py`：
+50 个真实 pytest 用例覆盖了 `cli.py` 和 `alignment.py`：
 
 ```bash
 pip install -e ".[dev]"

@@ -5,7 +5,13 @@ import math
 import numpy as np
 import pytest
 
-from alignment import AlignmentError, BoundingBox, analyze_rgb_roi, extract_roi_stats, rgb_roi_to_thermal_roi
+from vision_companion.alignment import (
+    AlignmentError,
+    BoundingBox,
+    analyze_rgb_roi,
+    extract_roi_stats,
+    rgb_roi_to_thermal_roi,
+)
 
 
 def test_bounding_box_rejects_degenerate_box() -> None:

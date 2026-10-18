@@ -32,7 +32,7 @@ void Reset_Handler(void);
 static void Default_Handler(void);
 
 void NMI_Handler(void)          __attribute__((weak, alias("Default_Handler")));
-void HardFault_Handler(void)    __attribute__((weak, alias("Default_Handler")));
+void HardFault_Handler(void);   // defined below: records the faulting context
 void MemManage_Handler(void)    __attribute__((weak, alias("Default_Handler")));
 void BusFault_Handler(void)     __attribute__((weak, alias("Default_Handler")));
 void UsageFault_Handler(void)   __attribute__((weak, alias("Default_Handler")));
@@ -72,8 +72,61 @@ const vector_entry g_vector_table[16 + PLACEHOLDER_IRQ_COUNT] = {
     [16 ... 16 + PLACEHOLDER_IRQ_COUNT - 1] = IRQ_Placeholder_Handler,
 };
 
+// Cortex-M4F coprocessor access control register: CP10/CP11 are the FPU. The
+// image is compiled for the hard-float ABI, so the first floating-point
+// instruction raises a UsageFault (NOCP) unless full access is granted here.
+#define SCB_CPACR (*(volatile uint32_t *)0xE000ED88UL)
+#define SCB_CFSR (*(volatile uint32_t *)0xE000ED28UL)
+#define SCB_HFSR (*(volatile uint32_t *)0xE000ED2CUL)
+#define SCB_MMFAR (*(volatile uint32_t *)0xE000ED34UL)
+#define SCB_BFAR (*(volatile uint32_t *)0xE000ED38UL)
+#define FAULT_RECORD_MAGIC 0xFA17F00Du
+
+// Context of the last hard fault, kept in RAM that start-up does not clear
+// (the .noinit section of the linker script) so a debugger - or the next boot,
+// once something reads it - can tell where the core stopped.
+typedef struct {
+    uint32_t magic;
+    uint32_t r0, r1, r2, r3, r12, lr, pc, psr;
+    uint32_t cfsr, hfsr, mmfar, bfar;
+} fault_record_t;
+
+__attribute__((section(".noinit"), used)) volatile fault_record_t g_fault_record;
+
+__attribute__((used)) void HardFault_Capture(const uint32_t *stacked);
+__attribute__((used)) void HardFault_Capture(const uint32_t *stacked)
+{
+    g_fault_record.r0 = stacked[0];
+    g_fault_record.r1 = stacked[1];
+    g_fault_record.r2 = stacked[2];
+    g_fault_record.r3 = stacked[3];
+    g_fault_record.r12 = stacked[4];
+    g_fault_record.lr = stacked[5];
+    g_fault_record.pc = stacked[6];
+    g_fault_record.psr = stacked[7];
+    g_fault_record.cfsr = SCB_CFSR;
+    g_fault_record.hfsr = SCB_HFSR;
+    g_fault_record.mmfar = SCB_MMFAR;
+    g_fault_record.bfar = SCB_BFAR;
+    g_fault_record.magic = FAULT_RECORD_MAGIC;
+    for (;;) {
+    }
+}
+
+// Picks the stack the fault came from (bit 2 of EXC_RETURN in LR) and hands the
+// stacked exception frame to HardFault_Capture().
+__attribute__((naked)) void HardFault_Handler(void)
+{
+    __asm volatile(
+        "tst lr, #4\n"
+        "ite eq\n"
+        "mrseq r0, msp\n"
+        "mrsne r0, psp\n"
+        "b HardFault_Capture\n");
+}
+
 /**
- * Reset entry point - the very first code the core runs. Copies the
+ * Reset entry point - the very first code the core runs. Enables the FPU, copies the
  * initialized-data image from FLASH into RAM, zeroes .bss, then hands off
  * to main(). No clock/peripheral bring-up here (SystemInit equivalent) -
  * that's genuinely chip-specific and deferred until real hardware exists,
@@ -81,6 +134,9 @@ const vector_entry g_vector_table[16 + PLACEHOLDER_IRQ_COUNT] = {
  */
 void Reset_Handler(void)
 {
+    SCB_CPACR |= (0xFu << 20); // full access to CP10 and CP11 (the FPU)
+    __asm volatile("dsb\n isb" ::: "memory");
+
     uint32_t *src = &_sidata;
     uint32_t *dst = &_sdata;
     while (dst < &_edata) {

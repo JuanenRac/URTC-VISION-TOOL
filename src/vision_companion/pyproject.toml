@@ -4,12 +4,15 @@
 # GPL-3.0 - see LICENSE
 # =============================================================================
 [build-system]
-requires = ["setuptools>=68"]
+# setuptools 77 is the first release that reads the SPDX `license` string below
+# (PEP 639); older ones refuse the file, which matters on machines that build
+# without network access or without build isolation.
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "vision-companion"
-version = "0.0.2"
+dynamic = ["version"]
 description = "Vision companion for URTC-VISION-TOOL - thermal (MLX9064x) + RGB dual-modal capture pipeline."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,10 +27,20 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "ruff>=0.6"]
 
 [project.scripts]
-vision-companion = "main:main"
+vision-companion = "vision_companion.cli:main"
 
 [tool.setuptools]
-py-modules = ["main", "alignment"]
+packages = ["vision_companion"]
+
+[tool.setuptools.dynamic]
+version = { attr = "vision_companion.__version__" }
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP"]

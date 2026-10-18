@@ -1,0 +1,13 @@
+# =============================================================================
+# URTC-VISION-TOOL - vision_companion version bounds: constraints.txt
+# Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
+# GPL-3.0 - see LICENSE
+# =============================================================================
+# Upper bounds for CI and for reproducible installs:
+#   pip install -r requirements.txt -c constraints.txt pytest ruff
+# A new major version of a dependency is tried on purpose, by raising a bound
+# here, and not by surprise in the middle of an unrelated change.
+numpy>=1.26,<3
+pillow>=10.0,<14
+pytest>=8,<10
+ruff>=0.6,<1

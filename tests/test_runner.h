@@ -28,5 +28,6 @@ void run_rate_limiter_tests(int *failures);
 void run_sensor_diagnostics_tests(int *failures);
 void run_vision_sensor_scenario_tests(int *failures);
 void run_robustness_tests(int *failures);
+void run_sensor_freshness_tests(int *failures);
 
 #endif // TEST_RUNNER_H

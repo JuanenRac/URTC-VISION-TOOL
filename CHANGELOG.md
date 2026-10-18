@@ -13,7 +13,7 @@ The firmware entries come first, then those of vision_companion. Every entry say
 
 ## Versioning scheme
 
-The firmware (`FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` in `src/firmware_common.h`) and vision_companion (`version` in `src/vision_companion/pyproject.toml`) are versioned independently: they are built, shipped and run on entirely different targets. Both follow the family's "odometer" rule:
+The firmware (`FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` in `src/firmware_common.h`) and vision_companion (`__version__` in `src/vision_companion/vision_companion/__init__.py`) are versioned independently: they are built, shipped and run on entirely different targets. Both follow the family's "odometer" rule:
 
 - the `PATCH` of the part that was built goes up by 1;
 - when `PATCH` would pass 9 it goes back to 0 and `MINOR` goes up by 1 (`0.0.9` becomes `0.1.0`, never `0.0.10`);
@@ -24,6 +24,32 @@ The firmware is bumped by every run of `build_firmware.sh` / `build_firmware.bat
 ---
 
 # Firmware
+
+## [0.1.0] - A repeated or frozen frame is not a new reading, and builds undo a failed version bump
+
+**Fixed**
+- **A repeated, older or frozen frame is no longer accepted as a new reading.** The sequence number and the sensor timestamp of a frame were decoded and never used: the same frame sent twice, an old frame arriving late, and a sensor re-sending its last buffer all looked like a healthy stream. `src/sensor_freshness.h`/`.c` judges a frame against the last accepted one of the sensor (the sequence must be newer, with 8-bit wrap-around; the timestamp must have advanced, with 32-bit wrap-around). A repeat is counted in `replay_count`, a sequence that advances over a frozen timestamp in `stale_count`. The baseline only moves for an accepted frame, so a refused frame never spends the window of the good one that follows.
+- **A payload of the wrong size is a malformed frame, not an impossible temperature:** it has its own counter (`malformed_payload_count`) instead of being counted as out of range.
+- **The "latency" was an inter-arrival time.** `last_latency_ms` measured the time between two accepted frames; it is now `last_interarrival_ms`, and the new `last_sensor_latency_ms` is the receive time minus the sensor timestamp (meaningful only when both clocks share an epoch, which the header says).
+- **The bytes of a parsed payload past its length are cleared.** A caller that reuses one frame variable no longer sees the tail of an earlier frame there.
+- **The firmware image carries its version.** `g_firmware_version_code` was `volatile` but unreferenced, and the linker discarded it (`--gc-sections`); it now sits in a dedicated section that the linker script keeps, right after the vector table.
+- **Start-up enables the FPU** before the first floating-point instruction (the image is built for the hard-float ABI), and a hard fault records the stacked registers and the fault status registers in RAM that survives a reset.
+- **The Windows build honours `URTC_CI`** and no longer raises the version in a validation build; both build scripts work from any directory.
+
+**Added**
+- `vision_sensor_link_tick()` and `sensor_diagnostics_check_silence()`: a silence longer than a timeout is counted once per silence as a disconnect, and the freshness baseline is forgotten then, because a sensor that went quiet may come back with its counters restarted.
+- The receive path takes the freshness state (`vision_sensor_link_process_frame()` has one more argument, and refuses when a state is missing); the order of the checks and the execution context (one context only, an interrupt only fills a ring buffer) are documented in `src/vision_sensor_link.h`.
+- A build that fails after the version was raised puts the version, the manifest and the changelog back; every module is compiled for the Cortex-M4F target and all of them are linked together as a check; CI runs the host tests with AddressSanitizer and UBSan, and a pull request from the same repository no longer runs the workflow twice.
+- `tests/test_project_consistency.py` fails when the host test sources of the two build scripts differ, when a module or a test file is missing from them, or when the README and manifest quote a stale number of assertions or pytest cases.
+- `hardware/README.md` says what is undecided; `CONTRIBUTING.md` lists the target and interfaces as planned and not confirmed.
+
+**Changed**
+- The READMEs (all eight languages) state that the integration with URTC is planned and undecided, that the companion has no transport code yet, and the real test counts.
+- `tools/build_test.py` selects the WSL distribution with `URTC_WSL_DISTRO`, says clearly when WSL or the ARM toolchain is missing, and also runs the pytest suite of the companion.
+- The 0.0.4 entry no longer reads as if its four unit test files added up to 65 assertions.
+
+**Verified**
+- The host tests (154 assertions) with AddressSanitizer and UBSan and conversion warnings, the compile of every module and the link of the image for Cortex-M4F with the version word and the hard fault handler checked in the output, the unit tests of the build tooling, and both build scripts run on throwaway copies (validation mode, a failing compile that restores the version, and a full release-mode build). No run on real hardware.
 
 ## [0.0.9] - Claims aligned with what has been tested
 
@@ -39,7 +65,7 @@ The firmware is bumped by every run of `build_firmware.sh` / `build_firmware.bat
 ## [0.0.7] - Firmware version boundaries and side-effect-free CI builds
 
 - The firmware version scripts keep their own three-component odometer (0.7.9 -> 0.8.0, 0.9.9 -> 1.0.0, 9.9.9 -> 10.0.0) and no longer hand over to the shared manifest utility, which broke the build at the boundary versions; the successor rule is now a pure function covered by boundary tests that run in CI and as a step of the build script.
-- CI builds (HYDRA_UMC_CI=1) publish firmware images under build/firmware instead of firmware/, so a validation build leaves the tracked images untouched.
+- CI builds (URTC_CI=1) publish firmware images under build/firmware instead of firmware/, so a validation build leaves the tracked images untouched.
 - Verified: unit tests and shell syntax checks only; the ARM firmware build itself was not run.
 
 ## [0.0.6] - A frame of another sensor is never taken for a temperature, and a bad frame does not use up the good one's window
@@ -77,7 +103,7 @@ The firmware is bumped by every run of `build_firmware.sh` / `build_firmware.bat
 - **`src/sensor_reading.h`/`.c`** - `sensor_reading_validate_thermal()` decodes a thermal payload and checks it against this project's v0 limits (-40.00 to 300.00 C, in hundredths), apart from the framing: a well-formed frame can still carry an impossible reading (an ADC glitch, a disconnected sensor reporting the rail voltage).
 - **`src/rate_limiter.h`/`.c`** - `rate_limiter_allow()` keeps a minimum interval between accepted frames, so a faulty or flooding sensor is throttled instead of trusted at whatever rate it sends.
 - **`src/sensor_diagnostics.h`/`.c`** - counters for field support (`frame_errors`, `out_of_range_count`, `rate_limited_count`, `disconnect_count`, `bus_reset_count`, `last_latency_ms`). They never decide anything; they only record what the other modules decided.
-- **`tests/`** - a small harness with no dependencies (`test_runner.h`, the convention of URTC-SMART-RACK), built with the host's C compiler and never with `arm-none-eabi-gcc`: 65 assertions in `test_sensor_frame.c` (19), `test_sensor_reading.c` (9), `test_rate_limiter.c` (6) and `test_sensor_diagnostics.c` (14), and `test_vision_sensor_scenarios.c` (17), a sensor simulator that plays valid, truncated, CRC-corrupted, out-of-range and too-fast frames and an explicit disconnection through the whole chain.
+- **`tests/`** - a small harness with no dependencies (`test_runner.h`, the convention of URTC-SMART-RACK), built with the host's C compiler and never with `arm-none-eabi-gcc`: 65 assertions: 48 in four unit test files (`test_sensor_frame.c` 19, `test_sensor_reading.c` 9, `test_rate_limiter.c` 6 and `test_sensor_diagnostics.c` 14) and 17 in `test_vision_sensor_scenarios.c`, a sensor simulator that plays valid, truncated, CRC-corrupted, out-of-range and too-fast frames and an explicit disconnection through the whole chain.
 - **`build_firmware.sh`/`.bat`** have a new step 2 that builds and runs the host tests before the version bump and the ARM cross-compile, and fail the whole build if one assertion fails.
 
 **Verified**
@@ -105,6 +131,27 @@ The firmware is bumped by every run of `build_firmware.sh` / `build_firmware.bat
 ---
 
 # vision_companion
+
+## vision_companion [0.0.3] - Package layout, invalid pixels, sensor variants and a command line that fails cleanly
+
+**Changed**
+- The code is a package, `src/vision_companion/vision_companion/` (`cli.py`, `alignment.py`), instead of the top-level modules `main` and `alignment`, which installed two generic module names into site-packages. `python -m vision_companion` runs it, the `vision-companion` script points to `vision_companion.cli:main`, and the version is defined once, in `vision_companion/__init__.py` (`pyproject.toml` reads it). `pyproject.toml` asks for setuptools 77 or newer, which the SPDX license string needs.
+- A degenerate region exits `2` with a one-line message instead of a traceback, the same code as a usage error; a region that reaches past the RGB frame is measured on the part inside it, with a warning on stderr. The exit codes are `0` ok, `1` no thermal data, `2` invalid usage or input.
+
+**Fixed**
+- **One NaN pixel no longer turns the statistics of a region into NaN.** Pixels that are not finite are left out of `min_c`/`max_c`/`mean_c`, are not counted in `pixel_count` and are reported in the new `invalid_pixel_count`; a region without a valid pixel is empty.
+- **A uniform frame is no longer drawn as the coldest pixel:** the false-color scale is never narrower than 1 degree, and pixels without a valid temperature are painted magenta instead of turning the whole image black.
+
+**Added**
+- `p95_c`, the 95th percentile of a region (a hot-spot figure that one spurious hot pixel cannot move), printed by `analyze-roi`.
+- `--variant 90640|90641|90642` on `selftest` and `analyze-roi` (32x24, 16x12 and 32x24 pixels), and `--range LOW HIGH` on `selftest` for a fixed false-color scale.
+- `constraints.txt` (upper bounds of the dependencies, used by CI), `ruff` in CI, and `tests/test_docs.py`, which checks that `docs/CLI_REFERENCE.md` names the current version, every command and option and the exit codes.
+
+**Verified**
+- 50 pytest cases (27 before) and `ruff check` pass; the CLI reference was rewritten from real runs of the command.
+
+**Version**
+- 0.0.2 to 0.0.3, bumped by hand (see the versioning scheme above).
 
 ## vision_companion [0.0.2] - An RGB region entirely outside the frame no longer reads as edge temperature
 

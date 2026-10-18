@@ -5,6 +5,6 @@
 # =============================================================================
 # Alternative to `pip install -e .` (pyproject.toml) for environments that
 # prefer a plain requirements file (e.g. `pip install -r requirements.txt`
-# then `python main.py`).
+# then `python -m vision_companion`).
 numpy>=1.26
 pillow>=10.0

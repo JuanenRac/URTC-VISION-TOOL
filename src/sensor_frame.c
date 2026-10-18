@@ -13,7 +13,7 @@ uint8_t sensor_frame_crc8(const uint8_t *data, uint8_t len)
         crc ^= data[i];
         for (uint8_t bit = 0; bit < 8u; bit++) {
             if (crc & 0x80u) {
-                crc = (uint8_t)((crc << 1) ^ 0x07u);
+                crc = (uint8_t)(((unsigned)crc << 1) ^ 0x07u);
             } else {
                 crc = (uint8_t)(crc << 1);
             }
@@ -63,6 +63,11 @@ sensor_frame_status_t sensor_frame_parse(const uint8_t *buf, uint8_t buf_len, se
     out_frame->len = len;
     for (uint8_t i = 0; i < len; i++) {
         out_frame->payload[i] = buf[9u + i];
+    }
+    // The bytes past `len` are not the sender's: clear them, so a caller that
+    // reuses one frame variable never sees the tail of an earlier frame there.
+    for (uint8_t i = len; i < SENSOR_FRAME_MAX_PAYLOAD; i++) {
+        out_frame->payload[i] = 0;
     }
     return SENSOR_FRAME_OK;
 }

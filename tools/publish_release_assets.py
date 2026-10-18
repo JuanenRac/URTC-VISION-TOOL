@@ -103,7 +103,7 @@ def collect_with_index(fw_dir: Path, with_elf: bool, problems: list[str]) -> lis
 def collect_single(fw_dir: Path, version: str, with_elf: bool, problems: list[str]) -> list[Path]:
     images = sorted(fw_dir.glob(f"URTC_*_FIRMWARE_v{version}.bin"))
     if not images:
-        problems.append(f"no URTC_*_FIRMWARE_v{version}.bin in {fw_dir} (run build_firmware.sh without HYDRA_UMC_CI)")
+        problems.append(f"no URTC_*_FIRMWARE_v{version}.bin in {fw_dir} (run build_firmware.sh without URTC_CI)")
         return []
     files: list[Path] = []
     for image in images:
@@ -127,7 +127,7 @@ def build_plan(root: Path, fw_dir: Path, with_elf: bool, repo: str | None) -> di
     name, version = project_info(root)
     problems: list[str] = []
     if not fw_dir.is_dir():
-        problems.append(f"{fw_dir} does not exist (run build_firmware.sh without HYDRA_UMC_CI)")
+        problems.append(f"{fw_dir} does not exist (run build_firmware.sh without URTC_CI)")
         files: list[Path] = []
     elif (fw_dir / "firmware_manifest.json").is_file():
         files = collect_with_index(fw_dir, with_elf, problems)

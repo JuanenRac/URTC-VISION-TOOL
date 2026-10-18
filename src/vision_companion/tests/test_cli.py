@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 from PIL import Image
 
-import main
+from vision_companion import cli as main
+from vision_companion import __version__
 
 
 def test_generate_synthetic_thermal_frame_shape_and_range() -> None:
@@ -76,7 +77,7 @@ def test_cmd_version_prints_version(capsys: pytest.CaptureFixture[str]) -> None:
     exit_code = main.cmd_version(argparse_namespace())
     captured = capsys.readouterr()
     assert exit_code == 0
-    assert main.__version__ in captured.out
+    assert __version__ in captured.out
 
 
 def test_cmd_selftest_writes_real_output_files(tmp_path) -> None:

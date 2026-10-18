@@ -14,6 +14,7 @@
 
 #include "../src/rate_limiter.h"
 #include "../src/sensor_diagnostics.h"
+#include "../src/sensor_freshness.h"
 #include "../src/sensor_frame.h"
 #include "../src/sensor_reading.h"
 #include "../src/vision_sensor_link.h"
@@ -32,6 +33,15 @@ static void null_guards(int *failures)
     sensor_diagnostics_note_disconnect(NULL);
     sensor_diagnostics_note_bus_reset(NULL);
     sensor_diagnostics_note_accepted_frame(NULL, 5);
+    sensor_diagnostics_note_malformed_payload(NULL);
+    sensor_diagnostics_note_replay(NULL);
+    sensor_diagnostics_note_stale(NULL);
+    sensor_diagnostics_note_sensor_latency(NULL, 5, 1);
+    TEST_ASSERT(sensor_diagnostics_check_silence(NULL, 5, 1) == false, "a missing diagnostics state reports no silence");
+    sensor_freshness_init(NULL);
+    sensor_freshness_commit(NULL, 1, 1);
+    sensor_freshness_reset(NULL);
+    TEST_ASSERT(sensor_freshness_check(NULL, 1, 1) == SENSOR_REPLAYED, "a missing freshness state fails closed");
     TEST_ASSERT(1, "diagnostics calls with a null state do nothing and do not crash");
 
     sensor_frame_t frame;
@@ -154,9 +164,9 @@ static void clock_wraparound(int *failures)
     sensor_diagnostics_t diag;
     sensor_diagnostics_init(&diag);
     sensor_diagnostics_note_accepted_frame(&diag, 0xFFFFFFFEu);
-    TEST_ASSERT(diag.last_latency_ms == 0, "the first accepted frame has no latency");
+    TEST_ASSERT(diag.last_interarrival_ms == 0, "the first accepted frame has no interval");
     sensor_diagnostics_note_accepted_frame(&diag, 8);
-    TEST_ASSERT(diag.last_latency_ms == 10, "latency across the counter wrap is the real elapsed time");
+    TEST_ASSERT(diag.last_interarrival_ms == 10, "the interval across the counter wrap is the real elapsed time");
 
     sensor_diagnostics_note_bus_reset(&diag);
     sensor_diagnostics_note_bus_reset(&diag);
@@ -166,32 +176,101 @@ static void clock_wraparound(int *failures)
 static void link_end_to_end(int *failures)
 {
     rate_limiter_t rl;
+    sensor_freshness_t fresh;
     sensor_diagnostics_t diag;
     sensor_thermal_reading_t reading;
     rate_limiter_init(&rl, 100);
+    sensor_freshness_init(&fresh);
     sensor_diagnostics_init(&diag);
 
     uint8_t payload[2] = { 0x10, 0x27 }; // 100.00 degrees
     uint8_t buf[SENSOR_FRAME_MAX_SIZE];
     uint8_t n = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 5, payload, 2, buf);
 
-    TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, NULL, 0, 0, &reading) == false && diag.disconnect_count == 1, "a missing buffer counts as a disconnect");
-    TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, n, 1000, &reading) && reading.temp_centidegrees_c == 10000, "a good frame is accepted and decoded");
-    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &diag, buf, n, 1050, &reading) && diag.rate_limited_count == 1, "the next frame 50 ms later is throttled and counted");
+    TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, NULL, 0, 0, &reading) == false && diag.disconnect_count == 1, "a missing buffer counts as a disconnect");
+    TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 1000, &reading) && reading.temp_centidegrees_c == 10000, "a good frame is accepted and decoded");
+    n = sensor_frame_encode(SENSOR_ID_THERMAL, 2, 6, payload, 2, buf);
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 1050, &reading) && diag.rate_limited_count == 1, "the next frame 50 ms later is throttled and counted");
 
     uint8_t bad_value[2] = { 0xFF, 0x7F };
     n = sensor_frame_encode(SENSOR_ID_THERMAL, 2, 6, bad_value, 2, buf);
-    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &diag, buf, n, 2000, &reading) && diag.out_of_range_count == 1, "an impossible temperature is counted as out of range");
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 2000, &reading) && diag.out_of_range_count == 1, "an impossible temperature is counted as out of range");
     n = sensor_frame_encode(SENSOR_ID_THERMAL, 3, 7, payload, 2, buf);
-    TEST_ASSERT(vision_sensor_link_process_frame(&rl, &diag, buf, n, 2000, &reading), "a refused reading did not use up the rate window");
+    TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 2000, &reading), "a refused reading did not use up the rate window");
 
     n = sensor_frame_encode(SENSOR_ID_RGB_TRIGGER, 4, 8, payload, 2, buf);
-    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &diag, buf, n, 9000, &reading) && diag.unsupported_sensor_count == 1, "a frame from another sensor is counted apart and never read as a temperature");
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 9000, &reading) && diag.unsupported_sensor_count == 1, "a frame from another sensor is counted apart and never read as a temperature");
     n = sensor_frame_encode(0x77, 5, 9, payload, 2, buf);
-    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &diag, buf, n, 9000, &reading) && diag.unsupported_sensor_count == 2, "an unknown sensor id is counted apart too");
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 9000, &reading) && diag.unsupported_sensor_count == 2, "an unknown sensor id is counted apart too");
 
     buf[3] ^= 1;
-    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &diag, buf, n, 9100, &reading) && diag.frame_errors == 1, "a corrupted frame is counted as a frame error");
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 9100, &reading) && diag.frame_errors == 1, "a corrupted frame is counted as a frame error");
+
+    TEST_ASSERT(!vision_sensor_link_process_frame(NULL, &fresh, &diag, buf, n, 9100, &reading), "without a rate limiter the link refuses");
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, NULL, &diag, buf, n, 9100, &reading), "without a freshness state the link refuses");
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, NULL, buf, n, 9100, &reading), "without diagnostics the link refuses");
+}
+
+static void freshness_and_silence(int *failures)
+{
+    rate_limiter_t rl;
+    sensor_freshness_t fresh;
+    sensor_diagnostics_t diag;
+    sensor_thermal_reading_t reading;
+    rate_limiter_init(&rl, 10);
+    sensor_freshness_init(&fresh);
+    sensor_diagnostics_init(&diag);
+    uint8_t payload[2] = { 0xD0, 0x07 }; // 20.00 degrees
+    uint8_t buf[SENSOR_FRAME_MAX_SIZE];
+
+    uint8_t n = sensor_frame_encode(SENSOR_ID_THERMAL, 5, 1000, payload, 2, buf);
+    TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 1003, &reading), "the first frame is accepted");
+    TEST_ASSERT(diag.last_sensor_latency_ms == 3, "the delay between the sensor timestamp and the arrival is recorded");
+
+    // The same frame again (a sensor re-sending its last buffer) is a replay, and says so; it is not mistaken for a rate-limited frame.
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 1500, &reading) && diag.replay_count == 1 && diag.rate_limited_count == 0, "a repeated frame is a replay, not a new reading");
+
+    // An older frame that arrives late is refused too.
+    n = sensor_frame_encode(SENSOR_ID_THERMAL, 4, 990, payload, 2, buf);
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 1600, &reading) && diag.replay_count == 2, "a reordered older frame is refused");
+
+    // A sequence that advances over a frozen timestamp is a stale sensor.
+    n = sensor_frame_encode(SENSOR_ID_THERMAL, 6, 1000, payload, 2, buf);
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 1700, &reading) && diag.stale_count == 1, "a frame whose timestamp did not advance is stale");
+
+    // The refused frames did not move the baseline: the next genuine frame is accepted.
+    n = sensor_frame_encode(SENSOR_ID_THERMAL, 6, 1100, payload, 2, buf);
+    TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 1800, &reading), "a genuinely newer frame is accepted after the refused ones");
+    TEST_ASSERT(diag.last_interarrival_ms == 797, "the inter-arrival time is measured between accepted frames only");
+
+    // 8-bit sequence wrap-around and 32-bit timestamp wrap-around count as forward progress.
+    sensor_freshness_t wrap;
+    sensor_freshness_init(&wrap);
+    sensor_freshness_commit(&wrap, 255, 0xFFFFFFF0u);
+    TEST_ASSERT(sensor_freshness_check(&wrap, 0, 5) == SENSOR_FRESH, "255 -> 0 and a wrapped millisecond counter are forward progress");
+    TEST_ASSERT(sensor_freshness_check(&wrap, 255, 5) == SENSOR_REPLAYED, "the same sequence is a replay");
+    TEST_ASSERT(sensor_freshness_check(&wrap, 127, 5) == SENSOR_REPLAYED, "a step of 128 reads as going backwards");
+    TEST_ASSERT(sensor_freshness_check(&wrap, 126, 5) == SENSOR_FRESH, "a step of 127 is the furthest forward jump");
+    TEST_ASSERT(sensor_freshness_check(&wrap, 0, 0xFFFFFFF0u) == SENSOR_STALE, "an unchanged timestamp is stale");
+
+    // A payload of the wrong size is a malformed frame, not an impossible temperature.
+    uint8_t three[3] = { 1, 2, 3 };
+    n = sensor_frame_encode(SENSOR_ID_THERMAL, 7, 1200, three, 3, buf);
+    TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 1900, &reading) && diag.malformed_payload_count == 1 && diag.out_of_range_count == 0, "a payload of the wrong length is counted as malformed");
+
+    // Silence: reported once, forgets the freshness baseline, and a frame ends it.
+    TEST_ASSERT(!vision_sensor_link_tick(&fresh, &diag, 2000, 1000), "200 ms after the last accepted frame there is no silence yet");
+    TEST_ASSERT(vision_sensor_link_tick(&fresh, &diag, 2800, 1000), "1000 ms without an accepted frame is a silence");
+    TEST_ASSERT(!vision_sensor_link_tick(&fresh, &diag, 3000, 1000) && diag.disconnect_count == 1, "the same silence is not counted twice");
+    TEST_ASSERT(!fresh.has_last, "after a silence the freshness baseline is forgotten (the sensor may have restarted its counters)");
+    n = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 5, payload, 2, buf);
+    TEST_ASSERT(vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 3100, &reading), "a sensor that restarted its counters is accepted again");
+    TEST_ASSERT(!diag.silent, "an accepted frame ends the silence");
+    TEST_ASSERT(vision_sensor_link_tick(&fresh, &diag, 4200, 1000) && diag.disconnect_count == 2, "a later silence is a new event");
+
+    sensor_diagnostics_t fresh_diag;
+    sensor_diagnostics_init(&fresh_diag);
+    TEST_ASSERT(!sensor_diagnostics_check_silence(&fresh_diag, 99999, 1), "a link that never delivered a frame has no silence to report");
 }
 
 void run_robustness_tests(int *failures)
@@ -202,4 +281,5 @@ void run_robustness_tests(int *failures)
     reading_range_edges(failures);
     clock_wraparound(failures);
     link_end_to_end(failures);
+    freshness_and_silence(failures);
 }
