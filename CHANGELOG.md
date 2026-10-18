@@ -25,6 +25,11 @@ The firmware is bumped by every run of `build_firmware.sh` / `build_firmware.bat
 
 # Firmware
 
+## [0.0.9] - Claims aligned with what has been tested
+
+- Maturity is functional: nothing here has been verified on real hardware yet.
+- The README (all eight languages) renames the sensor protocol safety feature to range checks and says that they are pure C tested on a PC only, never run on a board or with a real sensor, and not a safety function.
+
 ## [0.0.8] - Firmware published only as release assets
 
 - Firmware binaries (bin, elf, hex) are no longer versioned in git; they are published only as assets of the GitHub release of each version. build_firmware.sh and build_firmware.bat write them to firmware/ (git-ignored) in release mode and to build/firmware in CI mode.
