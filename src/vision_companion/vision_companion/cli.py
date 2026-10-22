@@ -155,7 +155,7 @@ def thermal_to_false_color(
     # neighbor upscale keeps the real per-pixel readings visually distinct
     # instead of a smooth blur implying precision the sensor doesn't have.
     image = Image.fromarray(rgb, mode="RGB")
-    return image.resize((width * 16, height * 16), resample=Image.NEAREST)
+    return image.resize((width * 16, height * 16), resample=Image.Resampling.NEAREST)
 
 
 def cmd_version(_args: argparse.Namespace) -> int:
