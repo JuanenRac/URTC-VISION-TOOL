@@ -18,12 +18,12 @@ codes.
 
 ```
 $ vision-companion -h
-usage: vision-companion [-h] {version,selftest,analyze-roi} ...
+usage: vision-companion [-h] {version,selftest,analyze-roi,inspect,drift-check,rack-check} ...
 
 URTC-VISION-TOOL vision companion - thermal+RGB capture/processing pipeline.
 
 positional arguments:
-  {version,selftest,analyze-roi}
+  {version,selftest,analyze-roi,inspect,drift-check,rack-check}
     version             Print the companion's version and exit.
     selftest            Run the full synthetic thermal+RGB pipeline end-to-end
                         and save its output (no hardware needed).
@@ -201,6 +201,42 @@ $ echo $?
 2
 ```
 
+### `inspect PLAN [--frame FILE] [--variant VARIANT] [--calibration FILE] [--out FILE] [--task NAME] [--source-id ID] [--timestamp-ms MS] [--export-jsonl FILE] [--opcua-nodes FILE] [--datalake URL] [--token-env NAME]`
+
+Judges each component of a plan by the temperature rule of its kind: a joint that stayed cold after reflow, a part that runs too
+hot. `PLAN` is a JSON file (`src/vision_companion/vision_companion/inspection.py` describes it): a `profile` with a rule per kind
+of component (`expected_c` with `tolerance_c`, `min_c`, `max_c`, `min_rise_c`, `max_rise_c`; the rises are measured from the
+ambient, which is the profile's `ambient_c` or the median of the frame) and the list of `components`, each with a `ref`, a `kind`,
+a region `roi` in RGB pixels and optionally a `task`. The frame is a saved `.npy` (`--frame`) or the synthetic one. The verdict of
+a component is `ok`, `cold`, `hot` or `no_data` (a region without thermal data is never ok); the overall result is `pass`, `fail` or
+`incomplete`. It measures the temperature of the surface the camera sees, not of the junction inside a package.
+
+`--out` writes the full report as JSON. The same measurements can be exported as a time series, per task: `--export-jsonl` (one
+sample per line), `--opcua-nodes` (a map of node paths such as `URTC/Vision/<task>/<ref>/<statistic>` to values, for a gateway that
+publishes OPC-UA; this tool runs no OPC-UA server) and `--datalake URL` (POST of each sample to the `/ingest` endpoint of the
+HYDRA-UMC datalake, with the bearer token taken from the environment variable named by `--token-env`, never printed). A sample is
+`{sourceId, kind, timestamp, fields}` with the fields `<ref>.min_c`, `.max_c`, `.mean_c` and `.p95_c`; `--timestamp-ms` defaults to now.
+
+Exit codes: `0` pass, `1` incomplete (some region has no data), `2` bad plan or input or a failed export, `3` at least one component failed.
+
+### `drift-check BASELINE [--frames FILE] [--variant VARIANT] [--update] [--ambient C] [--offset-tolerance C] [--pixel-tolerance C] [--suggest-calibration FILE]`
+
+Checks the sensor against a reference scene: a wall at a stable temperature that fills the field of view. `--frames` is a `.npy` of
+at least four frames, `(count, height, width)` (without it, synthetic frames). With `--update` the frames become the baseline
+(`BASELINE`, a JSON file with the mean of every pixel, the ambient and the dead pixels); without it the frames are compared with the
+baseline and the command reports the common offset shift, the worst pixel after removing it, the pixels that died and the ones that
+work again. Dead pixels are those that never read a number, never change while the others do, read far from the level of the wall or
+are too noisy. `--offset-tolerance` and `--pixel-tolerance` say what counts as drift. `--suggest-calibration FILE` writes a
+calibration file (the format of `--calibration`) that brings the new frames back to the baseline.
+
+Exit codes: `0` nothing found, `2` unreadable frames or baseline, `3` drift or dead pixels found.
+
+### `rack-check STATE [--frame FILE] [--variant VARIANT] [--calibration FILE] [--ambient C] [--out FILE]`
+
+Judges the tips of the tool rack from a thermal frame. `STATE` is a JSON file with `elapsed_ms` (the time since the targets were set) and, for each slot, its `slot` number, the `roi` where its tip is in the RGB image, `occupied` and `target_c`. The temperature of a slot is the hottest valid pixel of its region; the ambient is `--ambient` or the median of the frame. The verdict of a slot is `reached`, `heating`, `not_reached` (still short after a minute), `overshoot` (25 C above the target), `idle_ok` or `still_hot` (told to stay cold), `empty_ok` or `heater_in_empty_slot`, or `unknown` when the region has no reading. The rules are those of `slot_verify.c` of URTC-SMART-RACK and of the rack model of URTC-COMMON, and a shared set of cases checks the three; the limits are estimates for a soldering tip. The command only reports: it never sends anything to the rack.
+
+Exit codes: `0` no fault, `2` unreadable state or frame, `3` at least one slot has a fault (`not_reached`, `overshoot`, `still_hot`, `heater_in_empty_slot`).
+
 ## Calibration file
 
 `--calibration FILE` (on `selftest` and `analyze-roi`) applies a correction to
@@ -230,4 +266,5 @@ The code is in `src/vision_companion/vision_companion/calibration.py`.
 |------|---------|
 | `0` | ok |
 | `1` | no thermal data: the requested region does not overlap the thermal field of view, or holds no valid pixel |
+| `3` | `inspect`: at least one component failed its rule; `drift-check`: drift or dead pixels were found; `rack-check`: a slot has a fault |
 | `2` | invalid usage or input: a missing subcommand, a bad argument type or value, a degenerate region, an empty `--range`, a `--calibration` file that cannot be read or is not valid |

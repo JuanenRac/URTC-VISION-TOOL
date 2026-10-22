@@ -44,3 +44,13 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# long help texts, messages and explanatory comments of the inspection, export and sensor-check commands
+"vision_companion/cli.py" = ["E501"]
+"vision_companion/export.py" = ["E501"]
+"vision_companion/inspection.py" = ["E501"]
+"vision_companion/sensor_drift.py" = ["E501"]
+"tests/test_inspection.py" = ["E501"]
+"tests/test_rack_check.py" = ["E501"]
+"vision_companion/rack_check.py" = ["E501"]

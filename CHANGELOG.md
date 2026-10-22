@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **`inspect`**: judges each component of a plan (regions found in the RGB image) by the temperature rule of its kind (expected value with tolerance, minimum, maximum, rise over the ambient): cold joints, parts that run hot, regions without data are never ok. The report can be written as JSON.
+- **Series export of the regions**: the minimum, maximum, mean and 95th percentile of every region and task as samples for the HYDRA-UMC datalake (`--datalake URL`, the token read from an environment variable and never printed), as JSON lines (`--export-jsonl`) or as a map of OPC-UA node values (`--opcua-nodes`).
+- **`drift-check`**: compares frames of a reference scene with a stored baseline (dead pixels, stuck or noisy pixels, offset drift) and can write a calibration file that the other commands accept (`--suggest-calibration`).
+- **`rack-check`**: judges the tips of the tool rack from a thermal frame (reached, too slow, overshoot, a heater on in an empty slot), with the rules of URTC-SMART-RACK checked against shared cases.
+- The false colour of this program is checked against the shared vectors of URTC-COMMON within one level. Exit code 3 means a finding. New tests cover the plan, the verdicts, the export (also against a local server), the drift and the commands; the lint and the type check are clean.
+- The README lists URTC-GATEWAY, the new gateway in front of the CAN bus, among the related projects.
+
 ## [0.1.2] - The thermal tool on the URTC bus, a calibration file and a Windows build
 
 - `tools/ci_validate.py` fails when a versioned file has the name of a Windows path (a colon, the character a file system uses to store one, or a first folder named like a drive or a user profile): a path handed to WSL without translation once put build output inside a repository. The same check (`tools/_tracked_names.py`) is in every URTC repository.

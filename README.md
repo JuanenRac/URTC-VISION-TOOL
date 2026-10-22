@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 154 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `cli.py`) is likewise real and backed by 75 passing pytest cases, and CI runs that suite too (its own step installs `src/vision_companion/requirements.txt` and runs `pytest tests/` there), so a regression in either half fails the build. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
+**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 154 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `cli.py`) is likewise real and backed by 106 passing pytest cases, and CI runs that suite too (its own step installs `src/vision_companion/requirements.txt` and runs `pytest tests/` there), so a regression in either half fails the build. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
 
 ---
 
@@ -46,7 +46,7 @@ No PCB/schematic exists for this board yet (see `hardware/`), so nothing below c
 * 📡 **URTC integration** — decided: this head is a URTC tool head and reuses URTC's thermal inspection tool (tool profile 22, MLX90640/90641/90642) and its CAN messages `0x250`-`0x255` (trigger, status, raw and calibrated pixel chunks, documented in URTC's `docs/CANBUS.TXT`) instead of a second protocol. The host side of that exchange is real and tested without hardware (`urtc_thermal.py`, with a simulated head); the head's firmware, a CAN transceiver and a populated board do not exist yet, so none of it has run on a bus. *(The sensor-side frame protocol of this repository, below, is a separate host-tested building block; it does not carry the thermal image.)*
 * 🔒 **Sensor Protocol Range Checks** — versioned framing with a CRC8 checksum, measurement-range validation, rate limiting, frame freshness checks (sequence and timestamp), and dedicated error/latency/bus-reset diagnostics counters. *(implemented as pure C and tested on a PC only; never run on a board or with a real sensor, and not a safety function)*
 * ✅ **Cortex-M4F firmware toolchain** — a real bare-metal image that cross-compiles and links with `arm-none-eabi-gcc`, same toolchain as sibling repos URTC and URTC-SMART-RACK. *(implemented — see BUILD below)*
-* ✅ **`vision_companion` processing pipeline** — a real, working Python package: synthetic thermal+RGB frame generation, false-color thermal rendering, RGB->thermal ROI alignment + temperature-stats extraction, stats reporting, all covered by 75 real pytest cases, runs end-to-end with no hardware attached. *(implemented — see VISION COMPANION below)*
+* ✅ **`vision_companion` processing pipeline** — a real, working Python package: synthetic thermal+RGB frame generation, false-color thermal rendering, RGB->thermal ROI alignment + temperature-stats extraction, stats reporting, all covered by 106 real pytest cases, runs end-to-end with no hardware attached. *(implemented — see VISION COMPANION below)*
 
 ---
 
@@ -100,7 +100,7 @@ URTC-VISION-TOOL/
 │       │   ├── cli.py              # Real, working CLI (version / selftest / analyze-roi)
 │       │   ├── alignment.py        # Real: RGB<->thermal ROI mapping + temperature-stats extraction
 │       │   └── calibration.py      # Real: thermal calibration (gain, offsets, dead pixels) loaded from JSON
-│       ├── tests/                  # 75 real pytest cases (cli.py + alignment.py)
+│       ├── tests/                  # 106 real pytest cases (cli.py + alignment.py)
 │       └── README.md               # Companion-specific usage docs
 ├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios, freshness, robustness)
 ├── docs/                           # Command line reference (CLI_REFERENCE.md)
@@ -174,7 +174,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-75 real pytest cases cover both `cli.py` and `alignment.py`:
+106 real pytest cases cover both `cli.py` and `alignment.py`:
 
 ```bash
 pip install -e ".[dev]"
@@ -190,6 +190,8 @@ See `src/vision_companion/README.md` for the full companion documentation, and [
 See [`CHANGELOG.md`](CHANGELOG.md) for the full version history — firmware and `vision_companion` are versioned independently (see BUILD and VISION COMPANION above), and each real change gets its own entry there.
 
 ---
+
+**Thermal inspection by region, series export, sensor drift and rack check (host-tested only):** `inspect` judges each component of a plan by the temperature rule of its kind and can export the minimum, maximum and mean of every region as samples for the HYDRA-UMC datalake, as JSON lines or as OPC-UA node values; `drift-check` compares frames of a reference scene with a baseline (dead pixels, offset drift) and can write a calibration file; `rack-check` judges the tips of the tool rack from a thermal frame. See [the CLI reference](docs/CLI_REFERENCE.md). Run on synthetic frames only; no camera or board has been used.
 
 ## 🔗 Related Projects
 
@@ -228,6 +230,7 @@ This project is part of the HYDRA-UMC robotics ecosystem by the same author (Jua
 
 *URTC Tool Platform*
 - **[URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER)** — desktop GUI flashing tool for URTC boards, CAN-OTA plus full-chip SWD/JTAG.
+- **[URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY)** — a gateway in front of the CAN bus that lets only listed identifiers through, limits their rate and asks for a session key.
 - **[URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO)** — browser-based alternative to URTC-TESTER via the Web Serial API, no local install needed.
 
 *Vision AI Node (Hailo-8)*

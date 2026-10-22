@@ -27,12 +27,15 @@ import numpy as np
 from PIL import Image
 
 from . import __version__
+from . import export as export_module
+from . import inspection, rack_check, sensor_drift
 from .alignment import BoundingBox, analyze_rgb_roi
 from .calibration import Calibration, CalibrationError, load_calibration
 
 EXIT_OK = 0
 EXIT_NO_DATA = 1
 EXIT_BAD_INPUT = 2
+EXIT_FINDINGS = 3   # the inspection failed, or the sensor check found drift or dead pixels
 
 # Thermal sensor variants of the MLX9064x family and their native resolution
 # (width, height). The default is the MLX90640, the one this tool head targets.
@@ -261,6 +264,111 @@ def cmd_analyze_roi(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _load_frames(path: str | None, variant_shape: tuple[int, int], count: int = 1) -> np.ndarray:
+    """A saved frame (or a stack of frames) from a .npy file, or the synthetic frame when no file is given."""
+    if path:
+        try:
+            return np.load(path)
+        except (OSError, ValueError) as error:
+            raise CalibrationError(f"cannot read the frames: {error}") from error
+    width, height = variant_shape
+    return generate_synthetic_thermal_frame(width, height)
+
+
+def cmd_inspect(args: argparse.Namespace) -> int:
+    """Judge every component of a plan by the temperature rule of its kind, from a saved frame or the synthetic one."""
+    import json
+    import time
+    try:
+        plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
+        profile, components = inspection.plan_from_dict(plan)
+        thermal = _load_frames(args.frame, _variant_shape(args))
+        if thermal.ndim != 2:
+            raise CalibrationError("--frame must hold one (height, width) frame")
+        calibration = _load_cal(args)
+        if calibration is not None:
+            thermal = calibration.apply(thermal)
+    except (OSError, ValueError, CalibrationError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    report = inspection.inspect(thermal, components, profile, RGB_WIDTH, RGB_HEIGHT)
+    document = inspection.report_to_dict(report)
+    print(f"inspection '{report.profile}': {report.overall} (ambient {report.ambient_c:.1f}C)")
+    for result in report.results:
+        print(f"  {result.ref} ({result.kind}): {result.verdict}" + (" - " + "; ".join(result.reasons) if result.reasons else ""))
+    if args.out:
+        Path(args.out).write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+        print(f"  -> {args.out}")
+    samples = export_module.samples_from_report(report, args.timestamp_ms or int(time.time() * 1000), args.source_id, args.task)
+    try:
+        if args.export_jsonl:
+            Path(args.export_jsonl).write_text(export_module.to_jsonl(samples), encoding="utf-8")
+            print(f"  -> {args.export_jsonl} ({len(samples)} sample(s))")
+        if args.opcua_nodes:
+            Path(args.opcua_nodes).write_text(json.dumps(export_module.opcua_nodes(samples), indent=2) + "\n", encoding="utf-8")
+            print(f"  -> {args.opcua_nodes}")
+        if args.datalake:
+            accepted = export_module.post_samples(args.datalake, samples, args.token_env)
+            print(f"  -> datalake accepted {accepted} sample(s)")
+    except export_module.ExportError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    if report.overall == inspection.FAIL:
+        return EXIT_FINDINGS
+    return EXIT_NO_DATA if report.overall == inspection.INCOMPLETE else EXIT_OK
+
+
+def cmd_drift_check(args: argparse.Namespace) -> int:
+    """Compare frames of the reference scene with a stored baseline (or store the baseline with --update)."""
+    import json
+    try:
+        frames = np.load(args.frames) if args.frames else sensor_drift.synthetic_reference(*_variant_shape(args))
+        if args.update:
+            baseline = sensor_drift.make_baseline(frames, args.ambient)
+            Path(args.baseline).write_text(json.dumps(baseline.to_dict()) + "\n", encoding="utf-8")
+            print(f"baseline written to {args.baseline}: {baseline.width}x{baseline.height}, ambient {baseline.ambient_c:.2f}C, {len(baseline.dead_pixels)} dead pixel(s)")
+            return EXIT_OK
+        baseline = sensor_drift.load_baseline(args.baseline)
+        report = sensor_drift.compare(baseline, frames, args.offset_tolerance, args.pixel_tolerance)
+        if args.suggest_calibration:
+            Path(args.suggest_calibration).write_text(json.dumps(sensor_drift.suggest_calibration(baseline, frames), indent=2) + "\n", encoding="utf-8")
+            print(f"  -> calibration suggested in {args.suggest_calibration}")
+    except (OSError, ValueError, sensor_drift.DriftError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    print(f"sensor check: {report.verdict} ({report.frames} frame(s))")
+    print(f"  common offset shift {report.offset_shift_c:+.2f}C, worst pixel {report.worst_pixel_shift_c:.2f}C after removing it")
+    if report.new_dead_pixels:
+        print("  new dead pixels: " + ", ".join(f"({x},{y})" for x, y in report.new_dead_pixels))
+    if report.recovered_pixels:
+        print("  pixels working again: " + ", ".join(f"({x},{y})" for x, y in report.recovered_pixels))
+    return EXIT_OK if report.verdict == sensor_drift.OK else EXIT_FINDINGS
+
+
+def cmd_rack_check(args: argparse.Namespace) -> int:
+    """Judge the tips of the tool rack by the temperature a thermal frame shows in each slot (see rack_check.py)."""
+    import json
+    try:
+        state = rack_check.load_state(args.state)
+        thermal = _load_frames(args.frame, _variant_shape(args))
+        if thermal.ndim != 2:
+            raise CalibrationError("--frame must hold one (height, width) frame")
+        calibration = _load_cal(args)
+        if calibration is not None:
+            thermal = calibration.apply(thermal)
+        results = rack_check.check_rack(thermal, state, RGB_WIDTH, RGB_HEIGHT, args.ambient)
+    except (OSError, ValueError, CalibrationError, rack_check.RackCheckError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    for r in results:
+        shown = "no reading" if r.measured_c is None else f"{r.measured_c:.1f}C"
+        print(f"slot {r.slot}: {'occupied' if r.occupied else 'empty'}, ordered {r.commanded_c}C, read {shown}: {r.verdict}" + (" FAULT" if r.is_fault else ""))
+    if args.out:
+        Path(args.out).write_text(json.dumps(rack_check.results_to_dict(results, args.ambient), indent=2) + "\n", encoding="utf-8")
+        print(f"  -> {args.out}")
+    return EXIT_FINDINGS if any(r.is_fault for r in results) else EXIT_OK
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="vision-companion",
@@ -305,6 +413,51 @@ def build_parser() -> argparse.ArgumentParser:
     analyze_roi.add_argument("--variant", choices=sorted(THERMAL_VARIANTS), default=DEFAULT_VARIANT, help=variant_help)
     analyze_roi.add_argument("--calibration", metavar="FILE", help=calibration_help)
     analyze_roi.set_defaults(func=cmd_analyze_roi)
+
+    inspect_cmd = subparsers.add_parser(
+        "inspect",
+        help="Judge each component of a plan (regions found in the RGB image) by the temperature rule of its kind: cold joints, "
+             "parts that run hot. Optionally export the min/max/mean of every region as a time series.",
+    )
+    inspect_cmd.add_argument("plan", help="JSON plan: a profile of rules and the list of components with their regions")
+    inspect_cmd.add_argument("--frame", metavar="FILE", help="a thermal frame saved as .npy (default: the synthetic frame)")
+    inspect_cmd.add_argument("--variant", choices=sorted(THERMAL_VARIANTS), default=DEFAULT_VARIANT, help=variant_help)
+    inspect_cmd.add_argument("--calibration", metavar="FILE", help=calibration_help)
+    inspect_cmd.add_argument("--out", metavar="FILE", help="write the full report as JSON")
+    inspect_cmd.add_argument("--task", default="", help="name of the run, for the components that have no task of their own")
+    inspect_cmd.add_argument("--source-id", default=export_module.DEFAULT_SOURCE, help="source id of the exported samples (default: %(default)s)")
+    inspect_cmd.add_argument("--timestamp-ms", type=int, default=0, help="Unix time in milliseconds of the samples (default: now)")
+    inspect_cmd.add_argument("--export-jsonl", metavar="FILE", help="write the samples, one JSON object per line")
+    inspect_cmd.add_argument("--opcua-nodes", metavar="FILE", help="write a map of OPC-UA node paths to values")
+    inspect_cmd.add_argument("--datalake", metavar="URL", help="POST the samples to the HYDRA-UMC datalake at this address")
+    inspect_cmd.add_argument("--token-env", default="HYDRA_UMC_DATALAKE_INGEST_TOKEN", help="environment variable that holds the datalake token (default: %(default)s)")
+    inspect_cmd.set_defaults(func=cmd_inspect)
+
+    drift_cmd = subparsers.add_parser(
+        "drift-check",
+        help="Compare frames of a reference scene (a uniform wall) with a stored baseline: dead pixels and offset drift.",
+    )
+    drift_cmd.add_argument("baseline", help="the baseline JSON file")
+    drift_cmd.add_argument("--frames", metavar="FILE", help="at least 4 frames of the reference scene as .npy, (count, height, width) (default: synthetic frames)")
+    drift_cmd.add_argument("--variant", choices=sorted(THERMAL_VARIANTS), default=DEFAULT_VARIANT, help=variant_help)
+    drift_cmd.add_argument("--update", action="store_true", help="store these frames as the new baseline instead of comparing")
+    drift_cmd.add_argument("--ambient", type=float, default=None, help="room temperature in C when the baseline is stored (default: the median of the frames)")
+    drift_cmd.add_argument("--offset-tolerance", type=float, default=0.5, metavar="C", help="common shift that counts as drift (default: %(default)s)")
+    drift_cmd.add_argument("--pixel-tolerance", type=float, default=1.0, metavar="C", help="shift of one pixel, beyond the common one, that counts as drift (default: %(default)s)")
+    drift_cmd.add_argument("--suggest-calibration", metavar="FILE", help="write a calibration file that brings the new frames back to the baseline")
+    drift_cmd.set_defaults(func=cmd_drift_check)
+
+    rack_cmd = subparsers.add_parser(
+        "rack-check",
+        help="Judge the tips of the tool rack from a thermal frame: reached, too slow, too hot, a heater on in an empty slot.",
+    )
+    rack_cmd.add_argument("state", help="JSON state of the rack: elapsed_ms and, for each slot, its region in the RGB image, occupied and target_c")
+    rack_cmd.add_argument("--frame", metavar="FILE", help="a thermal frame saved as .npy (default: the synthetic frame)")
+    rack_cmd.add_argument("--variant", choices=sorted(THERMAL_VARIANTS), default=DEFAULT_VARIANT, help=variant_help)
+    rack_cmd.add_argument("--calibration", metavar="FILE", help=calibration_help)
+    rack_cmd.add_argument("--ambient", type=float, default=None, help="room temperature in C (default: the median of the frame)")
+    rack_cmd.add_argument("--out", metavar="FILE", help="write the verdicts as JSON")
+    rack_cmd.set_defaults(func=cmd_rack_check)
 
     return parser
 

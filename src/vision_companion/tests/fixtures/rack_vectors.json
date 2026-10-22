@@ -1,0 +1,455 @@
+{
+  "format": 1,
+  "about": "Frames, command checks, CAN data, link scenarios and thermal slot checks of the tool rack; the rack firmware and the simulator both pass them.",
+  "frames": [
+    {
+      "name": "set 200 C on the soldering iron",
+      "seq": 1,
+      "cmd": 1,
+      "payload": "00C800",
+      "frame": "A50101010300C80065"
+    },
+    {
+      "name": "set 0 on the hot air nozzle",
+      "seq": 255,
+      "cmd": 1,
+      "payload": "130000",
+      "frame": "A501FF0103130000B9"
+    },
+    {
+      "name": "unknown command, empty",
+      "seq": 7,
+      "cmd": 126,
+      "payload": "",
+      "frame": "A501077E006A"
+    },
+    {
+      "name": "full payload",
+      "seq": 9,
+      "cmd": 1,
+      "payload": "000102030405060708090A0B0C0D0E0F",
+      "frame": "A501090110000102030405060708090A0B0C0D0E0FEF"
+    }
+  ],
+  "parse": [
+    {
+      "name": "good frame",
+      "hex": "A50103010300FA00E4",
+      "status": "ok"
+    },
+    {
+      "name": "short",
+      "hex": "A501030103",
+      "status": "incomplete"
+    },
+    {
+      "name": "frame cut after the header",
+      "hex": "A50103010300FA",
+      "status": "incomplete"
+    },
+    {
+      "name": "wrong start byte",
+      "hex": "5A0103010300FA00E4",
+      "status": "bad_sof"
+    },
+    {
+      "name": "version 2",
+      "hex": "A50203010300FA00E4",
+      "status": "unsupported_version"
+    },
+    {
+      "name": "length 17",
+      "hex": "A50103011100FA00E4",
+      "status": "length_out_of_range"
+    },
+    {
+      "name": "bad crc",
+      "hex": "A50103010300FA001B",
+      "status": "crc_mismatch"
+    }
+  ],
+  "validate": [
+    {
+      "name": "soldering 250",
+      "payload": "00FA00",
+      "status": "ok",
+      "tool": 0,
+      "target": 250
+    },
+    {
+      "name": "soldering 400",
+      "payload": "009001",
+      "status": "ok",
+      "tool": 0,
+      "target": 400
+    },
+    {
+      "name": "soldering 401",
+      "payload": "009101",
+      "status": "temp_out_of_range",
+      "tool": null,
+      "target": null
+    },
+    {
+      "name": "printer 310",
+      "payload": "0A3601",
+      "status": "ok",
+      "tool": 10,
+      "target": 310
+    },
+    {
+      "name": "printer 311",
+      "payload": "0A3701",
+      "status": "temp_out_of_range",
+      "tool": null,
+      "target": null
+    },
+    {
+      "name": "hot air 400",
+      "payload": "139001",
+      "status": "ok",
+      "tool": 19,
+      "target": 400
+    },
+    {
+      "name": "gripper 0 (no heater, target 0)",
+      "payload": "060000",
+      "status": "ok",
+      "tool": 6,
+      "target": 0
+    },
+    {
+      "name": "gripper 100",
+      "payload": "066400",
+      "status": "tool_not_heatable",
+      "tool": null,
+      "target": null
+    },
+    {
+      "name": "no tool (31)",
+      "payload": "1F0000",
+      "status": "tool_id_absent",
+      "tool": null,
+      "target": null
+    },
+    {
+      "name": "tool 25",
+      "payload": "190000",
+      "status": "tool_id_invalid",
+      "tool": null,
+      "target": null
+    },
+    {
+      "name": "tool byte 32",
+      "payload": "200000",
+      "status": "tool_id_invalid",
+      "tool": null,
+      "target": null
+    },
+    {
+      "name": "two bytes",
+      "payload": "0001",
+      "status": "wrong_payload_len",
+      "tool": null,
+      "target": null
+    },
+    {
+      "name": "four bytes",
+      "payload": "00010000",
+      "status": "wrong_payload_len",
+      "tool": null,
+      "target": null
+    },
+    {
+      "name": "empty",
+      "payload": "",
+      "status": "wrong_payload_len",
+      "tool": null,
+      "target": null
+    }
+  ],
+  "can": [
+    {
+      "name": "soldering 250",
+      "id": 608,
+      "seq": 4,
+      "tool": 0,
+      "target": 250,
+      "data": "0000FA0400000000"
+    },
+    {
+      "name": "hot air 350",
+      "id": 608,
+      "seq": 200,
+      "tool": 19,
+      "target": 350,
+      "data": "13015EC800000000"
+    },
+    {
+      "name": "off",
+      "id": 608,
+      "seq": 0,
+      "tool": 5,
+      "target": 0,
+      "data": "0500000000000000"
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "apply, retransmit, stale, new",
+      "steps": [
+        {
+          "time_ms": 0,
+          "frame": "A5010A010300C80051",
+          "action": "set_target",
+          "tool": 0,
+          "temp": 200,
+          "ack": 1
+        },
+        {
+          "time_ms": 20,
+          "frame": "A5010A010300C80051",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 1
+        },
+        {
+          "time_ms": 40,
+          "frame": "A50109010300FA00F9",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 1
+        },
+        {
+          "time_ms": 60,
+          "frame": "A5010B010300FA00AB",
+          "action": "set_target",
+          "tool": 0,
+          "temp": 250,
+          "ack": 1
+        }
+      ]
+    },
+    {
+      "name": "refused command sends the tool to the safe state",
+      "steps": [
+        {
+          "time_ms": 0,
+          "frame": "A50101010300C80065",
+          "action": "set_target",
+          "tool": 0,
+          "temp": 200,
+          "ack": 1
+        },
+        {
+          "time_ms": 10,
+          "frame": "A50102010300F4011C",
+          "action": "safe_state",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0
+        },
+        {
+          "time_ms": 20,
+          "frame": "A50102010300C8001E",
+          "action": "set_target",
+          "tool": 0,
+          "temp": 200,
+          "ack": 1
+        }
+      ]
+    },
+    {
+      "name": "silence resets the sequences",
+      "steps": [
+        {
+          "time_ms": 0,
+          "frame": "A501320103132C01B4",
+          "action": "set_target",
+          "tool": 19,
+          "temp": 300,
+          "ack": 1
+        },
+        {
+          "time_ms": 100,
+          "frame": "A501320103132C01B4",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 1
+        },
+        {
+          "time_ms": 1000,
+          "frame": "A501320103132C01B4",
+          "action": "set_target",
+          "tool": 19,
+          "temp": 300,
+          "ack": 1
+        }
+      ]
+    },
+    {
+      "name": "noise changes nothing",
+      "steps": [
+        {
+          "time_ms": 0,
+          "frame": "A50101010300C80065",
+          "action": "set_target",
+          "tool": 0,
+          "temp": 200,
+          "ack": 1
+        },
+        {
+          "time_ms": 10,
+          "frame": "A50102",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0
+        },
+        {
+          "time_ms": 20,
+          "frame": "A501027E00AA",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0
+        },
+        {
+          "time_ms": 30,
+          "frame": "A501010103066400FC",
+          "action": "safe_state",
+          "tool": 6,
+          "temp": 0,
+          "ack": 0
+        }
+      ]
+    }
+  ],
+  "verify": [
+    {
+      "name": "no reading",
+      "occupied": true,
+      "commanded_c": 200,
+      "measured_c": null,
+      "ambient_c": 24.0,
+      "elapsed_ms": 0,
+      "verdict": "unknown"
+    },
+    {
+      "name": "empty and cold",
+      "occupied": false,
+      "commanded_c": 0,
+      "measured_c": 25.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 0,
+      "verdict": "empty_ok"
+    },
+    {
+      "name": "empty with a heater on",
+      "occupied": false,
+      "commanded_c": 0,
+      "measured_c": 80.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 0,
+      "verdict": "heater_in_empty_slot"
+    },
+    {
+      "name": "empty, a little warm",
+      "occupied": false,
+      "commanded_c": 0,
+      "measured_c": 60.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 0,
+      "verdict": "empty_ok"
+    },
+    {
+      "name": "idle and cool",
+      "occupied": true,
+      "commanded_c": 0,
+      "measured_c": 30.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 0,
+      "verdict": "idle_ok"
+    },
+    {
+      "name": "idle and still hot",
+      "occupied": true,
+      "commanded_c": 0,
+      "measured_c": 120.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 0,
+      "verdict": "still_hot"
+    },
+    {
+      "name": "heating, early",
+      "occupied": true,
+      "commanded_c": 300,
+      "measured_c": 150.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 5000,
+      "verdict": "heating"
+    },
+    {
+      "name": "heating, too slow",
+      "occupied": true,
+      "commanded_c": 300,
+      "measured_c": 150.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 60000,
+      "verdict": "not_reached"
+    },
+    {
+      "name": "reached",
+      "occupied": true,
+      "commanded_c": 300,
+      "measured_c": 290.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 20000,
+      "verdict": "reached"
+    },
+    {
+      "name": "reached, just inside",
+      "occupied": true,
+      "commanded_c": 300,
+      "measured_c": 285.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 20000,
+      "verdict": "reached"
+    },
+    {
+      "name": "just outside, early",
+      "occupied": true,
+      "commanded_c": 300,
+      "measured_c": 284.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 59999,
+      "verdict": "heating"
+    },
+    {
+      "name": "overshoot",
+      "occupied": true,
+      "commanded_c": 300,
+      "measured_c": 330.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 90000,
+      "verdict": "overshoot"
+    },
+    {
+      "name": "overshoot edge",
+      "occupied": true,
+      "commanded_c": 300,
+      "measured_c": 325.0,
+      "ambient_c": 24.0,
+      "elapsed_ms": 90000,
+      "verdict": "reached"
+    }
+  ],
+  "limits": {
+    "ceiling_c": 400,
+    "link_timeout_ms": 250,
+    "printer_c": 310
+  }
+}
