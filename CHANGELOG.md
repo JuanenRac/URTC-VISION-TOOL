@@ -130,7 +130,9 @@ All notable changes to this project are documented here.
 
 # vision_companion
 
-## vision_companion [0.0.3] - Package layout, invalid pixels, sensor variants and a command line that fails cleanly
+## Earlier history
+
+### vision_companion [0.0.3] - Package layout, invalid pixels, sensor variants and a command line that fails cleanly
 
 **Changed**
 - The code is a package, `src/vision_companion/vision_companion/` (`cli.py`, `alignment.py`), instead of the top-level modules `main` and `alignment`, which installed two generic module names into site-packages. `python -m vision_companion` runs it, the `vision-companion` script points to `vision_companion.cli:main`, and the version is defined once, in `vision_companion/__init__.py` (`pyproject.toml` reads it). `pyproject.toml` asks for setuptools 77 or newer, which the SPDX license string needs.
@@ -151,7 +153,7 @@ All notable changes to this project are documented here.
 **Version**
 - 0.0.2 to 0.0.3, bumped by hand (see the versioning scheme above).
 
-## vision_companion [0.0.2] - An RGB region entirely outside the frame no longer reads as edge temperature
+### vision_companion [0.0.2] - An RGB region entirely outside the frame no longer reads as edge temperature
 
 **Fixed**
 - `rgb_roi_to_thermal_roi()` clamped any projected box into the bounds of the thermal frame, whether it overlapped it or not. A detection box entirely outside the RGB frame (or projecting where the thermal sensor sees nothing) still came back as a narrow box at the nearest thermal edge, so `analyze_rgb_roi()` returned that edge pixel's temperature as if it were a reading of the requested, non-existent region.
@@ -163,7 +165,7 @@ All notable changes to this project are documented here.
 **Version**
 - 0.0.1 to 0.0.2, bumped by hand (see the versioning scheme above).
 
-## vision_companion [0.0.1] - RGB-to-thermal region alignment and temperature statistics
+### vision_companion [0.0.1] - RGB-to-thermal region alignment and temperature statistics
 
 **Added**
 - `src/vision_companion/alignment.py` - the "Eye-in-Hand Alignment" of the README, made real: `rgb_roi_to_thermal_roi()` rescales a box detected in RGB pixels to the much lower native resolution of the thermal sensor (it assumes a shared field of view: a per-pixel homography needs real cameras to calibrate against), clamped and widened so it never collapses to zero size; `extract_roi_stats()` takes the minimum, maximum and mean temperature of a region of a thermal frame; `analyze_rgb_roi()` chains both into the path a real component detection will drive.
@@ -177,7 +179,7 @@ All notable changes to this project are documented here.
 **Not done on purpose**
 - The dual-modal capture (RGB camera plus MLX9064x over I2C) and a per-pixel calibration between the two sensors: both need a real PCB and real cameras.
 
-## vision_companion [0.0.0] - Initial command line
+### vision_companion [0.0.0] - Initial command line
 
 **Added**
 - `src/vision_companion/main.py` - a working command line (`version`, `selftest`). `selftest` makes a synthetic MLX9064x-shaped thermal frame and an RGB colour-bar test pattern, renders the thermal frame in false colour, saves every output as a file and prints statistics: it runs from end to end with no hardware.
