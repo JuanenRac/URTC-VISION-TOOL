@@ -17,7 +17,8 @@ What is decided so far, all of it provisional:
 - the thermal sensor is an MLX9064x: 32x24 pixels for the MLX90640 and MLX90642, 16x12 for the
   MLX90641 (the companion handles both shapes);
 - the RGB camera and its interface are not chosen;
-- how the thermal data reaches a host (the CAN messages of URTC's thermal inspection tool, or
-  this project's own sensor frame) is undecided.
+- the thermal data reaches a host through the CAN messages of URTC's thermal inspection tool (tool
+  profile 22, identifiers `0x250`-`0x255`, see URTC's `docs/CANBUS.TXT`); this head does not define a
+  second protocol for the image.
 
 Nothing in `src/` has ever read a real sensor or driven a real pin.

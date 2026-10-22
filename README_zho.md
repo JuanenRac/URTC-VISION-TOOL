@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**诚实核查 - 今天真正能运行的部分：** 固件侧的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）是真实的纯 C 代码，有 154 个通过的 `TEST_ASSERT` 检查（`tests/test_*.c`，用主机自身的 C 编译器编译并运行），并且本仓库的 CI 确实会运行它们：`.github/workflows/ci.yml` 的固件步骤调用 `build_firmware.sh`，其第 2 步总是在进行 STM32 构建之前编译并运行 `tests/`。主机侧的 `vision_companion` 包（`alignment.py`、`cli.py`）同样是真实的，有 62 个通过的 pytest 用例，CI 也会运行这套测试（专门的步骤安装 `src/vision_companion/requirements.txt` 并在该目录运行 `pytest tests/`），因此任何一半出现回归都会导致构建失败。正如 README 开头所说：这块板卡还没有 PCB/原理图，因此这里的任何东西都从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只证明 Cortex-M4F 的交叉编译和链接在占位链接脚本下能够成功。已发布的内容请参见 `CHANGELOG.md`。
+**诚实核查 - 今天真正能运行的部分：** 固件侧的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）是真实的纯 C 代码，有 154 个通过的 `TEST_ASSERT` 检查（`tests/test_*.c`，用主机自身的 C 编译器编译并运行），并且本仓库的 CI 确实会运行它们：`.github/workflows/ci.yml` 的固件步骤调用 `build_firmware.sh`，其第 2 步总是在进行 STM32 构建之前编译并运行 `tests/`。主机侧的 `vision_companion` 包（`alignment.py`、`cli.py`）同样是真实的，有 75 个通过的 pytest 用例，CI 也会运行这套测试（专门的步骤安装 `src/vision_companion/requirements.txt` 并在该目录运行 `pytest tests/`），因此任何一半出现回归都会导致构建失败。正如 README 开头所说：这块板卡还没有 PCB/原理图，因此这里的任何东西都从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只证明 Cortex-M4F 的交叉编译和链接在占位链接脚本下能够成功。已发布的内容请参见 `CHANGELOG.md`。
 
 ---
 
@@ -50,10 +50,10 @@
 * 🔬 **双模态感知** —— 同步的热成像与 RGB 图像捕获。*（两路帧所馈送的处理流水线是真实的——见下文；真正的同步捕获需要 PCB 和传感器。）*
 * 🌡️ **高精度热成像** —— 集成 MLX90640/41/42 传感器支持。*（伪彩色渲染和按区域统计提取是真实的——见下文；通过 I2C 读取真实的 MLX9064x 需要 PCB。）*
 * 🎯 **Eye-in-Hand 对位** —— 亚毫米级 PnP 与 AOI（自动光学检测）。*（RGB->热成像 ROI 坐标映射与温度统计提取是真实的并已测试——见下文的 `vision_companion/alignment.py`；亚毫米级精度需要真实的已标定摄像头。）*
-* 📡 **与 URTC 的集成（计划中）** —— 该刀头在 URTC 的 25 种工具目录中尚无工具 ID，也没有 CAN 标识符；URTC 已有一个带有自己 CAN 消息的热成像检测工具（ID 22，MLX90640），本刀头走哪条路线尚未决定。*（传感器侧的线缆协议本身——帧格式、CRC、范围校验——是真实的，见下文；仍需要真实的 CAN 收发器来实际承载它。）*
+* 📡 **与 URTC 的集成** —— 已决定：该刀头是 URTC 的工具头，复用 URTC 的热成像检测工具（工具配置 22，MLX90640/90641/90642）及其 CAN 消息 `0x250`-`0x255`（触发、状态、原始与校准后的像素块，记录在 URTC 的 `docs/CANBUS.TXT` 中），而不是另起第二套协议。该交换的主机端是真实的，并已在没有硬件的情况下测试（`urtc_thermal.py`，带模拟刀头）；刀头固件、CAN 收发器和已装配的电路板都还不存在，因此这些都没有在总线上运行过。*（本仓库的传感器侧帧协议（见下文）是单独的、在主机上测试过的组件，不承载热成像图像。）*
 * 🔒 **传感器协议范围检查** —— 版本化帧格式，带 CRC8 校验和，测量范围校验，速率限制，帧新鲜度检查（序列号与时间戳），以及独立于控制决策的专用错误/延迟/总线复位诊断计数器。*（以纯 C 实现，仅在 PC 上测试过；从未在板卡上或配合真实传感器运行过，也不是安全功能）*
 * ✅ **Cortex-M4F 固件工具链** —— 一个真实的裸机镜像，使用与兄弟仓库 URTC 和 URTC-SMART-RACK 相同的工具链，通过 `arm-none-eabi-gcc` 交叉编译并链接。*（已实现——见下方"构建"）*
-* ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 62 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方"VISION COMPANION"）*
+* ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 75 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方"VISION COMPANION"）*
 
 ---
 
@@ -76,9 +76,9 @@ flowchart LR
 
 * **为什么本项目拥有 2 条独立的版本跟踪线。** `src/firmware_common.h`（STM32 端固件）和 `src/vision_companion/vision_companion/__init__.py`（独立的主机端 Python 包）分别独立进行版本管理——它们运行在不同的硬件上（MCU 与主机 CM5/PC），并按不同的发布节奏交付。
 * **为什么它不是 URTC 自身的子项目。** 与 URTC-SMART-RACK 自身 README 中的理由相同——它是一个共享 URTC 固件惯例的配套工具，而非其集成层级结构的一部分。
-* **为什么需要一个主机端配套软件包。** 热成像/RGB 双模态捕获需要真正的图像处理（numpy/Pillow），而这不适合直接运行在 STM32 上——该配套软件包正是执行这些处理的地方。它目前还没有传输代码：真实帧如何到达它（像 URTC 的热成像检测工具那样走 CAN，还是其他链路）属于上文尚未决定的集成问题。
+* **为什么需要一个主机端配套软件包。** 热成像/RGB 双模态捕获需要真正的图像处理（numpy/Pillow），而这不适合直接运行在 STM32 上——该配套软件包正是执行这些处理的地方。它自己没有总线访问，但会说 URTC 的热成像检测消息（`urtc_thermal.py`）：构造请求，把 16 像素的块重新拼成图像，并把消息交给承载总线的东西。
 * **为什么 `alignment.py` 假设两个传感器共享同一视场，而非使用真实单应变换。** 两个传感器安装在同一个刚性工具头上，因此在 RGB 空间与热成像空间之间对像素坐标做逐轴线性缩放是合理的 v0 近似——真正的逐像素标定（棋盘格、镜头畸变）需要真实摄像头才能进行，而这些目前还不存在。
-* **这如何融入生态系统的其余部分。** 属于 URTC 自身的工具生态系统（其 CAN 集成尚未决定，见上文），并与 HYDRA-UMC-DETECTION-HEF 自然搭配，承担与 URTC-SMART-RACK 相同的视觉识别角色。
+* **这如何融入生态系统的其余部分。** 属于 URTC 自身的工具生态系统（复用 URTC 的热成像检测工具及其 CAN 消息，见上文），并与 HYDRA-UMC-DETECTION-HEF 自然搭配，承担与 URTC-SMART-RACK 相同的视觉识别角色。
 * **为什么传感器帧协议携带自己的时间戳字段。** 真实的传感器端毫秒级时间戳让调用方知道一次读数*实际上是何时*采集的，而与 MCU 何时才能解析该帧无关——这是历史记录/诊断方面真实的价值，若只是简单地假设“刚刚到达”则会丢失这一价值。
 * **为什么诊断计数器（`sensor_diagnostics.c`）自身从不做出接受/拒绝的决策。** 只有 `sensor_frame.c`（帧格式）、`sensor_reading.c`（范围）和 `rate_limiter.c`（速率限制）决定一帧数据是否可信——诊断模块只记录它们的决策结果。严格保持这一边界意味着诊断模块中的 bug 永远不可能意外放行错误数据，这正是诊断笔记自身所说的"separar diagnostico de salida de control"。
 
@@ -107,7 +107,7 @@ URTC-VISION-TOOL/
 │       │   ├── cli.py              # 真实可用的 CLI（版本/自检/analyze-roi）
 │       │   ├── alignment.py        # 真实：RGB<->热成像 ROI 映射 + 温度统计提取
 │       │   └── calibration.py      # 真实：从 JSON 加载的热校准（增益、偏移、坏点）
-│       ├── tests/                  # 62 个真实 pytest 用例（cli.py + alignment.py）
+│       ├── tests/                  # 75 个真实 pytest 用例（cli.py + alignment.py）
 │       └── README.md               # 配套软件专属使用文档
 ├── tests/                          # 真实的主机原生固件测试套件（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、传感器场景、新鲜度、健壮性）
 ├── docs/                           # 命令行参考（CLI_REFERENCE.md）
@@ -195,7 +195,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-62 个真实 pytest 用例覆盖了 `cli.py` 和 `alignment.py`：
+75 个真实 pytest 用例覆盖了 `cli.py` 和 `alignment.py`：
 
 ```bash
 pip install -e ".[dev]"

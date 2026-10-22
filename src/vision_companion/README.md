@@ -5,12 +5,13 @@ thermal (MLX9064x) + RGB tool head. Part of the [URTC-VISION-TOOL](../../README.
 project - see the repo root README for the full project context.
 
 There is no real PCB for this tool head yet (see [`../../hardware/README.md`](../../hardware/README.md)),
-so real sensor capture isn't implemented, and the companion has no transport code (how real
-frames reach it is still undecided). What's real and fully working today is the processing
+so real sensor capture isn't implemented. The companion has no bus access of its own, but it speaks the
+CAN messages of URTC's thermal inspection tool (`urtc_thermal.py`, identifiers `0x250`-`0x255`): it builds
+the requests and puts the 16-pixel chunks back together, and a simulated head answers them in the tests. What's real and fully working today is the processing
 pipeline those captures will feed: synthetic thermal/RGB frame generation, false-color thermal
 rendering, real RGB->thermal ROI alignment and stats extraction (`alignment.py`; invalid pixels
 are left out and counted), thermal sensors of 32x24 and 16x12 pixels, and stats reporting - runs
-end-to-end with no hardware attached, verified by 62 real pytest cases.
+end-to-end with no hardware attached, verified by 75 real pytest cases.
 
 ## Layout
 
@@ -22,7 +23,8 @@ src/vision_companion/
 │   ├── __init__.py           # __version__, defined once
 │   ├── __main__.py           # python -m vision_companion
 │   ├── cli.py                # the command line (version / selftest / analyze-roi)
-│   └── alignment.py          # ROI mapping and temperature statistics
+│   ├── alignment.py          # ROI mapping and temperature statistics
+│   └── urtc_thermal.py       # the CAN messages of URTC's thermal inspection tool (host side) and a simulated head
 └── tests/                    # pytest
 ```
 
@@ -76,7 +78,7 @@ pytest
 ruff check .
 ```
 
-62 real pytest cases: `tests/test_cli.py` (synthetic frame generation, false-color rendering,
+75 real pytest cases: `tests/test_cli.py` (synthetic frame generation, false-color rendering,
 CLI commands), `tests/test_alignment.py` (ROI coordinate mapping, out-of-bounds/degenerate-input
 guards including a ROI with no real overlap with the thermal frame at all, ROI stats
 extraction), `tests/test_robustness.py` (invalid pixels, sensor variants, degenerate input,
