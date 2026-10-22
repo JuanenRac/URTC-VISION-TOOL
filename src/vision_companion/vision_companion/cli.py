@@ -28,6 +28,7 @@ from PIL import Image
 
 from . import __version__
 from .alignment import BoundingBox, analyze_rgb_roi
+from .calibration import Calibration, CalibrationError, load_calibration
 
 EXIT_OK = 0
 EXIT_NO_DATA = 1
@@ -167,6 +168,11 @@ def _variant_shape(args: argparse.Namespace) -> tuple[int, int]:
     return THERMAL_VARIANTS[getattr(args, "variant", DEFAULT_VARIANT)]
 
 
+def _load_cal(args: argparse.Namespace) -> Calibration | None:
+    path = getattr(args, "calibration", None)
+    return load_calibration(path) if path else None
+
+
 def cmd_selftest(args: argparse.Namespace) -> int:
     """Runs the full synthetic pipeline end-to-end - generates a thermal
     frame + an RGB frame, renders/saves both, and prints stats. Exercises
@@ -177,11 +183,23 @@ def cmd_selftest(args: argparse.Namespace) -> int:
         print(f"error: --range needs HIGH greater than LOW, got {value_range[0]} {value_range[1]}", file=sys.stderr)
         return EXIT_BAD_INPUT
 
+    try:
+        calibration = _load_cal(args)
+    except CalibrationError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
 
     width, height = _variant_shape(args)
     thermal = generate_synthetic_thermal_frame(width, height)
+    if calibration is not None:
+        try:
+            thermal = calibration.apply(thermal)
+        except CalibrationError as error:
+            print(f"error: {error}", file=sys.stderr)
+            return EXIT_BAD_INPUT
     rgb = generate_synthetic_rgb_frame()
 
     thermal_npy_path = out_dir / "thermal_frame.npy"
@@ -219,6 +237,13 @@ def cmd_analyze_roi(args: argparse.Namespace) -> int:
 
     width, height = _variant_shape(args)
     thermal = generate_synthetic_thermal_frame(width, height)
+    try:
+        calibration = _load_cal(args)
+        if calibration is not None:
+            thermal = calibration.apply(thermal)
+    except CalibrationError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_BAD_INPUT
     stats = analyze_rgb_roi(thermal, roi, rgb_width=RGB_WIDTH, rgb_height=RGB_HEIGHT)
 
     print(f"RGB ROI ({roi.x0},{roi.y0})-({roi.x1},{roi.y1}) in a {RGB_WIDTH}x{RGB_HEIGHT} frame")
@@ -247,6 +272,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     variant_help = "Thermal sensor variant: 90640 and 90642 are 32x24, 90641 is 16x12 (default: %(default)s)"
 
+    calibration_help = (
+        "JSON file with a gain, an offset, per-pixel offsets and dead pixels "
+        "applied to the thermal frame"
+    )
+
     selftest = subparsers.add_parser(
         "selftest",
         help="Run the full synthetic thermal+RGB pipeline end-to-end and save its output (no hardware needed).",
@@ -260,6 +290,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--range", nargs=2, type=float, metavar=("LOW", "HIGH"),
         help="Fixed false-color scale in degrees C instead of the frame's own min/max",
     )
+    selftest.add_argument("--calibration", metavar="FILE", help=calibration_help)
     selftest.set_defaults(func=cmd_selftest)
 
     analyze_roi = subparsers.add_parser(
@@ -272,6 +303,7 @@ def build_parser() -> argparse.ArgumentParser:
     analyze_roi.add_argument("x1", type=int, help=f"ROI right edge, in RGB pixels (0-{RGB_WIDTH})")
     analyze_roi.add_argument("y1", type=int, help=f"ROI bottom edge, in RGB pixels (0-{RGB_HEIGHT})")
     analyze_roi.add_argument("--variant", choices=sorted(THERMAL_VARIANTS), default=DEFAULT_VARIANT, help=variant_help)
+    analyze_roi.add_argument("--calibration", metavar="FILE", help=calibration_help)
     analyze_roi.set_defaults(func=cmd_analyze_roi)
 
     return parser

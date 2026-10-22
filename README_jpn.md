@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C で、154 件の `TEST_ASSERT` チェック（`tests/test_*.c`、ホストの C コンパイラでコンパイル・実行）がすべて通過しており、このリポジトリの CI が実際に実行しています：`.github/workflows/ci.yml` のファームウェアステップが `build_firmware.sh` を呼び出し、そのステップ 2 が STM32 ビルドの前に必ず `tests/` をコンパイル・実行します。ホスト側の `vision_companion` パッケージ（`alignment.py`、`cli.py`）も本物で、50 件の pytest ケースがすべて通過しており、CI はこのスイートも実行します（専用ステップが `src/vision_companion/requirements.txt` をインストールし、そこで `pytest tests/` を実行）。したがって、どちらの側の退行もビルドを失敗させます。README の冒頭にある通り、このボードの PCB／回路図はまだ存在しないため、ここにあるものは本物の MLX9064x センサーや RGB カメラを読んだことも、本物の CAN トランシーバーを駆動したこともありません——`main.c`/`startup_stm32_minimal.c` は、仮のリンカースクリプトで Cortex-M4F のクロスコンパイルとリンクが成功することを示すだけです。何がリリースされたかは `CHANGELOG.md` を参照してください。
+**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C で、154 件の `TEST_ASSERT` チェック（`tests/test_*.c`、ホストの C コンパイラでコンパイル・実行）がすべて通過しており、このリポジトリの CI が実際に実行しています：`.github/workflows/ci.yml` のファームウェアステップが `build_firmware.sh` を呼び出し、そのステップ 2 が STM32 ビルドの前に必ず `tests/` をコンパイル・実行します。ホスト側の `vision_companion` パッケージ（`alignment.py`、`cli.py`）も本物で、62 件の pytest ケースがすべて通過しており、CI はこのスイートも実行します（専用ステップが `src/vision_companion/requirements.txt` をインストールし、そこで `pytest tests/` を実行）。したがって、どちらの側の退行もビルドを失敗させます。README の冒頭にある通り、このボードの PCB／回路図はまだ存在しないため、ここにあるものは本物の MLX9064x センサーや RGB カメラを読んだことも、本物の CAN トランシーバーを駆動したこともありません——`main.c`/`startup_stm32_minimal.c` は、仮のリンカースクリプトで Cortex-M4F のクロスコンパイルとリンクが成功することを示すだけです。何がリリースされたかは `CHANGELOG.md` を参照してください。
 
 ---
 
@@ -54,7 +54,7 @@ RGB グローバルシャッターカメラと MLX9064x ファミリーの熱セ
 * 📡 **URTC との統合（計画中）** — このヘッドにはまだ URTC の 25 種類の工具カタログ内の工具 ID も CAN 識別子もありません。URTC にはすでに独自の CAN メッセージを持つ熱画像検査ツール（ID 22、MLX90640）があり、このヘッドがどちらの方式をとるかは未決定です。*（センサー側のワイヤープロトコル自体——フレーミング、CRC、範囲検証——は本物です。下記参照。それを実際に伝送する実際の CAN トランシーバーはまだ必要です。）*
 * 🔒 **センサープロトコルの範囲チェック** — バージョン管理されたフレーミング、CRC8 チェックサム、測定範囲検証、レート制限、フレームの鮮度チェック（シーケンスとタイムスタンプ）、そして制御判断とは独立した専用のエラー/レイテンシ/バスリセット診断カウンター。*（純粋な C として実装され、PC 上でのみテスト済みです。ボードや実際のセンサーで動作したことはなく、安全機能でもありません）*
 * ✅ **Cortex-M4F ファームウェアツールチェーン** — 兄弟リポジトリ URTC と URTC-SMART-RACK と同じツールチェーンを用いて、`arm-none-eabi-gcc` でクロスコンパイルおよびリンクされる実際のベアメタルイメージ。*（実装済み——下記の「ビルド」を参照）*
-* ✅ **`vision_companion` 処理パイプライン** — 実際に動作する Python パッケージ：合成された熱画像+RGB フレーム生成、疑似カラー熱画像レンダリング、RGB->熱画像 ROI アライメント + 温度統計抽出、統計レポート、50 件の実際の pytest ケースでカバー、ハードウェア接続なしでエンドツーエンドに実行可能。*（実装済み——下記の「VISION COMPANION」を参照）*
+* ✅ **`vision_companion` 処理パイプライン** — 実際に動作する Python パッケージ：合成された熱画像+RGB フレーム生成、疑似カラー熱画像レンダリング、RGB->熱画像 ROI アライメント + 温度統計抽出、統計レポート、62 件の実際の pytest ケースでカバー、ハードウェア接続なしでエンドツーエンドに実行可能。*（実装済み——下記の「VISION COMPANION」を参照）*
 
 ---
 
@@ -106,8 +106,9 @@ URTC-VISION-TOOL/
 │       ├── vision_companion/
 │       │   ├── __init__.py         # コンパニオンのバージョン（1 か所だけで定義）
 │       │   ├── cli.py              # 実際に動作する CLI（バージョン/自己診断/analyze-roi）
-│       │   └── alignment.py        # 本物：RGB<->熱画像 ROI マッピング + 温度統計抽出
-│       ├── tests/                  # 50 件の実際の pytest ケース（cli.py + alignment.py）
+│       │   ├── alignment.py        # 本物：RGB<->熱画像 ROI マッピング + 温度統計抽出
+│       │   └── calibration.py      # 実装済み: JSON から読み込む熱キャリブレーション（ゲイン、オフセット、不良ピクセル）
+│       ├── tests/                  # 62 件の実際の pytest ケース（cli.py + alignment.py）
 │       └── README.md               # コンパニオン専用の使用方法ドキュメント
 ├── tests/                          # 実際のホストネイティブなファームウェアテストハーネス（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、センサーシナリオ、鮮度、堅牢性）
 ├── docs/                           # コマンドラインリファレンス（CLI_REFERENCE.md）
@@ -199,7 +200,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-50 件の実際の pytest ケースが `cli.py` と `alignment.py` の両方をカバー
+62 件の実際の pytest ケースが `cli.py` と `alignment.py` の両方をカバー
 します：
 
 ```bash

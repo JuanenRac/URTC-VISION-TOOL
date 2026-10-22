@@ -13,6 +13,7 @@ The firmware entries come first, then those of vision_companion. Every entry say
 
 ## [Unreleased]
 
+- **`--calibration FILE` on `selftest` and `analyze-roi`** (`vision_companion/calibration.py`): a JSON file with a gain, an offset, a per-pixel offset map and a list of dead pixels is applied to the thermal frame before it is drawn or measured; dead pixels are counted as invalid, an unknown key, a map of the wrong size or a bad value is refused with exit code 2. 12 new tests (62 in all); the CLI reference describes the file.
 - The banner follows the animated style of the ecosystem banners, with the name, the kind and the technologies of the project.
 - **CI type-checks the `vision_companion` package with `mypy`** next to the tests and `ruff`; the package already passes with no issue.
 - The manifest declares how far the project has been shown to work (`evidence`: host-test) and `tools/ci_validate.py` checks the value.

@@ -10,7 +10,7 @@ frames reach it is still undecided). What's real and fully working today is the 
 pipeline those captures will feed: synthetic thermal/RGB frame generation, false-color thermal
 rendering, real RGB->thermal ROI alignment and stats extraction (`alignment.py`; invalid pixels
 are left out and counted), thermal sensors of 32x24 and 16x12 pixels, and stats reporting - runs
-end-to-end with no hardware attached, verified by 50 real pytest cases.
+end-to-end with no hardware attached, verified by 62 real pytest cases.
 
 ## Layout
 
@@ -76,11 +76,11 @@ pytest
 ruff check .
 ```
 
-50 real pytest cases: `tests/test_cli.py` (synthetic frame generation, false-color rendering,
+62 real pytest cases: `tests/test_cli.py` (synthetic frame generation, false-color rendering,
 CLI commands), `tests/test_alignment.py` (ROI coordinate mapping, out-of-bounds/degenerate-input
 guards including a ROI with no real overlap with the thermal frame at all, ROI stats
 extraction), `tests/test_robustness.py` (invalid pixels, sensor variants, degenerate input,
-packaging) and `tests/test_docs.py` (the CLI reference matches the CLI).
+packaging), `tests/test_calibration.py` (the JSON thermal calibration) and `tests/test_docs.py` (the CLI reference matches the CLI).
 
 See [`vision_companion/cli.py`](vision_companion/cli.py) and
 [`vision_companion/alignment.py`](vision_companion/alignment.py) for the real, working code. A real

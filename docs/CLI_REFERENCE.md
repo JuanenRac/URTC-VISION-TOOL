@@ -51,7 +51,7 @@ $ vision-companion version
 vision-companion v0.0.3 (URTC-VISION-TOOL)
 ```
 
-### `selftest [--out DIR] [--variant VARIANT] [--range LOW HIGH]`
+### `selftest [--out DIR] [--variant VARIANT] [--range LOW HIGH] [--calibration FILE]`
 
 Runs the full synthetic pipeline end-to-end — generates a thermal frame (32x24
 for the default MLX90640, the real native resolution) and a 640x480 RGB
@@ -72,7 +72,7 @@ prints an error and exits `2`.
 $ vision-companion selftest -h
 usage: vision-companion selftest [-h] [--out OUT]
                                  [--variant {90640,90641,90642}]
-                                 [--range LOW HIGH]
+                                 [--range LOW HIGH] [--calibration FILE]
 
 options:
   -h, --help            show this help message and exit
@@ -83,6 +83,8 @@ options:
                         90641 is 16x12 (default: 90640)
   --range LOW HIGH      Fixed false-color scale in degrees C instead of the
                         frame's own min/max
+  --calibration FILE    JSON file with a gain, an offset, per-pixel offsets
+                        and dead pixels applied to the thermal frame
 ```
 
 ```
@@ -111,7 +113,7 @@ $ ls -la /tmp/vc_selftest_out
 -rw-r--r-- 1 juane 197609 3846 thermal_frame_falsecolor.png
 ```
 
-### `analyze-roi x0 y0 x1 y1 [--variant VARIANT]`
+### `analyze-roi x0 y0 x1 y1 [--variant VARIANT] [--calibration FILE]`
 
 Maps an RGB-space bounding box (e.g. a component detection from an
 upstream vision model) into thermal-sensor space and reports real
@@ -126,6 +128,7 @@ spurious hot pixel cannot move the way it moves the maximum.
 ```
 $ vision-companion analyze-roi -h
 usage: vision-companion analyze-roi [-h] [--variant {90640,90641,90642}]
+                                    [--calibration FILE]
                                     x0 y0 x1 y1
 
 positional arguments:
@@ -139,6 +142,8 @@ options:
   --variant {90640,90641,90642}
                         Thermal sensor variant: 90640 and 90642 are 32x24,
                         90641 is 16x12 (default: 90640)
+  --calibration FILE    JSON file with a gain, an offset, per-pixel offsets
+                        and dead pixels applied to the thermal frame
 ```
 
 ```
@@ -189,11 +194,35 @@ message on stderr and exit code `2`:
 ```
 $ vision-companion analyze-roi 0 0 abc 100
 usage: vision-companion analyze-roi [-h] [--variant {90640,90641,90642}]
+                                    [--calibration FILE]
                                     x0 y0 x1 y1
 vision-companion analyze-roi: error: argument x1: invalid int value: 'abc'
 $ echo $?
 2
 ```
+
+## Calibration file
+
+`--calibration FILE` (on `selftest` and `analyze-roi`) applies a correction to
+the thermal frame before it is rendered or measured. The file is JSON; only
+`schema` is required, and any key that is not listed is an error so that a
+misspelt key cannot leave a correction switched off.
+
+```json
+{
+  "schema": 1,
+  "gain": 1.02,
+  "offset_c": -0.4,
+  "pixel_offsets_c": [[0.0, 0.1, "... 32 numbers per row, 24 rows ..."]],
+  "dead_pixels": [[5, 7], [12, 3]]
+}
+```
+
+Each pixel becomes `pixel * gain + offset_c + pixel_offsets_c[y][x]`; `gain`
+must be greater than 0. A dead pixel is set to NaN, so it is painted magenta and
+counted as invalid in the statistics. A `pixel_offsets_c` map or a dead pixel
+that does not fit the chosen `--variant` is reported as an error (exit `2`).
+The code is in `src/vision_companion/vision_companion/calibration.py`.
 
 ## Exit codes
 
@@ -201,4 +230,4 @@ $ echo $?
 |------|---------|
 | `0` | ok |
 | `1` | no thermal data: the requested region does not overlap the thermal field of view, or holds no valid pixel |
-| `2` | invalid usage or input: a missing subcommand, a bad argument type or value, a degenerate region, an empty `--range` |
+| `2` | invalid usage or input: a missing subcommand, a bad argument type or value, a degenerate region, an empty `--range`, a `--calibration` file that cannot be read or is not valid |
