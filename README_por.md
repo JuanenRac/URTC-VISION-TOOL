@@ -39,7 +39,7 @@ Equipada com uma câmara RGB global shutter e um sensor térmico da família MLX
 
 Ainda não existe PCB/esquemático para esta placa (ver `hardware/`), pelo que nada do que se segue pode controlar sensores térmicos/RGB reais - mas a cadeia de ferramentas de firmware e o pipeline de processamento de visão do lado do anfitrião (geração de frames sintéticos, renderização em falsa cor, alinhamento de ROI RGB->térmico e extração de estatísticas de temperatura, tudo coberto por pytest) são reais e funcionam hoje.
 
-### Características Principais:
+### Caraterísticas Principais:
 * 🔬 **Perceção Bimodal** — captura sincronizada de imagem térmica e RGB. *(o pipeline de processamento que ambos os frames alimentam é real - ver abaixo; a captura real sincronizada requer a PCB e os sensores.)*
 * 🌡️ **Térmica de Alta Precisão** — suporte integrado para sensores MLX90640/41/42. *(a renderização em falsa cor e a extração de estatísticas por região são reais - ver abaixo; ler um MLX9064x real por I2C requer a PCB.)*
 * 🎯 **Alinhamento Eye-in-Hand** — PnP submilimétrico e AOI (Inspeção Ótica Automatizada). *(o mapeamento de coordenadas de ROI RGB->térmico e a extração de estatísticas de temperatura são reais e testados - ver `vision_companion/alignment.py` abaixo; a precisão submilimétrica requer uma câmara real calibrada.)*
