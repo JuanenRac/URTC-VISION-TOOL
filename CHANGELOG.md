@@ -11,6 +11,13 @@ The repository has two parts with their own versions:
 
 The firmware entries come first, then those of vision_companion. Every entry says what was **Added**, **Changed**, **Fixed** and **Verified**, in that order, and only the headings that apply.
 
+## [Unreleased]
+
+- The manifest declares how far the project has been shown to work (`evidence`: host-test) and `tools/ci_validate.py` checks the value.
+- The manifest notes are shorter.
+- The CI workflow no longer carries the steps for languages the repository does not use, and installs the newlib packages the firmware build needs.
+- The README of each language lists URTC-UPDATER among the related projects.
+
 ## Versioning scheme
 
 The firmware (`FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` in `src/firmware_common.h`) and vision_companion (`__version__` in `src/vision_companion/vision_companion/__init__.py`) are versioned independently: they are built, shipped and run on entirely different targets. Both follow the family's "odometer" rule:
