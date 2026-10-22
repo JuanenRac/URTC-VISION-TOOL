@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Version | `0.1.2` |
+| Version | `0.1.3` |
 | Maturité | Fonctionnel |
 | Technologie | C / STM32 / Python vision companion |
 | Cible | Une carte à microcontrôleur (le firmware) ; compilé sur un PC |

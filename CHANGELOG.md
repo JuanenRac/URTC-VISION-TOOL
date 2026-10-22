@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.1.3] - Plan inspection, series export, drift check and rack check
 
 - **`inspect`**: judges each component of a plan (regions found in the RGB image) by the temperature rule of its kind (expected value with tolerance, minimum, maximum, rise over the ambient): cold joints, parts that run hot, regions without data are never ok. The report can be written as JSON.
 - **Series export of the regions**: the minimum, maximum, mean and 95th percentile of every region and task as samples for the HYDRA-UMC datalake (`--datalake URL`, the token read from an environment variable and never printed), as JSON lines (`--export-jsonl`) or as a map of OPC-UA node values (`--opcua-nodes`).
