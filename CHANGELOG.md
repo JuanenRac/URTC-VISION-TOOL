@@ -13,6 +13,7 @@ The firmware entries come first, then those of vision_companion. Every entry say
 
 ## [Unreleased]
 
+- The banner follows the animated style of the ecosystem banners, with the name, the kind and the technologies of the project.
 - **CI type-checks the `vision_companion` package with `mypy`** next to the tests and `ruff`; the package already passes with no issue.
 - The manifest declares how far the project has been shown to work (`evidence`: host-test) and `tools/ci_validate.py` checks the value.
 - The manifest notes are shorter.
