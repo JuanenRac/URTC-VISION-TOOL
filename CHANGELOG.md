@@ -1,15 +1,6 @@
 # Changelog
 
-All notable work on **URTC-VISION-TOOL**, newest first. This file leaves out calendar dates.
-
-The repository has two parts with their own versions:
-
-| Part | Where | Entries |
-|---|---|---|
-| **Firmware** (STM32, Cortex-M4F) | `src/*.c`, `src/*.h` | headed `## [x.y.z]` |
-| **vision_companion** (Python, runs on a computer or the CM5) | `src/vision_companion/` | headed `## vision_companion [x.y.z]` |
-
-The firmware entries come first, then those of vision_companion. Every entry says what was **Added**, **Changed**, **Fixed** and **Verified**, in that order, and only the headings that apply.
+All notable changes to this project are documented here.
 
 ## [0.1.2] - The thermal tool on the URTC bus, a calibration file and a Windows build
 
@@ -26,20 +17,6 @@ The firmware entries come first, then those of vision_companion. Every entry say
 - The manifest notes are shorter.
 - The CI workflow no longer carries the steps for languages the repository does not use, and installs the newlib packages the firmware build needs.
 - The README of each language lists URTC-UPDATER among the related projects.
-
-## Versioning scheme
-
-The firmware (`FIRMWARE_VERSION_MAJOR`/`_MINOR`/`_PATCH` in `src/firmware_common.h`) and vision_companion (`__version__` in `src/vision_companion/vision_companion/__init__.py`) are versioned independently: they are built, shipped and run on entirely different targets. Both follow the family's "odometer" rule:
-
-- the `PATCH` of the part that was built goes up by 1;
-- when `PATCH` would pass 9 it goes back to 0 and `MINOR` goes up by 1 (`0.0.9` becomes `0.1.0`, never `0.0.10`);
-- the same carry goes from `MINOR` into `MAJOR`.
-
-The firmware is raised only by the explicit `python bump.py` step (`bump_version.py`, the same script URTC and URTC-SMART-RACK use); building never changes it. vision_companion is bumped by hand: there is no production build step for a Python tool this small yet.
-
----
-
-# Firmware
 
 ## [0.1.1] - An explicit bump command: building never changes the version
 
