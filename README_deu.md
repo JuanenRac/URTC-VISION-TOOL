@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Version | `0.1.1` |
+| Version | `0.1.2` |
 | Reifegrad | Funktionsfähig |
 | Technik | C / STM32 / Python vision companion |
 | Ziel | Eine Mikrocontroller-Platine (die Firmware); wird auf einem PC gebaut |

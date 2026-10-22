@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Versione | `0.1.1` |
+| Versione | `0.1.2` |
 | Maturità | Funzionale |
 | Tecnologia | C / STM32 / Python vision companion |
 | Destinazione | Una scheda con microcontrollore (il firmware); compilato su un PC |

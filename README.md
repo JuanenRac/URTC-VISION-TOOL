@@ -25,7 +25,7 @@
 
 | | |
 |---|---|
-| Version | `0.1.1` |
+| Version | `0.1.2` |
 | Maturity | Functional |
 | Stack | C / STM32 / Python vision companion |
 | Target | A microcontroller board (the firmware); built on a PC |
