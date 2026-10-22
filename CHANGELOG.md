@@ -13,6 +13,7 @@ The firmware entries come first, then those of vision_companion. Every entry say
 
 ## [Unreleased]
 
+- **CI type-checks the `vision_companion` package with `mypy`** next to the tests and `ruff`; the package already passes with no issue.
 - The manifest declares how far the project has been shown to work (`evidence`: host-test) and `tools/ci_validate.py` checks the value.
 - The manifest notes are shorter.
 - The CI workflow no longer carries the steps for languages the repository does not use, and installs the newlib packages the firmware build needs.
