@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The README files carry sections written once in URTC-COMMON:** "Compatibility", in the eight languages, between marker comments before the license heading (`tools/readme_sections.py` of URTC-COMMON writes and checks them; the rest of each README is hand-written as before).
 - **A static check on every push:** `ruff.toml` (unused names, exception chaining and syntax errors, the rules the flasher and the tester already ran) and a step of the CI that runs `ruff check .` with a pinned ruff; nothing to fix.
 - **The frame layer and the rate limiter come from URTC-COMMON:** `sensor_frame_parse` and `sensor_frame_encode` use `src/urtc_frame.h`, shared with the tool rack, and `rate_limiter.c` calls `src/urtc_rate_limiter.h` (both copied with `vendor_copy.py --set firmware_frame`); the names, the order of the checks and every decision are unchanged. The tests of the limiter also run the shared decisions (`tests/vectors/rate_vectors.h`, copied with `--set rate_c`), the wrap of the millisecond counter included, with the sanitizers.
 - The `TEST_ASSERT` macro of the host tests comes from URTC-COMMON (`tests/vectors/urtc_test.h`, copied with `vendor_copy.py --set firmware_test`) instead of being written again in `tests/test_runner.h`; the suites are unchanged.
