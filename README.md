@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 154 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `cli.py`) is likewise real and backed by 106 passing pytest cases, and CI runs that suite too (its own step installs `src/vision_companion/requirements.txt` and runs `pytest tests/` there), so a regression in either half fails the build. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
+**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 156 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `cli.py`) is likewise real and backed by 106 passing pytest cases, and CI runs that suite too (its own step installs `src/vision_companion/requirements.txt` and runs `pytest tests/` there), so a regression in either half fails the build. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
 
 ---
 
@@ -84,6 +84,7 @@ URTC-VISION-TOOL/
 ├── src/
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
 │   ├── sensor_frame.h / .c         # Real: versioned frame format + CRC8 parse/encode
+│   ├── urtc_crc8.h                 # Real: CRC-8 shared with the tool rack (copied from URTC-COMMON)
 │   ├── sensor_reading.h / .c       # Real: thermal reading decode + range validation
 │   ├── rate_limiter.h / .c         # Real: minimum-interval frame throttling
 │   ├── sensor_freshness.h / .c     # Real: sequence/timestamp freshness (replay and stale-sensor detection)

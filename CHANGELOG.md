@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **One checksum for the vision link and the rack:** `sensor_frame_crc8()` now calls `urtc_crc8()` of `src/urtc_crc8.h`, the header that URTC-COMMON keeps for the repositories that frame their data with CRC-8 (copied with `vendor_copy.py`, locked in `src/urtc_common.lock.json`); the test checks it against the check values URTC-COMMON computes on its own, among them the CRC-8 check value `0xF4` of the text `123456789`. The host tests run 156 assertions.
+
 ## [0.1.3] - Plan inspection, series export, drift check and rack check
 
 - **`inspect`**: judges each component of a plan (regions found in the RGB image) by the temperature rule of its kind (expected value with tolerance, minimum, maximum, rise over the ambient): cold joints, parts that run hot, regions without data are never ok. The report can be written as JSON.

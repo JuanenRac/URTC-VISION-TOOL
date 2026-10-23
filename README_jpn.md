@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C で、154 件の `TEST_ASSERT` チェック（`tests/test_*.c`、ホストの C コンパイラでコンパイル・実行）がすべて通過しており、このリポジトリの CI が実際に実行しています：`.github/workflows/ci.yml` のファームウェアステップが `build_firmware.sh` を呼び出し、そのステップ 2 が STM32 ビルドの前に必ず `tests/` をコンパイル・実行します。ホスト側の `vision_companion` パッケージ（`alignment.py`、`cli.py`）も本物で、106 件の pytest ケースがすべて通過しており、CI はこのスイートも実行します（専用ステップが `src/vision_companion/requirements.txt` をインストールし、そこで `pytest tests/` を実行）。したがって、どちらの側の退行もビルドを失敗させます。README の冒頭にある通り、このボードの PCB／回路図はまだ存在しないため、ここにあるものは本物の MLX9064x センサーや RGB カメラを読んだことも、本物の CAN トランシーバーを駆動したこともありません——`main.c`/`startup_stm32_minimal.c` は、仮のリンカースクリプトで Cortex-M4F のクロスコンパイルとリンクが成功することを示すだけです。何がリリースされたかは `CHANGELOG.md` を参照してください。
+**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C で、156 件の `TEST_ASSERT` チェック（`tests/test_*.c`、ホストの C コンパイラでコンパイル・実行）がすべて通過しており、このリポジトリの CI が実際に実行しています：`.github/workflows/ci.yml` のファームウェアステップが `build_firmware.sh` を呼び出し、そのステップ 2 が STM32 ビルドの前に必ず `tests/` をコンパイル・実行します。ホスト側の `vision_companion` パッケージ（`alignment.py`、`cli.py`）も本物で、106 件の pytest ケースがすべて通過しており、CI はこのスイートも実行します（専用ステップが `src/vision_companion/requirements.txt` をインストールし、そこで `pytest tests/` を実行）。したがって、どちらの側の退行もビルドを失敗させます。README の冒頭にある通り、このボードの PCB／回路図はまだ存在しないため、ここにあるものは本物の MLX9064x センサーや RGB カメラを読んだことも、本物の CAN トランシーバーを駆動したこともありません——`main.c`/`startup_stm32_minimal.c` は、仮のリンカースクリプトで Cortex-M4F のクロスコンパイルとリンクが成功することを示すだけです。何がリリースされたかは `CHANGELOG.md` を参照してください。
 
 ---
 
@@ -92,6 +92,7 @@ URTC-VISION-TOOL/
 ├── src/
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
 │   ├── sensor_frame.h / .c         # 本物：バージョン管理されたフレーム形式 + CRC8 パース/エンコード
+│   ├── urtc_crc8.h                 # 本物：ツールラックと共有する CRC-8（URTC-COMMON からコピー）
 │   ├── sensor_reading.h / .c       # 本物：熱画像読み取りのデコード + 範囲検証
 │   ├── rate_limiter.h / .c         # 本物：最小間隔によるフレームのスロットリング
 │   ├── sensor_freshness.h / .c     # 本物：シーケンス/タイムスタンプによる鮮度チェック（重複・固着センサーの検出）

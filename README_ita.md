@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**Verifica di onestà - cosa funziona davvero oggi:** il protocollo dei sensori lato firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) è vero C puro coperto da 154 controlli `TEST_ASSERT` superati (`tests/test_*.c`, compilati ed eseguiti con il compilatore C dell'host), e la CI di questo repo li esegue davvero: il passo firmware di `.github/workflows/ci.yml` invoca `build_firmware.sh`, il cui passo 2 compila ed esegue sempre `tests/` prima di toccare la build STM32. Il pacchetto `vision_companion` lato host (`alignment.py`, `cli.py`) è anch'esso reale e coperto da 106 casi pytest superati, e la CI esegue anche quella suite (un passo dedicato installa `src/vision_companion/requirements.txt` ed esegue lì `pytest tests/`), quindi una regressione in una delle due metà fa fallire la build. Come già dice l'introduzione del README: per questa scheda non esistono ancora PCB/schema, quindi niente di tutto ciò ha mai letto un vero sensore MLX9064x o una telecamera RGB, né pilotato un vero transceiver CAN - `main.c`/`startup_stm32_minimal.c` dimostrano solo che la cross-compilazione e il link Cortex-M4F riescono con uno script di link provvisorio. Vedi `CHANGELOG.md` per cosa è stato effettivamente rilasciato.
+**Verifica di onestà - cosa funziona davvero oggi:** il protocollo dei sensori lato firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) è vero C puro coperto da 156 controlli `TEST_ASSERT` superati (`tests/test_*.c`, compilati ed eseguiti con il compilatore C dell'host), e la CI di questo repo li esegue davvero: il passo firmware di `.github/workflows/ci.yml` invoca `build_firmware.sh`, il cui passo 2 compila ed esegue sempre `tests/` prima di toccare la build STM32. Il pacchetto `vision_companion` lato host (`alignment.py`, `cli.py`) è anch'esso reale e coperto da 106 casi pytest superati, e la CI esegue anche quella suite (un passo dedicato installa `src/vision_companion/requirements.txt` ed esegue lì `pytest tests/`), quindi una regressione in una delle due metà fa fallire la build. Come già dice l'introduzione del README: per questa scheda non esistono ancora PCB/schema, quindi niente di tutto ciò ha mai letto un vero sensore MLX9064x o una telecamera RGB, né pilotato un vero transceiver CAN - `main.c`/`startup_stm32_minimal.c` dimostrano solo che la cross-compilazione e il link Cortex-M4F riescono con uno script di link provvisorio. Vedi `CHANGELOG.md` per cosa è stato effettivamente rilasciato.
 
 ---
 
@@ -84,6 +84,7 @@ URTC-VISION-TOOL/
 ├── src/
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
 │   ├── sensor_frame.h / .c         # Reale: formato di frame versionato + parsing/codifica CRC8
+│   ├── urtc_crc8.h                 # Reale: CRC-8 condiviso con il rack utensili (copiato da URTC-COMMON)
 │   ├── sensor_reading.h / .c       # Reale: decodifica lettura termica + validazione intervallo
 │   ├── rate_limiter.h / .c         # Reale: limitazione frame a intervallo minimo
 │   ├── sensor_freshness.h / .c     # Reale: freschezza per sequenza/timestamp (rilevamento di ripetizioni e sensore bloccato)

@@ -5,10 +5,23 @@
 // =============================================================================
 #include "test_runner.h"
 #include "../src/sensor_frame.h"
+#include "vectors/urtc_fw_vectors.h"
 #include <string.h>
 
 void run_sensor_frame_tests(int *failures)
 {
+    // --- The shared checksum (urtc_crc8.h, copied from URTC-COMMON) gives the values URTC-COMMON computes on its own ---
+    {
+        int mismatches = 0;
+        for (int i = 0; i < URTC_VEC_COUNT(URTC_VEC_CRC8); i++) {
+            if (sensor_frame_crc8(URTC_VEC_CRC8[i].data, URTC_VEC_CRC8[i].len) != URTC_VEC_CRC8[i].crc) {
+                mismatches++;
+            }
+        }
+        TEST_ASSERT(mismatches == 0, "sensor_frame_crc8 gives every check value of URTC-COMMON");
+        TEST_ASSERT(sensor_frame_crc8((const uint8_t *)"123456789", 9) == 0xF4, "the check text gives the CRC-8 check value 0xF4");
+    }
+
     // --- Real round trip: encode then parse gives back the exact same frame ---
     {
         uint8_t payload[2] = {0xD0, 0x07}; // 0x07D0 = 2000 centidegrees = 20.00C
