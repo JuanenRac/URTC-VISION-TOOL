@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The frame layer and the rate limiter come from URTC-COMMON:** `sensor_frame_parse` and `sensor_frame_encode` use `src/urtc_frame.h`, shared with the tool rack, and `rate_limiter.c` calls `src/urtc_rate_limiter.h` (both copied with `vendor_copy.py --set firmware_frame`); the names, the order of the checks and every decision are unchanged. The tests of the limiter also run the shared decisions (`tests/vectors/rate_vectors.h`, copied with `--set rate_c`), the wrap of the millisecond counter included, with the sanitizers.
 - The `TEST_ASSERT` macro of the host tests comes from URTC-COMMON (`tests/vectors/urtc_test.h`, copied with `vendor_copy.py --set firmware_test`) instead of being written again in `tests/test_runner.h`; the suites are unchanged.
 - **The host tests are held to a coverage floor:** the CI builds them with gcov counters (`URTC_COVERAGE_FLOOR` in `build_firmware.sh`) and `tools/gcov_floor.py` fails the build when they execute less than 92 percent of the lines of `src/` (100 percent today).
 - The CI holds the `vision_companion` tests to a coverage floor of 88 percent (measured 96).

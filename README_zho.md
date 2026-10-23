@@ -15,7 +15,7 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**诚实核查 - 今天真正能运行的部分：** 固件侧的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）是真实的纯 C 代码，有 163 个通过的 `TEST_ASSERT` 检查（`tests/test_*.c`，用主机自身的 C 编译器编译并运行），并且本仓库的 CI 确实会运行它们：`.github/workflows/ci.yml` 的固件步骤调用 `build_firmware.sh`，其第 2 步总是在进行 STM32 构建之前编译并运行 `tests/`。主机侧的 `vision_companion` 包（`alignment.py`、`cli.py`）同样是真实的，有 106 个通过的 pytest 用例，CI 也会运行这套测试（专门的步骤安装 `src/vision_companion/requirements.txt` 并在该目录运行 `pytest tests/`），因此任何一半出现回归都会导致构建失败。正如 README 开头所说：这块板卡还没有 PCB/原理图，因此这里的任何东西都从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只证明 Cortex-M4F 的交叉编译和链接在占位链接脚本下能够成功。已发布的内容请参见 `CHANGELOG.md`。
+**诚实核查 - 今天真正能运行的部分：** 固件侧的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）是真实的纯 C 代码，有 165 个通过的 `TEST_ASSERT` 检查（`tests/test_*.c`，用主机自身的 C 编译器编译并运行），并且本仓库的 CI 确实会运行它们：`.github/workflows/ci.yml` 的固件步骤调用 `build_firmware.sh`，其第 2 步总是在进行 STM32 构建之前编译并运行 `tests/`。主机侧的 `vision_companion` 包（`alignment.py`、`cli.py`）同样是真实的，有 106 个通过的 pytest 用例，CI 也会运行这套测试（专门的步骤安装 `src/vision_companion/requirements.txt` 并在该目录运行 `pytest tests/`），因此任何一半出现回归都会导致构建失败。正如 README 开头所说：这块板卡还没有 PCB/原理图，因此这里的任何东西都从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只证明 Cortex-M4F 的交叉编译和链接在占位链接脚本下能够成功。已发布的内容请参见 `CHANGELOG.md`。
 
 ---
 
@@ -92,6 +92,8 @@ URTC-VISION-TOOL/
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
 │   ├── sensor_frame.h / .c         # 真实：版本化帧格式 + CRC8 解析/编码
 │   ├── urtc_crc8.h                 # 真实：与工具架共用的 CRC-8（复制自 URTC-COMMON）
+│   ├── urtc_frame.h                # 真实：与工具架共用的帧层（复制自 URTC-COMMON）
+│   ├── urtc_rate_limiter.h         # 真实：链路的最小间隔限制器（复制自 URTC-COMMON）
 │   ├── sensor_reading.h / .c       # 真实：热成像读数解码 + 范围校验
 │   ├── rate_limiter.h / .c         # 真实：最小间隔帧限速
 │   ├── sensor_freshness.h / .c     # 真实：基于序列号/时间戳的新鲜度检查（检测重复帧与冻结的传感器）

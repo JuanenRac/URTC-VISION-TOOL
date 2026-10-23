@@ -2,6 +2,10 @@
   "format": 1,
   "urtc_common_version": "0.0.7",
   "files": {
+    "rate_vectors.h": {
+      "from": "generated/rate_vectors.h",
+      "sha256": "082c46d62e3afcc8bd083036fba56253a8adbbea3da2be9404b386852bc9db75"
+    },
     "sensor_vectors.h": {
       "from": "generated/sensor_vectors.h",
       "sha256": "59d0ebf740d63b614623000b0b64544b9bf3238551d06dd6b195cc3aebab31ac"

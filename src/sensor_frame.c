@@ -5,7 +5,19 @@
 // =============================================================================
 #include "sensor_frame.h"
 #include "urtc_crc8.h"   // the checksum shared with the tool rack protocol (copied from URTC-COMMON)
+#include "urtc_frame.h"  // the frame layer shared with the tool rack protocol (copied from URTC-COMMON)
 #include <stddef.h>
+
+// The sensor frame is the shared layer with the length byte at index 8 (sensor id, sequence and the timestamp sit before it).
+static const urtc_frame_format_t SENSOR_FRAME = { SENSOR_FRAME_SOF, SENSOR_FRAME_VERSION, 8u, SENSOR_FRAME_MAX_PAYLOAD };
+
+// The statuses of the shared layer have the same order as ours; the cast below relies on it.
+_Static_assert((int)URTC_FRAME_OK == (int)SENSOR_FRAME_OK, "status order: ok");
+_Static_assert((int)URTC_FRAME_INCOMPLETE == (int)SENSOR_FRAME_ERR_INCOMPLETE, "status order: incomplete");
+_Static_assert((int)URTC_FRAME_BAD_SOF == (int)SENSOR_FRAME_ERR_BAD_SOF, "status order: bad start byte");
+_Static_assert((int)URTC_FRAME_UNSUPPORTED_VERSION == (int)SENSOR_FRAME_ERR_UNSUPPORTED_VERSION, "status order: unsupported version");
+_Static_assert((int)URTC_FRAME_LENGTH_OUT_OF_RANGE == (int)SENSOR_FRAME_ERR_LENGTH_OUT_OF_RANGE, "status order: length out of range");
+_Static_assert((int)URTC_FRAME_CRC_MISMATCH == (int)SENSOR_FRAME_ERR_CRC_MISMATCH, "status order: CRC mismatch");
 
 uint8_t sensor_frame_crc8(const uint8_t *data, uint8_t len)
 {
@@ -17,31 +29,14 @@ sensor_frame_status_t sensor_frame_parse(const uint8_t *buf, uint8_t buf_len, se
     if (buf == NULL || out_frame == NULL) {
         return SENSOR_FRAME_ERR_INCOMPLETE;
     }
-    // Smallest real frame: SOF+VERSION+SENSOR_ID+SEQ+TIMESTAMP(4)+LEN+CRC, zero payload.
-    if (buf_len < 10u) {
-        return SENSOR_FRAME_ERR_INCOMPLETE;
+    // Start byte, version, length, completeness and CRC are decided by the shared frame layer, in that order.
+    uint8_t total_len = 0;
+    const urtc_frame_status_t status = urtc_frame_validate(&SENSOR_FRAME, buf, buf_len, &total_len);
+    if (status != URTC_FRAME_OK) {
+        return (sensor_frame_status_t)status;
     }
-    if (buf[0] != SENSOR_FRAME_SOF) {
-        return SENSOR_FRAME_ERR_BAD_SOF;
-    }
-    uint8_t version = buf[1];
-    if (version != SENSOR_FRAME_VERSION) {
-        return SENSOR_FRAME_ERR_UNSUPPORTED_VERSION;
-    }
-    uint8_t len = buf[8];
-    if (len > SENSOR_FRAME_MAX_PAYLOAD) {
-        return SENSOR_FRAME_ERR_LENGTH_OUT_OF_RANGE;
-    }
-    uint8_t header_and_payload_len = (uint8_t)(9u + len);
-    uint8_t total_len = (uint8_t)(header_and_payload_len + 1u);
-    if (buf_len < total_len) {
-        return SENSOR_FRAME_ERR_INCOMPLETE;
-    }
-    uint8_t computed_crc = sensor_frame_crc8(buf, header_and_payload_len);
-    uint8_t received_crc = buf[header_and_payload_len];
-    if (computed_crc != received_crc) {
-        return SENSOR_FRAME_ERR_CRC_MISMATCH;
-    }
+    const uint8_t version = buf[1];
+    const uint8_t len = buf[8];
 
     out_frame->version = version;
     out_frame->sensor_id = buf[2];
@@ -70,19 +65,15 @@ uint8_t sensor_frame_encode(uint8_t sensor_id, uint8_t seq, uint32_t timestamp_m
     if (payload_len > 0u && payload == NULL) {
         return 0;
     }
-    out_buf[0] = SENSOR_FRAME_SOF;
-    out_buf[1] = SENSOR_FRAME_VERSION;
+    urtc_frame_start(&SENSOR_FRAME, out_buf, payload_len);
     out_buf[2] = sensor_id;
     out_buf[3] = seq;
     out_buf[4] = (uint8_t)((timestamp_ms >> 24) & 0xFFu);
     out_buf[5] = (uint8_t)((timestamp_ms >> 16) & 0xFFu);
     out_buf[6] = (uint8_t)((timestamp_ms >> 8) & 0xFFu);
     out_buf[7] = (uint8_t)(timestamp_ms & 0xFFu);
-    out_buf[8] = payload_len;
     for (uint8_t i = 0; i < payload_len; i++) {
         out_buf[9u + i] = payload[i];
     }
-    uint8_t header_and_payload_len = (uint8_t)(9u + payload_len);
-    out_buf[header_and_payload_len] = sensor_frame_crc8(out_buf, header_and_payload_len);
-    return (uint8_t)(header_and_payload_len + 1u);
+    return urtc_frame_seal(&SENSOR_FRAME, out_buf, payload_len);
 }

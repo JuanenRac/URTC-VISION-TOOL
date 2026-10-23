@@ -15,11 +15,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-typedef struct {
-    uint32_t min_interval_ms;
-    uint32_t last_accept_ms;
-    bool has_accepted_any;
-} rate_limiter_t;
+#include "urtc_rate_limiter.h"  // the limiter itself, shared with the other repositories (copied from URTC-COMMON)
+
+// The type and the two functions below keep this repository's names; the decisions are the shared ones, held to the
+// shared vectors by tests/test_rate_limiter.c.
+typedef urtc_rate_limiter_t rate_limiter_t;
 
 void rate_limiter_init(rate_limiter_t *rl, uint32_t min_interval_ms);
 
