@@ -18,12 +18,12 @@ codes.
 
 ```
 $ vision-companion -h
-usage: vision-companion [-h] {version,selftest,analyze-roi,inspect,drift-check,rack-check} ...
+usage: vision-companion [-h] {version,selftest,analyze-roi,inspect,drift-check,rack-check,rack-watch,rack-simulate} ...
 
 URTC-VISION-TOOL vision companion - thermal+RGB capture/processing pipeline.
 
 positional arguments:
-  {version,selftest,analyze-roi,inspect,drift-check,rack-check}
+  {version,selftest,analyze-roi,inspect,drift-check,rack-check,rack-watch,rack-simulate}
     version             Print the companion's version and exit.
     selftest            Run the full synthetic thermal+RGB pipeline end-to-end
                         and save its output (no hardware needed).
@@ -231,11 +231,21 @@ calibration file (the format of `--calibration`) that brings the new frames back
 
 Exit codes: `0` nothing found, `2` unreadable frames or baseline, `3` drift or dead pixels found.
 
-### `rack-check STATE [--frame FILE] [--variant VARIANT] [--calibration FILE] [--ambient C] [--out FILE]`
+### `rack-check STATE [--frame FILE] [--variant VARIANT] [--calibration FILE] [--ambient C] [--lang LANG] [--out FILE]`
 
-Judges the tips of the tool rack from a thermal frame. `STATE` is a JSON file with `elapsed_ms` (the time since the targets were set) and, for each slot, its `slot` number, the `roi` where its tip is in the RGB image, `occupied` and `target_c`. The temperature of a slot is the hottest valid pixel of its region; the ambient is `--ambient` or the median of the frame. The verdict of a slot is `reached`, `heating`, `not_reached` (still short after a minute), `overshoot` (25 C above the target), `idle_ok` or `still_hot` (told to stay cold), `empty_ok` or `heater_in_empty_slot`, or `unknown` when the region has no reading. The rules are those of `slot_verify.c` of URTC-SMART-RACK and of the rack model of URTC-COMMON, and a shared set of cases checks the three; the limits are estimates for a soldering tip. The command only reports: it never sends anything to the rack.
+Judges the tips of the tool rack from a thermal frame. `STATE` is a JSON file with `elapsed_ms` (the time since the targets were set) and, for each slot, its `slot` number, the `roi` where its tip is in the RGB image, `occupied` and `target_c`. The temperature of a slot is the hottest valid pixel of its region; the ambient is `--ambient` or the median of the frame. The verdict of a slot is `reached`, `heating`, `not_reached` (still short after a minute), `overshoot` (25 C above the target), `idle_ok` or `still_hot` (told to stay cold), `empty_ok` or `heater_in_empty_slot`, or `unknown` when the region has no reading. The rules are those of `slot_verify.c` of URTC-SMART-RACK and of the rack model of URTC-COMMON, and a shared set of cases checks the three; the limits are estimates for a soldering tip. The command only reports: it never sends anything to the rack. `--lang` chooses the language of the printed words (`en`, `es`, `de`, `fr`, `it`, `ja`, `zh`, `pt`); the verdicts in the JSON file stay the identifiers above.
 
 Exit codes: `0` no fault, `2` unreadable state or frame, `3` at least one slot has a fault (`not_reached`, `overshoot`, `still_hot`, `heater_in_empty_slot`).
+
+### `rack-watch STATE --frames FILE [--interval-ms N] [--variant VARIANT] [--calibration FILE] [--ambient C] [--lang LANG] [--out FILE]`
+
+Closes the loop of the pre-heat. `--frames` is a stack of thermal frames `(n, height, width)` saved as `.npy`, one every `--interval-ms` (default 5000) from the moment the targets were set; `STATE` is the same file as for `rack-check` (its `elapsed_ms` is replaced by the position of each frame). Every frame is judged by the rules of `rack-check`, and for each slot the command prints the last verdict, when the target was first reached and whether a swap is allowed: `swap_ok` needs the last three readings all at the target (or all cold for a slot told to stay cold), `swap_wait` means the tip is not stable yet or has no reading, `swap_blocked` means the slot ends in a fault. The command only reports: it never sends anything to the rack.
+
+Exit codes: `0` no slot ends in a fault, `2` unreadable state or frames, `3` at least one slot ends in a fault.
+
+### `rack-simulate STATE --out FILE [--scenario NAME] [--count N] [--interval-ms N] [--variant VARIANT] [--seed N]`
+
+Writes the frames a camera would give while a simulated rack heats, to try `rack-watch` without a camera or a rack. The tip of each occupied slot follows a first-order curve to its target. `--scenario` is `healthy` (default), `slow_heater` (the first heated slot misses the time allowed), `overshoot` (it ends 40 C above its target), `heater_in_empty_slot` (the first empty slot heats) or `dead_region` (the region of the first slot gives no reading). The same seed gives the same noise. The curves are estimates for a soldering tip, not measurements.
 
 ## Calibration file
 

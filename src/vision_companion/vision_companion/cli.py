@@ -28,7 +28,7 @@ from PIL import Image
 
 from . import __version__
 from . import export as export_module
-from . import inspection, rack_check, sensor_drift
+from . import inspection, rack_check, rack_text, rack_watch, sensor_drift
 from .alignment import BoundingBox, analyze_rgb_roi
 from .calibration import Calibration, CalibrationError, load_calibration
 
@@ -360,13 +360,55 @@ def cmd_rack_check(args: argparse.Namespace) -> int:
     except (OSError, ValueError, CalibrationError, rack_check.RackCheckError) as error:
         print(f"error: {error}", file=sys.stderr)
         return EXIT_BAD_INPUT
+    lang = args.lang
     for r in results:
-        shown = "no reading" if r.measured_c is None else f"{r.measured_c:.1f}C"
-        print(f"slot {r.slot}: {'occupied' if r.occupied else 'empty'}, ordered {r.commanded_c}C, read {shown}: {r.verdict}" + (" FAULT" if r.is_fault else ""))
+        shown = rack_text.text("no_reading", lang) if r.measured_c is None else f"{r.measured_c:.1f}C"
+        state_word = rack_text.text("occupied" if r.occupied else "empty", lang)
+        print(f"{rack_text.text('slot', lang)} {r.slot}: {state_word}, {rack_text.text('ordered', lang)} {r.commanded_c}C, {rack_text.text('read', lang)} {shown}: "
+              f"{rack_text.text(r.verdict, lang)}" + (f" {rack_text.text('fault', lang)}" if r.is_fault else ""))
     if args.out:
         Path(args.out).write_text(json.dumps(rack_check.results_to_dict(results, args.ambient), indent=2) + "\n", encoding="utf-8")
         print(f"  -> {args.out}")
     return EXIT_FINDINGS if any(r.is_fault for r in results) else EXIT_OK
+
+
+def cmd_rack_simulate(args: argparse.Namespace) -> int:
+    """Write the thermal frames a camera would give while the rack heats (a simulated rack, see rack_watch.py)."""
+    try:
+        state = rack_check.load_state(args.state)
+        width, height = _variant_shape(args)
+        frames = rack_watch.simulate(state, args.scenario, args.count, args.interval_ms, RGB_WIDTH, RGB_HEIGHT, width, height, args.seed)
+        np.save(args.out, frames)
+    except (OSError, ValueError, rack_check.RackCheckError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    print(f"{args.scenario}: {frames.shape[0]} frame(s) every {args.interval_ms} ms -> {args.out}")
+    return EXIT_OK
+
+
+def cmd_rack_watch(args: argparse.Namespace) -> int:
+    """Judge a series of frames taken while the rack heats and say, per slot, when the target was reached and whether a swap is allowed."""
+    import json
+    try:
+        state = rack_check.load_state(args.state)
+        frames = _load_frames(args.frames, _variant_shape(args))
+        if frames.ndim != 3:
+            raise CalibrationError("--frames must hold a stack of (n, height, width) frames")
+        calibration = _load_cal(args)
+        if calibration is not None:
+            frames = np.stack([calibration.apply(f) for f in frames])
+        histories = rack_watch.watch(frames, state, RGB_WIDTH, RGB_HEIGHT, args.interval_ms, args.ambient)
+    except (OSError, ValueError, CalibrationError, rack_check.RackCheckError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    lang = args.lang
+    for h in histories:
+        when = rack_text.text("never_reached", lang) if h.reached_at_ms is None else rack_text.text("reached_after", lang, s=f"{h.reached_at_ms / 1000:.1f}")
+        print(f"{rack_text.text('slot', lang)} {h.slot}: {rack_text.text(h.final, lang)}; {when}; {rack_text.text(h.swap_state, lang)}")
+    if args.out:
+        Path(args.out).write_text(json.dumps(rack_watch.histories_to_dict(histories, args.interval_ms), indent=2) + "\n", encoding="utf-8")
+        print(f"  -> {args.out}")
+    return EXIT_FINDINGS if any(h.final in rack_check.FAULTS for h in histories) else EXIT_OK
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -457,7 +499,33 @@ def build_parser() -> argparse.ArgumentParser:
     rack_cmd.add_argument("--calibration", metavar="FILE", help=calibration_help)
     rack_cmd.add_argument("--ambient", type=float, default=None, help="room temperature in C (default: the median of the frame)")
     rack_cmd.add_argument("--out", metavar="FILE", help="write the verdicts as JSON")
+    rack_cmd.add_argument("--lang", choices=rack_text.LANGUAGES, default="en", help="language of the printed words (en, es, de, fr, it, ja, zh, pt)")
     rack_cmd.set_defaults(func=cmd_rack_check)
+    watch_cmd = subparsers.add_parser(
+        "rack-watch",
+        help="Judge frames taken while the rack heats: when each slot reached its target and whether a swap is allowed.",
+    )
+    watch_cmd.add_argument("state", help="JSON state of the rack (the same file as rack-check; elapsed_ms is taken from the frame order)")
+    watch_cmd.add_argument("--frames", metavar="FILE", required=True, help="a stack of thermal frames saved as .npy, shape (n, height, width)")
+    watch_cmd.add_argument("--interval-ms", type=int, default=5000, help="time between two frames (default 5000)")
+    watch_cmd.add_argument("--variant", choices=sorted(THERMAL_VARIANTS), default=DEFAULT_VARIANT, help=variant_help)
+    watch_cmd.add_argument("--calibration", metavar="FILE", help=calibration_help)
+    watch_cmd.add_argument("--ambient", type=float, default=None, help="room temperature in C (default: the median of each frame)")
+    watch_cmd.add_argument("--lang", choices=rack_text.LANGUAGES, default="en", help="language of the printed words")
+    watch_cmd.add_argument("--out", metavar="FILE", help="write the history as JSON")
+    watch_cmd.set_defaults(func=cmd_rack_watch)
+    sim_cmd = subparsers.add_parser(
+        "rack-simulate",
+        help="Write the frames of a simulated rack while it heats (healthy or with a fault), to try rack-watch without a camera.",
+    )
+    sim_cmd.add_argument("state", help="JSON state of the rack (slots, regions, occupied, target_c)")
+    sim_cmd.add_argument("--scenario", choices=rack_watch.SCENARIOS, default="healthy", help="what the simulated rack does")
+    sim_cmd.add_argument("--count", type=int, default=16, help="number of frames (default 16)")
+    sim_cmd.add_argument("--interval-ms", type=int, default=5000, help="time between two frames (default 5000)")
+    sim_cmd.add_argument("--variant", choices=sorted(THERMAL_VARIANTS), default=DEFAULT_VARIANT, help=variant_help)
+    sim_cmd.add_argument("--seed", type=int, default=1, help="seed of the sensor noise")
+    sim_cmd.add_argument("--out", metavar="FILE", required=True, help="where to write the frames (.npy)")
+    sim_cmd.set_defaults(func=cmd_rack_simulate)
 
     return parser
 

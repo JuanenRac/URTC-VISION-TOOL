@@ -195,7 +195,7 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the full version history — firmware and
 
 ---
 
-**Thermal inspection by region, series export, sensor drift and rack check (host-tested only):** `inspect` judges each component of a plan by the temperature rule of its kind and can export the minimum, maximum and mean of every region as samples for the HYDRA-UMC datalake, as JSON lines or as OPC-UA node values; `drift-check` compares frames of a reference scene with a baseline (dead pixels, offset drift) and can write a calibration file; `rack-check` judges the tips of the tool rack from a thermal frame. See [the CLI reference](docs/CLI_REFERENCE.md). Run on synthetic frames only; no camera or board has been used.
+**Thermal inspection by region, series export, sensor drift and rack check (host-tested only):** `inspect` judges each component of a plan by the temperature rule of its kind and can export the minimum, maximum and mean of every region as samples for the HYDRA-UMC datalake, as JSON lines or as OPC-UA node values; `drift-check` compares frames of a reference scene with a baseline (dead pixels, offset drift) and can write a calibration file; `rack-check` judges the tips of the tool rack from a thermal frame. `rack-watch` follows the tips while the rack heats and says when each slot reached its target and whether a swap is allowed, `rack-simulate` writes the frames of a simulated rack (healthy or with a fault) to try it without a camera, and the rack commands print in eight languages (`--lang`). See [the CLI reference](docs/CLI_REFERENCE.md). Run on synthetic frames only; no camera or board has been used.
 
 ## 🔗 Related Projects
 
