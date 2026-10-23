@@ -119,7 +119,7 @@ URTC-VISION-TOOL/
 ├── bump.py                         # Comando esplicito per alzare la versione (compilare non la alza mai)
 ├── bump_version.py                 # Incremento versione stile contachilometri (generico, condiviso con URTC / URTC-SMART-RACK)
 ├── bump_manifest_version.py        # Sincronizza la versione di urtc.project.json con quella nativa (--sync)
-├── build_firmware.sh / .bat        # Build reale: test host + incrementa versione + compila + collega + pubblica in firmware/
+├── build_firmware.sh / .bat        # Build reale: test host + compila + collega + pubblica in firmware/ (non cambia mai la versione)
 ├── build-test.sh / .bat            # Controllo build/compilazione senza incremento di versione
 └── README.md
 ```
