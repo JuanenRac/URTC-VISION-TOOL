@@ -6,107 +6,107 @@
       "name": "set 200 C on the soldering iron",
       "seq": 1,
       "cmd": 1,
-      "payload": "00C800",
-      "frame": "A50101010300C80065"
+      "payload": "0000C8",
+      "frame": "A5020101030000C830"
     },
     {
       "name": "set 0 on the hot air nozzle",
       "seq": 255,
       "cmd": 1,
       "payload": "130000",
-      "frame": "A501FF0103130000B9"
+      "frame": "A502FF0103130000DF"
     },
     {
       "name": "unknown command, empty",
       "seq": 7,
       "cmd": 126,
       "payload": "",
-      "frame": "A501077E006A"
+      "frame": "A502077E0050"
     },
     {
       "name": "full payload",
       "seq": 9,
       "cmd": 1,
       "payload": "000102030405060708090A0B0C0D0E0F",
-      "frame": "A501090110000102030405060708090A0B0C0D0E0FEF"
+      "frame": "A502090110000102030405060708090A0B0C0D0E0F9B"
     }
   ],
   "parse": [
     {
       "name": "good frame",
-      "hex": "A50103010300FA00E4",
+      "hex": "A5020301030000FAFC",
       "status": "ok"
     },
     {
       "name": "short",
-      "hex": "A501030103",
+      "hex": "A502030103",
       "status": "incomplete"
     },
     {
       "name": "frame cut after the header",
-      "hex": "A50103010300FA",
+      "hex": "A5020301030000",
       "status": "incomplete"
     },
     {
       "name": "wrong start byte",
-      "hex": "5A0103010300FA00E4",
+      "hex": "5A020301030000FAFC",
       "status": "bad_sof"
     },
     {
-      "name": "version 2",
-      "hex": "A50203010300FA00E4",
+      "name": "version 1, the little-endian layout",
+      "hex": "A5010301030000FAFC",
       "status": "unsupported_version"
     },
     {
       "name": "length 17",
-      "hex": "A50103011100FA00E4",
+      "hex": "A5020301110000FAFC",
       "status": "length_out_of_range"
     },
     {
       "name": "bad crc",
-      "hex": "A50103010300FA001B",
+      "hex": "A5020301030000FA03",
       "status": "crc_mismatch"
     }
   ],
   "validate": [
     {
       "name": "soldering 250",
-      "payload": "00FA00",
+      "payload": "0000FA",
       "status": "ok",
       "tool": 0,
       "target": 250
     },
     {
       "name": "soldering 400",
-      "payload": "009001",
+      "payload": "000190",
       "status": "ok",
       "tool": 0,
       "target": 400
     },
     {
       "name": "soldering 401",
-      "payload": "009101",
+      "payload": "000191",
       "status": "temp_out_of_range",
       "tool": null,
       "target": null
     },
     {
       "name": "printer 310",
-      "payload": "0A3601",
+      "payload": "0A0136",
       "status": "ok",
       "tool": 10,
       "target": 310
     },
     {
       "name": "printer 311",
-      "payload": "0A3701",
+      "payload": "0A0137",
       "status": "temp_out_of_range",
       "tool": null,
       "target": null
     },
     {
       "name": "hot air 400",
-      "payload": "139001",
+      "payload": "130190",
       "status": "ok",
       "tool": 19,
       "target": 400
@@ -120,7 +120,7 @@
     },
     {
       "name": "gripper 100",
-      "payload": "066400",
+      "payload": "060064",
       "status": "tool_not_heatable",
       "tool": null,
       "target": null
@@ -155,7 +155,7 @@
     },
     {
       "name": "four bytes",
-      "payload": "00010000",
+      "payload": "00000100",
       "status": "wrong_payload_len",
       "tool": null,
       "target": null
@@ -200,7 +200,7 @@
       "steps": [
         {
           "time_ms": 0,
-          "frame": "A5010A010300C80051",
+          "frame": "A5020A01030000C804",
           "action": "set_target",
           "tool": 0,
           "temp": 200,
@@ -208,7 +208,7 @@
         },
         {
           "time_ms": 20,
-          "frame": "A5010A010300C80051",
+          "frame": "A5020A01030000C804",
           "action": "none",
           "tool": 0,
           "temp": 0,
@@ -216,7 +216,7 @@
         },
         {
           "time_ms": 40,
-          "frame": "A50109010300FA00F9",
+          "frame": "A5020901030000FAE1",
           "action": "none",
           "tool": 0,
           "temp": 0,
@@ -224,7 +224,7 @@
         },
         {
           "time_ms": 60,
-          "frame": "A5010B010300FA00AB",
+          "frame": "A5020B01030000FAB3",
           "action": "set_target",
           "tool": 0,
           "temp": 250,
@@ -237,7 +237,7 @@
       "steps": [
         {
           "time_ms": 0,
-          "frame": "A50101010300C80065",
+          "frame": "A5020101030000C830",
           "action": "set_target",
           "tool": 0,
           "temp": 200,
@@ -245,7 +245,7 @@
         },
         {
           "time_ms": 10,
-          "frame": "A50102010300F4011C",
+          "frame": "A5020201030001F4EA",
           "action": "safe_state",
           "tool": 0,
           "temp": 0,
@@ -253,7 +253,7 @@
         },
         {
           "time_ms": 20,
-          "frame": "A50102010300C8001E",
+          "frame": "A5020201030000C84B",
           "action": "set_target",
           "tool": 0,
           "temp": 200,
@@ -266,7 +266,7 @@
       "steps": [
         {
           "time_ms": 0,
-          "frame": "A501320103132C01B4",
+          "frame": "A50232010313012C56",
           "action": "set_target",
           "tool": 19,
           "temp": 300,
@@ -274,7 +274,7 @@
         },
         {
           "time_ms": 100,
-          "frame": "A501320103132C01B4",
+          "frame": "A50232010313012C56",
           "action": "none",
           "tool": 0,
           "temp": 0,
@@ -282,7 +282,7 @@
         },
         {
           "time_ms": 1000,
-          "frame": "A501320103132C01B4",
+          "frame": "A50232010313012C56",
           "action": "set_target",
           "tool": 19,
           "temp": 300,
@@ -295,7 +295,7 @@
       "steps": [
         {
           "time_ms": 0,
-          "frame": "A50101010300C80065",
+          "frame": "A5020101030000C830",
           "action": "set_target",
           "tool": 0,
           "temp": 200,
@@ -311,7 +311,7 @@
         },
         {
           "time_ms": 20,
-          "frame": "A501027E00AA",
+          "frame": "A502027E0090",
           "action": "none",
           "tool": 0,
           "temp": 0,
@@ -319,7 +319,7 @@
         },
         {
           "time_ms": 30,
-          "frame": "A501010103066400FC",
+          "frame": "A50201010306006400",
           "action": "safe_state",
           "tool": 6,
           "temp": 0,

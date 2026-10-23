@@ -4,6 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- The CI holds the `vision_companion` tests to a coverage floor of 88 percent (measured 96).
 - **The sensor frame is big-endian, version 2:** the timestamp of the frame and the thermal reading it carries were little-endian, unlike every other multi-byte value of the family. `SENSOR_FRAME_VERSION` is now 2, `sensor_frame.c` writes and reads the four timestamp bytes most significant first and `sensor_reading_validate_thermal()` reads the signed 16-bit reading the same way. A frame of version 1 is refused as an unsupported version instead of being read as another timestamp or another temperature (a reading of 1.00 degree sent the old way, bytes `64 00`, would otherwise have been read as 25600 hundredths, 256.00 degrees, and accepted).
 - **The frame is held to vectors written by URTC-COMMON:** `tests/test_sensor_vectors.c` encodes and parses every frame of `tests/vectors/sensor_vectors.h` (copied with `vendor_copy.py`, lock updated), reproduces every parse outcome including the refusal of version 1, and checks every thermal reading, so the firmware and the reference model of URTC-COMMON cannot drift apart unnoticed. The host test harness builds it in `build_firmware.sh` and `build_firmware.bat`; the existing tests build their payloads big-endian.
 
