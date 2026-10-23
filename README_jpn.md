@@ -119,6 +119,7 @@ URTC-VISION-TOOL/
 ├── images/                         # メディアと図表
 ├── tools/
 │   ├── build_test.py               # バージョンを更新しないビルド/コンパイル確認
+│   ├── gcov_floor.py               # ホストテストが src/ を下限より少なくしか実行しないと失敗する（gcov）
 │   ├── publish_release_assets.py   # 添付するリリースアセットを列挙し gh コマンドを表示
 │   └── ci_validate.py              # CI が使用する manifest/CHANGELOG/docs の検証
 ├── bump.py                         # 明示的なバージョン加算コマンド（コンパイルでは加算されない）

@@ -64,6 +64,7 @@ jobs:
         env:
           URTC_CI: "1"
           URTC_SANITIZE: "1"
+          URTC_COVERAGE_FLOOR: "92"
         shell: bash
         run: |
           chmod +x build_firmware.sh

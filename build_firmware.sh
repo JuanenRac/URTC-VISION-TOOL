@@ -109,11 +109,19 @@ SANITIZE_FLAGS=""
 if [ "${URTC_SANITIZE:-0}" = "1" ]; then
     SANITIZE_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=undefined"
 fi
-"$HOST_CC" -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests $SANITIZE_FLAGS \
+# URTC_COVERAGE_FLOOR=<percent> (set by CI) also builds them with gcov counters and fails under that share of executed lines.
+COVERAGE_FLAGS=""
+if [ -n "${URTC_COVERAGE_FLOOR:-}" ]; then
+    COVERAGE_FLAGS="--coverage -O0"
+fi
+"$HOST_CC" -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests $SANITIZE_FLAGS $COVERAGE_FLAGS \
     -o "$BUILD/host_tests" \
     tests/test_main.c tests/test_sensor_frame.c tests/test_sensor_reading.c tests/test_rate_limiter.c tests/test_sensor_diagnostics.c tests/test_vision_sensor_scenarios.c tests/test_robustness.c tests/test_sensor_freshness.c tests/test_sensor_vectors.c \
     src/sensor_frame.c src/sensor_reading.c src/rate_limiter.c src/sensor_diagnostics.c src/vision_sensor_link.c src/sensor_freshness.c
 "$BUILD/host_tests"
+if [ -n "${URTC_COVERAGE_FLOOR:-}" ]; then
+    python3 tools/gcov_floor.py "$URTC_COVERAGE_FLOOR" "$BUILD"
+fi
 echo "  OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_freshness.c / sensor_diagnostics.c / vision_sensor_link.c pure-logic tests passed"
 
 echo ""

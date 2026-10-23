@@ -118,6 +118,7 @@ URTC-VISION-TOOL/
 ├── images/                         # 媒体与图表
 ├── tools/
 │   ├── build_test.py               # 不递增版本号的构建/编译检查
+│   ├── gcov_floor.py               # 主机测试执行的 src/ 少于下限时失败（gcov）
 │   ├── publish_release_assets.py   # 列出要附加的发布资源并输出 gh 命令
 │   └── ci_validate.py              # CI 使用的 manifest/CHANGELOG/docs 校验
 ├── bump.py                         # 显式的版本递增命令（编译从不递增）

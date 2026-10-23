@@ -111,6 +111,7 @@ URTC-VISION-TOOL/
 ├── images/                         # Médias et diagrammes
 ├── tools/
 │   ├── build_test.py               # Contrôle build/compilation sans gestion de version
+│   ├── gcov_floor.py               # Échoue si les tests hôte exécutent moins de src/ qu'un plancher (gcov)
 │   ├── publish_release_assets.py   # Liste les assets de la release et affiche la commande gh
 │   └── ci_validate.py              # Validation manifest/CHANGELOG/docs utilisée par la CI
 ├── bump.py                         # Commande explicite pour monter la version (compiler ne la monte jamais)

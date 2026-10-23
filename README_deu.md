@@ -111,6 +111,7 @@ URTC-VISION-TOOL/
 ├── images/                         # Medien und Diagramme
 ├── tools/
 │   ├── build_test.py               # Build-/Kompilierprüfung ohne Versionserhöhung
+│   ├── gcov_floor.py               # Schlägt fehl, wenn die Host-Tests weniger von src/ ausführen als ein Mindestwert (gcov)
 │   ├── publish_release_assets.py   # Listet die Release-Assets auf und gibt den gh-Befehl aus
 │   └── ci_validate.py              # Manifest-/CHANGELOG-/Doku-Validierung, von der CI genutzt
 ├── bump.py                         # Ausdrücklicher Befehl zum Erhöhen der Version (Kompilieren erhöht nie)

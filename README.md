@@ -111,6 +111,7 @@ URTC-VISION-TOOL/
 ├── images/                         # Media and diagrams
 ├── tools/
 │   ├── build_test.py               # Non-versioning build/compile check
+│   ├── gcov_floor.py               # Fails when the host tests run less of src/ than a floor (gcov)
 │   ├── publish_release_assets.py   # Lists the release assets to attach and prints the gh command
 │   └── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
 ├── bump.py                         # Explicit version bump command (building never bumps)
