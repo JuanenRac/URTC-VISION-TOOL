@@ -15,6 +15,7 @@ int main(void)
     run_sensor_diagnostics_tests(&failures);
     run_vision_sensor_scenario_tests(&failures);
     run_sensor_freshness_tests(&failures);
+    run_sensor_vectors_tests(&failures);
     run_robustness_tests(&failures);
 
     if (failures == 0) {

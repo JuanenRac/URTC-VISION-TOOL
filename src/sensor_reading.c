@@ -15,7 +15,7 @@ sensor_reading_status_t sensor_reading_validate_thermal(const uint8_t *payload, 
         return SENSOR_READING_ERR_WRONG_PAYLOAD_LEN;
     }
 
-    int16_t temp = (int16_t)(uint16_t)(payload[0] | ((uint16_t)payload[1] << 8));
+    int16_t temp = (int16_t)(uint16_t)(((uint16_t)payload[0] << 8) | payload[1]);
     if (temp < SENSOR_READING_MIN_TEMP_CENTIDEGREES_C || temp > SENSOR_READING_MAX_TEMP_CENTIDEGREES_C) {
         return SENSOR_READING_ERR_TEMP_OUT_OF_RANGE;
     }

@@ -46,10 +46,10 @@ sensor_frame_status_t sensor_frame_parse(const uint8_t *buf, uint8_t buf_len, se
     out_frame->version = version;
     out_frame->sensor_id = buf[2];
     out_frame->seq = buf[3];
-    out_frame->timestamp_ms = (uint32_t)buf[4]
-        | ((uint32_t)buf[5] << 8)
-        | ((uint32_t)buf[6] << 16)
-        | ((uint32_t)buf[7] << 24);
+    out_frame->timestamp_ms = ((uint32_t)buf[4] << 24)
+        | ((uint32_t)buf[5] << 16)
+        | ((uint32_t)buf[6] << 8)
+        | (uint32_t)buf[7];
     out_frame->len = len;
     for (uint8_t i = 0; i < len; i++) {
         out_frame->payload[i] = buf[9u + i];
@@ -74,10 +74,10 @@ uint8_t sensor_frame_encode(uint8_t sensor_id, uint8_t seq, uint32_t timestamp_m
     out_buf[1] = SENSOR_FRAME_VERSION;
     out_buf[2] = sensor_id;
     out_buf[3] = seq;
-    out_buf[4] = (uint8_t)(timestamp_ms & 0xFFu);
-    out_buf[5] = (uint8_t)((timestamp_ms >> 8) & 0xFFu);
-    out_buf[6] = (uint8_t)((timestamp_ms >> 16) & 0xFFu);
-    out_buf[7] = (uint8_t)((timestamp_ms >> 24) & 0xFFu);
+    out_buf[4] = (uint8_t)((timestamp_ms >> 24) & 0xFFu);
+    out_buf[5] = (uint8_t)((timestamp_ms >> 16) & 0xFFu);
+    out_buf[6] = (uint8_t)((timestamp_ms >> 8) & 0xFFu);
+    out_buf[7] = (uint8_t)(timestamp_ms & 0xFFu);
     out_buf[8] = payload_len;
     for (uint8_t i = 0; i < payload_len; i++) {
         out_buf[9u + i] = payload[i];

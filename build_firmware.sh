@@ -111,7 +111,7 @@ if [ "${URTC_SANITIZE:-0}" = "1" ]; then
 fi
 "$HOST_CC" -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests $SANITIZE_FLAGS \
     -o "$BUILD/host_tests" \
-    tests/test_main.c tests/test_sensor_frame.c tests/test_sensor_reading.c tests/test_rate_limiter.c tests/test_sensor_diagnostics.c tests/test_vision_sensor_scenarios.c tests/test_robustness.c tests/test_sensor_freshness.c \
+    tests/test_main.c tests/test_sensor_frame.c tests/test_sensor_reading.c tests/test_rate_limiter.c tests/test_sensor_diagnostics.c tests/test_vision_sensor_scenarios.c tests/test_robustness.c tests/test_sensor_freshness.c tests/test_sensor_vectors.c \
     src/sensor_frame.c src/sensor_reading.c src/rate_limiter.c src/sensor_diagnostics.c src/vision_sensor_link.c src/sensor_freshness.c
 "$BUILD/host_tests"
 echo "  OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_freshness.c / sensor_diagnostics.c / vision_sensor_link.c pure-logic tests passed"

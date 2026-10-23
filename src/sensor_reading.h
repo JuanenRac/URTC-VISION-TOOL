@@ -32,7 +32,7 @@ typedef struct {
 } sensor_thermal_reading_t;
 
 // Decodes and range-checks a SENSOR_ID_THERMAL payload (2 bytes,
-// little-endian signed int16, hundredths of a degree C). `out_reading` is
+// big-endian signed int16, hundredths of a degree C). `out_reading` is
 // only written on SENSOR_READING_OK.
 sensor_reading_status_t sensor_reading_validate_thermal(const uint8_t *payload, uint8_t len, sensor_thermal_reading_t *out_reading);
 

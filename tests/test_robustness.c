@@ -62,7 +62,7 @@ static void null_guards(int *failures)
 
 static void truncation_and_corruption(int *failures)
 {
-    uint8_t payload[2] = { 0xE8, 0x03 }; // 10.00 degrees
+    uint8_t payload[2] = { 0x03, 0xE8 }; // 10.00 degrees
     uint8_t buf[SENSOR_FRAME_MAX_SIZE];
     uint8_t n = sensor_frame_encode(SENSOR_ID_THERMAL, 7, 123456, payload, 2, buf);
     TEST_ASSERT(n == 12, "a thermal frame with a 2-byte payload is 12 bytes");
@@ -124,8 +124,10 @@ static void round_trips(int *failures)
     buf[0] = 0x00;
     TEST_ASSERT(sensor_frame_parse(buf, 10, &frame) == SENSOR_FRAME_ERR_BAD_SOF, "a wrong start byte is a bad SOF");
     buf[0] = SENSOR_FRAME_SOF;
-    buf[1] = 2;
+    buf[1] = (uint8_t)(SENSOR_FRAME_VERSION + 1u);
     TEST_ASSERT(sensor_frame_parse(buf, 10, &frame) == SENSOR_FRAME_ERR_UNSUPPORTED_VERSION, "an unknown protocol version is refused before the CRC is looked at");
+    buf[1] = 1;
+    TEST_ASSERT(sensor_frame_parse(buf, 10, &frame) == SENSOR_FRAME_ERR_UNSUPPORTED_VERSION, "version 1, the little-endian layout, is refused instead of being read as other numbers");
 }
 
 static void reading_range_edges(int *failures)
@@ -141,7 +143,7 @@ static void reading_range_edges(int *failures)
         { INT16_MAX, SENSOR_READING_ERR_TEMP_OUT_OF_RANGE, "the most positive 16-bit value" },
     };
     for (unsigned i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
-        uint8_t payload[2] = { (uint8_t)((uint16_t)cases[i].value & 0xFF), (uint8_t)((uint16_t)cases[i].value >> 8) };
+        uint8_t payload[2] = { (uint8_t)((uint16_t)cases[i].value >> 8), (uint8_t)((uint16_t)cases[i].value & 0xFF) };
         sensor_reading_status_t got = sensor_reading_validate_thermal(payload, 2, &reading);
         TEST_ASSERT(got == cases[i].expect, cases[i].name);
         if (got == SENSOR_READING_OK) TEST_ASSERT(reading.temp_centidegrees_c == cases[i].value, "an accepted reading is returned as sent");
@@ -183,7 +185,7 @@ static void link_end_to_end(int *failures)
     sensor_freshness_init(&fresh);
     sensor_diagnostics_init(&diag);
 
-    uint8_t payload[2] = { 0x10, 0x27 }; // 100.00 degrees
+    uint8_t payload[2] = { 0x27, 0x10 }; // 100.00 degrees
     uint8_t buf[SENSOR_FRAME_MAX_SIZE];
     uint8_t n = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 5, payload, 2, buf);
 
@@ -192,7 +194,7 @@ static void link_end_to_end(int *failures)
     n = sensor_frame_encode(SENSOR_ID_THERMAL, 2, 6, payload, 2, buf);
     TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 1050, &reading) && diag.rate_limited_count == 1, "the next frame 50 ms later is throttled and counted");
 
-    uint8_t bad_value[2] = { 0xFF, 0x7F };
+    uint8_t bad_value[2] = { 0x7F, 0xFF };
     n = sensor_frame_encode(SENSOR_ID_THERMAL, 2, 6, bad_value, 2, buf);
     TEST_ASSERT(!vision_sensor_link_process_frame(&rl, &fresh, &diag, buf, n, 2000, &reading) && diag.out_of_range_count == 1, "an impossible temperature is counted as out of range");
     n = sensor_frame_encode(SENSOR_ID_THERMAL, 3, 7, payload, 2, buf);
@@ -220,7 +222,7 @@ static void freshness_and_silence(int *failures)
     rate_limiter_init(&rl, 10);
     sensor_freshness_init(&fresh);
     sensor_diagnostics_init(&diag);
-    uint8_t payload[2] = { 0xD0, 0x07 }; // 20.00 degrees
+    uint8_t payload[2] = { 0x07, 0xD0 }; // 20.00 degrees
     uint8_t buf[SENSOR_FRAME_MAX_SIZE];
 
     uint8_t n = sensor_frame_encode(SENSOR_ID_THERMAL, 5, 1000, payload, 2, buf);

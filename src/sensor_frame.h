@@ -15,17 +15,21 @@
 //   byte:   0     1        2         3      4..7           8      9..9+len-1   9+len
 //         [SOF][VERSION][SENSOR_ID][SEQ] [TIMESTAMP_MS]  [LEN] [PAYLOAD...]   [CRC8]
 //
-// TIMESTAMP_MS is a 4-byte little-endian sensor-side millisecond
+// TIMESTAMP_MS is a 4-byte big-endian sensor-side millisecond
 // timestamp - the real "cuando se midio" the review calls for, distinct
 // from whenever the MCU happens to parse the frame. CRC8 covers
 // everything from SOF through the last payload byte.
+//
+// Every multi-byte value is BIG-ENDIAN, like every value of the URTC bus. Version 1
+// of this frame was little-endian; a frame of that version is refused as
+// SENSOR_FRAME_ERR_UNSUPPORTED_VERSION instead of being read as another number.
 #ifndef SENSOR_FRAME_H
 #define SENSOR_FRAME_H
 
 #include <stdint.h>
 
 #define SENSOR_FRAME_SOF 0xB6u
-#define SENSOR_FRAME_VERSION 1u
+#define SENSOR_FRAME_VERSION 2u
 #define SENSOR_FRAME_MAX_PAYLOAD 16u
 // SOF + VERSION + SENSOR_ID + SEQ + TIMESTAMP(4) + LEN + payload + CRC
 #define SENSOR_FRAME_MAX_SIZE (9u + SENSOR_FRAME_MAX_PAYLOAD + 1u)

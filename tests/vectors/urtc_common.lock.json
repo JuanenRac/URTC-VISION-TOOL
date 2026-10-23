@@ -2,9 +2,13 @@
   "format": 1,
   "urtc_common_version": "0.0.7",
   "files": {
+    "sensor_vectors.h": {
+      "from": "generated/sensor_vectors.h",
+      "sha256": "59d0ebf740d63b614623000b0b64544b9bf3238551d06dd6b195cc3aebab31ac"
+    },
     "urtc_fw_vectors.h": {
       "from": "generated/urtc_fw_vectors.h",
-      "sha256": "c2ad884b439c1eab4b2bc30cc1c2f1b00bc998cd9bf1e8da73d62155878cae70"
+      "sha256": "bbddb2966366422881b4d2fec358ed5a8782e0571285110947154e486a9aeff6"
     }
   }
 }

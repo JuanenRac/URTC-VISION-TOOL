@@ -41,7 +41,7 @@ void run_vision_sensor_scenario_tests(int *failures)
         sensor_freshness_t fresh;
         sensor_freshness_init(&fresh);
 
-        uint8_t payload[2] = {0xD0, 0x07}; // 20.00C
+        uint8_t payload[2] = {0x07, 0xD0}; // 20.00C
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 1000, payload, 2, buf);
 
@@ -62,7 +62,7 @@ void run_vision_sensor_scenario_tests(int *failures)
         sensor_freshness_t fresh;
         sensor_freshness_init(&fresh);
 
-        uint8_t payload[2] = {0xD0, 0x07};
+        uint8_t payload[2] = {0x07, 0xD0};
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 1000, payload, 2, buf);
 
@@ -81,7 +81,7 @@ void run_vision_sensor_scenario_tests(int *failures)
         sensor_freshness_t fresh;
         sensor_freshness_init(&fresh);
 
-        uint8_t payload[2] = {0xD0, 0x07};
+        uint8_t payload[2] = {0x07, 0xD0};
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 1000, payload, 2, buf);
         buf[len - 1] ^= 0xFFu; // real bit-level CRC corruption
@@ -102,7 +102,7 @@ void run_vision_sensor_scenario_tests(int *failures)
         sensor_freshness_init(&fresh);
 
         int16_t too_hot = SENSOR_READING_MAX_TEMP_CENTIDEGREES_C + 100;
-        uint8_t payload[2] = {(uint8_t)((uint16_t)too_hot & 0xFF), (uint8_t)(((uint16_t)too_hot >> 8) & 0xFF)};
+        uint8_t payload[2] = {(uint8_t)(((uint16_t)too_hot >> 8) & 0xFF), (uint8_t)((uint16_t)too_hot & 0xFF)};
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 1000, payload, 2, buf);
 
@@ -122,7 +122,7 @@ void run_vision_sensor_scenario_tests(int *failures)
         sensor_freshness_t fresh;
         sensor_freshness_init(&fresh);
 
-        uint8_t payload[2] = {0xD0, 0x07};
+        uint8_t payload[2] = {0x07, 0xD0};
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         uint8_t len = sensor_frame_encode(SENSOR_ID_THERMAL, 1, 0, payload, 2, buf);
         uint8_t second_buf[SENSOR_FRAME_MAX_SIZE];
@@ -144,7 +144,7 @@ void run_vision_sensor_scenario_tests(int *failures)
         sensor_diagnostics_init(&diag);
         sensor_freshness_t fresh;
         sensor_freshness_init(&fresh);
-        uint8_t payload[2] = {0x10, 0x27}; // would be 100.00 C if read as thermal
+        uint8_t payload[2] = {0x27, 0x10}; // would be 100.00 C if read as thermal
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         sensor_thermal_reading_t reading;
 
@@ -166,8 +166,8 @@ void run_vision_sensor_scenario_tests(int *failures)
         sensor_diagnostics_init(&diag);
         sensor_freshness_t fresh;
         sensor_freshness_init(&fresh);
-        uint8_t bad[2] = {0xFF, 0x7F}; // 327.67 C: out of range
-        uint8_t good[2] = {0xD0, 0x07}; // 20.00 C
+        uint8_t bad[2] = {0x7F, 0xFF}; // 327.67 C: out of range
+        uint8_t good[2] = {0x07, 0xD0}; // 20.00 C
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         sensor_thermal_reading_t reading;
 

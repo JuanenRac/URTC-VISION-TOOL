@@ -24,7 +24,7 @@ void run_sensor_frame_tests(int *failures)
 
     // --- Real round trip: encode then parse gives back the exact same frame ---
     {
-        uint8_t payload[2] = {0xD0, 0x07}; // 0x07D0 = 2000 centidegrees = 20.00C
+        uint8_t payload[2] = {0x07, 0xD0}; // 0x07D0 = 2000 centidegrees = 20.00C
         uint8_t buf[SENSOR_FRAME_MAX_SIZE];
         uint8_t written = sensor_frame_encode(SENSOR_ID_THERMAL, 3, 123456u, payload, 2, buf);
         TEST_ASSERT(written == 9 + 2 + 1, "encode writes header + payload + CRC bytes");
@@ -35,7 +35,7 @@ void run_sensor_frame_tests(int *failures)
         TEST_ASSERT(status == SENSOR_FRAME_OK, "a real, valid encoded frame parses as SENSOR_FRAME_OK");
         TEST_ASSERT(frame.sensor_id == SENSOR_ID_THERMAL, "parsed sensor_id matches");
         TEST_ASSERT(frame.seq == 3, "parsed seq matches");
-        TEST_ASSERT(frame.timestamp_ms == 123456u, "parsed timestamp_ms matches (real 32-bit little-endian decode)");
+        TEST_ASSERT(frame.timestamp_ms == 123456u, "parsed timestamp_ms matches (real 32-bit big-endian decode)");
         TEST_ASSERT(frame.len == 2, "parsed len matches");
         TEST_ASSERT(memcmp(frame.payload, payload, 2) == 0, "parsed payload bytes match exactly");
     }
