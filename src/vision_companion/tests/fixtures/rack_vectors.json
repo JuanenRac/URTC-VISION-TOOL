@@ -447,6 +447,469 @@
       "verdict": "reached"
     }
   ],
+  "streams": [
+    {
+      "name": "a frame in one piece",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5020101030000C830"
+        }
+      ],
+      "frames": [
+        "A5020101030000C830"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 0,
+        "dropped_bytes": 0
+      }
+    },
+    {
+      "name": "a frame in pieces, each within the timeout",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A502"
+        },
+        {
+          "time_ms": 10,
+          "hex": "010103"
+        },
+        {
+          "time_ms": 20,
+          "hex": "0000C830"
+        }
+      ],
+      "frames": [
+        "A5020101030000C830"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 0,
+        "dropped_bytes": 0
+      }
+    },
+    {
+      "name": "two frames in one burst",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5020101030000C830A50202010313012CF3"
+        }
+      ],
+      "frames": [
+        "A5020101030000C830",
+        "A50202010313012CF3"
+      ],
+      "stats": {
+        "frames_ok": 2,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 0,
+        "dropped_bytes": 0
+      }
+    },
+    {
+      "name": "a frame split at every byte",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5"
+        },
+        {
+          "time_ms": 1,
+          "hex": "02"
+        },
+        {
+          "time_ms": 2,
+          "hex": "01"
+        },
+        {
+          "time_ms": 3,
+          "hex": "01"
+        },
+        {
+          "time_ms": 4,
+          "hex": "03"
+        },
+        {
+          "time_ms": 5,
+          "hex": "00"
+        },
+        {
+          "time_ms": 6,
+          "hex": "00"
+        },
+        {
+          "time_ms": 7,
+          "hex": "C8"
+        },
+        {
+          "time_ms": 8,
+          "hex": "30"
+        }
+      ],
+      "frames": [
+        "A5020101030000C830"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 0,
+        "dropped_bytes": 0
+      }
+    },
+    {
+      "name": "noise before and between the frames",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "0013FFA5020101030000C83042A50202010313012CF3"
+        }
+      ],
+      "frames": [
+        "A5020101030000C830",
+        "A50202010313012CF3"
+      ],
+      "stats": {
+        "frames_ok": 2,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 0,
+        "dropped_bytes": 4
+      }
+    },
+    {
+      "name": "a frame cut short by a silence, then a whole one",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5020101"
+        },
+        {
+          "time_ms": 100,
+          "hex": "A50202010313012CF3"
+        }
+      ],
+      "frames": [
+        "A50202010313012CF3"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 1,
+        "dropped_bytes": 4
+      }
+    },
+    {
+      "name": "a silence of exactly the timeout keeps the frame",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5020101"
+        },
+        {
+          "time_ms": 20,
+          "hex": "030000C830"
+        }
+      ],
+      "frames": [
+        "A5020101030000C830"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 0,
+        "dropped_bytes": 0
+      }
+    },
+    {
+      "name": "a silence of one more drops it",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5020101"
+        },
+        {
+          "time_ms": 21,
+          "hex": "030000C830"
+        }
+      ],
+      "frames": [],
+      "stats": {
+        "frames_ok": 0,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 1,
+        "dropped_bytes": 9
+      }
+    },
+    {
+      "name": "the clock of the milliseconds wraps inside a frame",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 4294967280,
+          "hex": "A5020101"
+        },
+        {
+          "time_ms": 4,
+          "hex": "030000C830"
+        }
+      ],
+      "frames": [
+        "A5020101030000C830"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 0,
+        "dropped_bytes": 0
+      }
+    },
+    {
+      "name": "a bad crc, then a good frame",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5020101030000C8CFA50202010313012CF3"
+        }
+      ],
+      "frames": [
+        "A50202010313012CF3"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 1,
+        "bad_headers": 0,
+        "resyncs": 1,
+        "timeouts": 0,
+        "dropped_bytes": 9
+      }
+    },
+    {
+      "name": "a bad crc inside a burst of three frames",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5020101030000C830A5020101030000C8CFA50202010313012CF3A50203010300000014"
+        }
+      ],
+      "frames": [
+        "A5020101030000C830",
+        "A50202010313012CF3",
+        "A50203010300000014"
+      ],
+      "stats": {
+        "frames_ok": 3,
+        "crc_errors": 1,
+        "bad_headers": 0,
+        "resyncs": 1,
+        "timeouts": 0,
+        "dropped_bytes": 9
+      }
+    },
+    {
+      "name": "a version this rack does not speak, then a good frame",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5010101030000C830A50202010313012CF3"
+        }
+      ],
+      "frames": [
+        "A50202010313012CF3"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 1,
+        "resyncs": 1,
+        "timeouts": 0,
+        "dropped_bytes": 9
+      }
+    },
+    {
+      "name": "a length of 17 is refused at once",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A502010111A50202010313012CF3"
+        }
+      ],
+      "frames": [
+        "A50202010313012CF3"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 1,
+        "resyncs": 1,
+        "timeouts": 0,
+        "dropped_bytes": 5
+      }
+    },
+    {
+      "name": "a header that hides the start of a real frame",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A502000103A50202010313012CF3"
+        }
+      ],
+      "frames": [
+        "A50202010313012CF3"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 1,
+        "bad_headers": 0,
+        "resyncs": 1,
+        "timeouts": 0,
+        "dropped_bytes": 5
+      }
+    },
+    {
+      "name": "thirty start bytes in a row",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5"
+        }
+      ],
+      "frames": [],
+      "stats": {
+        "frames_ok": 0,
+        "crc_errors": 0,
+        "bad_headers": 29,
+        "resyncs": 29,
+        "timeouts": 0,
+        "dropped_bytes": 29
+      }
+    },
+    {
+      "name": "a frame after thirty start bytes",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5A5020101030000C830"
+        }
+      ],
+      "frames": [
+        "A5020101030000C830"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 30,
+        "resyncs": 30,
+        "timeouts": 0,
+        "dropped_bytes": 30
+      }
+    },
+    {
+      "name": "a timeout of 5 ms (a faster link)",
+      "timeout_ms": 5,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A50201"
+        },
+        {
+          "time_ms": 6,
+          "hex": "01030000C830"
+        }
+      ],
+      "frames": [],
+      "stats": {
+        "frames_ok": 0,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 1,
+        "dropped_bytes": 9
+      }
+    },
+    {
+      "name": "a frame of the longest payload",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A502090110000102030405060708090A0B0C0D0E0F9B"
+        }
+      ],
+      "frames": [
+        "A502090110000102030405060708090A0B0C0D0E0F9B"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 0,
+        "dropped_bytes": 0
+      }
+    },
+    {
+      "name": "a start byte alone, then silence, then a whole frame",
+      "timeout_ms": 20,
+      "events": [
+        {
+          "time_ms": 0,
+          "hex": "A5"
+        },
+        {
+          "time_ms": 50,
+          "hex": "A5020101030000C830"
+        }
+      ],
+      "frames": [
+        "A5020101030000C830"
+      ],
+      "stats": {
+        "frames_ok": 1,
+        "crc_errors": 0,
+        "bad_headers": 0,
+        "resyncs": 0,
+        "timeouts": 1,
+        "dropped_bytes": 1
+      }
+    }
+  ],
   "limits": {
     "ceiling_c": 400,
     "link_timeout_ms": 250,

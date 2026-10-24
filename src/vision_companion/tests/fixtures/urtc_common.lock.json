@@ -4,7 +4,7 @@
   "files": {
     "rack_vectors.json": {
       "from": "conformance/rack_vectors.json",
-      "sha256": "0920b7981a7d78527c8d81791262be6fb3783d9e3beb1b06ee5c2f15f5cb81a3"
+      "sha256": "a35d7e38dc233843e3bc425d043e4fcccef87f591858297dd904eee4454e8bcc"
     },
     "thermal_vectors.json": {
       "from": "conformance/thermal_vectors.json",
