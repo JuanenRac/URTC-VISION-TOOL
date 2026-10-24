@@ -351,5 +351,19 @@ pytest
 どのバージョンの URTC プログラムが連携して動作し、それぞれがどのプロトコルバージョンを話すかは、URTC-COMMON が生成する互換性表に載っています：[docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md)。
 <!-- /urtc-section:compatibility -->
 
+<!-- urtc-section:status_vision_tool -->
+## 💡 プロジェクトの状況
+
+🟢 完了・検証済み · 🟡 動作するが既知の制限あり · 🟠 途中、または未検証 · 🔴 未実施または動作しない。実機で一度も動いていないものは緑になりません。
+
+| 項目 | 状態 | リポジトリが示せること |
+| --- | :---: | --- |
+| ソフトウェア | 🟡 | PC とシミュレーターでは動作します。実際のボードでは一度も実行していません。 |
+| テスト | 🟢 | テストスイートはプッシュごとに CI で通ります。 |
+| 実機 | 🟠 | 実際のボードでの実行はまだありません。ベンチテストは未実施です。 |
+| ドキュメント | 🟡 | 8 言語の README と参照ドキュメントがあります。翻訳はネイティブによるレビューを受けていません。 |
+
+<!-- /urtc-section:status_vision_tool -->
+
 ## 📜 ライセンス
 GPL-3.0-or-later —— 詳細は LICENSE を参照してください。

@@ -320,5 +320,19 @@ This project is part of the HYDRA-UMC robotics ecosystem by the same author (Jua
 Which versions of the URTC programs work together, and which protocol version each one speaks, is listed in the compatibility table that URTC-COMMON generates: [docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md).
 <!-- /urtc-section:compatibility -->
 
+<!-- urtc-section:status_vision_tool -->
+## 💡 Project status
+
+🟢 done and verified · 🟡 works, with known limits · 🟠 half done or not verified · 🔴 not done or not working. Nothing is green if it never ran on real hardware.
+
+| Part | Status | What the repository can show |
+| --- | :---: | --- |
+| Software | 🟡 | Works on a PC and against the simulator; never run against a real board. |
+| Tests | 🟢 | The test suite passes in the CI on every push. |
+| Real hardware | 🟠 | No run on a real board yet: the bench test is still pending. |
+| Documentation | 🟡 | README in eight languages and reference documents; the translations were not reviewed by native speakers. |
+
+<!-- /urtc-section:status_vision_tool -->
+
 ## 📜 LICENSE
 GPL-3.0-or-later - See LICENSE for details.
