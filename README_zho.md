@@ -130,7 +130,8 @@ URTC-VISION-TOOL/
 │   ├── build_test.py               # 不递增版本号的构建/编译检查
 │   ├── gcov_floor.py               # 主机测试执行的 src/ 少于下限时失败（gcov）
 │   ├── publish_release_assets.py   # 列出要附加的发布资源并输出 gh 命令
-│   └── ci_validate.py              # CI 使用的 manifest/CHANGELOG/docs 校验
+│   ├── ci_validate.py              # CI 使用的 manifest/CHANGELOG/docs 校验
+│   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # ci_validate.py 使用的共享检查
 ├── bump.py                         # 显式的版本递增命令（编译从不递增）
 ├── bump_version.py                 # 里程表式版本递增（通用脚本，与 URTC / URTC-SMART-RACK 共享）
 ├── bump_manifest_version.py        # 将 urtc.project.json 的版本与原生版本同步（--sync）

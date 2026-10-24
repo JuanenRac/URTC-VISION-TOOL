@@ -131,7 +131,8 @@ URTC-VISION-TOOL/
 │   ├── build_test.py               # バージョンを更新しないビルド/コンパイル確認
 │   ├── gcov_floor.py               # ホストテストが src/ を下限より少なくしか実行しないと失敗する（gcov）
 │   ├── publish_release_assets.py   # 添付するリリースアセットを列挙し gh コマンドを表示
-│   └── ci_validate.py              # CI が使用する manifest/CHANGELOG/docs の検証
+│   ├── ci_validate.py              # CI が使用する manifest/CHANGELOG/docs の検証
+│   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # ci_validate.py が使う共有チェック
 ├── bump.py                         # 明示的なバージョン加算コマンド（コンパイルでは加算されない）
 ├── bump_version.py                 # オドメーター式バージョンインクリメント（汎用スクリプト、URTC / URTC-SMART-RACK と共有）
 ├── bump_manifest_version.py        # urtc.project.json のバージョンをネイティブ側と同期（--sync）

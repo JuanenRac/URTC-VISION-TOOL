@@ -123,7 +123,8 @@ URTC-VISION-TOOL/
 │   ├── build_test.py               # Build-/Kompilierprüfung ohne Versionserhöhung
 │   ├── gcov_floor.py               # Schlägt fehl, wenn die Host-Tests weniger von src/ ausführen als ein Mindestwert (gcov)
 │   ├── publish_release_assets.py   # Listet die Release-Assets auf und gibt den gh-Befehl aus
-│   └── ci_validate.py              # Manifest-/CHANGELOG-/Doku-Validierung, von der CI genutzt
+│   ├── ci_validate.py              # Manifest-/CHANGELOG-/Doku-Validierung, von der CI genutzt
+│   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # Gemeinsame Prüfungen, die ci_validate.py verwendet
 ├── bump.py                         # Ausdrücklicher Befehl zum Erhöhen der Version (Kompilieren erhöht nie)
 ├── bump_version.py                 # Versionserhöhung nach Kilometerzähler-Prinzip (generisch, geteilt mit URTC / URTC-SMART-RACK)
 ├── bump_manifest_version.py        # Synchronisiert die Version von urtc.project.json mit der nativen (--sync)

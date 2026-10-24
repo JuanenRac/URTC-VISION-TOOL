@@ -123,7 +123,8 @@ URTC-VISION-TOOL/
 │   ├── build_test.py               # Non-versioning build/compile check
 │   ├── gcov_floor.py               # Fails when the host tests run less of src/ than a floor (gcov)
 │   ├── publish_release_assets.py   # Lists the release assets to attach and prints the gh command
-│   └── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
+│   ├── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
+│   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # Shared checks used by ci_validate.py
 ├── bump.py                         # Explicit version bump command (building never bumps)
 ├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC / URTC-SMART-RACK), called by bump.py
 ├── bump_manifest_version.py        # Syncs urtc.project.json's version to the native one (--sync)

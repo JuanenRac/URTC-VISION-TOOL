@@ -123,7 +123,8 @@ URTC-VISION-TOOL/
 │   ├── build_test.py               # Controllo build/compilazione senza incremento di versione
 │   ├── gcov_floor.py               # Fallisce se i test host eseguono meno di src/ di una soglia minima (gcov)
 │   ├── publish_release_assets.py   # Elenca gli asset della release e stampa il comando gh
-│   └── ci_validate.py              # Validazione manifest/CHANGELOG/docs usata dalla CI
+│   ├── ci_validate.py              # Validazione manifest/CHANGELOG/docs usata dalla CI
+│   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # Controlli condivisi usati da ci_validate.py
 ├── bump.py                         # Comando esplicito per alzare la versione (compilare non la alza mai)
 ├── bump_version.py                 # Incremento versione stile contachilometri (generico, condiviso con URTC / URTC-SMART-RACK)
 ├── bump_manifest_version.py        # Sincronizza la versione di urtc.project.json con quella nativa (--sync)
