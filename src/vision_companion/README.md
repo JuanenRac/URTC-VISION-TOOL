@@ -5,9 +5,10 @@ thermal (MLX9064x) + RGB tool head. Part of the [URTC-VISION-TOOL](../../README.
 project - see the repo root README for the full project context.
 
 There is no real PCB for this tool head yet (see [`../../hardware/README.md`](../../hardware/README.md)),
-so real sensor capture isn't implemented. The companion has no bus access of its own, but it speaks the
-CAN messages of URTC's thermal inspection tool (`urtc_thermal.py`, identifiers `0x250`-`0x255`): it builds
-the requests and puts the 16-pixel chunks back together, and a simulated head answers them in the tests. What's real and fully working today is the processing
+so no capture from a real sensor has happened. The companion speaks the CAN messages of URTC's thermal
+inspection tool (`urtc_thermal.py`, identifiers `0x250`-`0x255`): it builds the requests and puts the
+16-pixel chunks back together, `slcan_link.py` carries them over a serial CAN adapter (`capture`), and a
+simulated adapter and head answer them in the tests. What's real and fully working today is the processing
 pipeline those captures will feed: synthetic thermal/RGB frame generation, false-color thermal
 rendering, real RGB->thermal ROI alignment and stats extraction (`alignment.py`; invalid pixels
 are left out and counted), thermal sensors of 32x24 and 16x12 pixels, and stats reporting - runs
@@ -22,9 +23,17 @@ src/vision_companion/
 ├── vision_companion/         # the importable package
 │   ├── __init__.py           # __version__, defined once
 │   ├── __main__.py           # python -m vision_companion
-│   ├── cli.py                # the command line (version / selftest / analyze-roi)
+│   ├── cli.py                # the command line (version / selftest / capture / analyze-roi / inspect / drift-check / rack-check / rack-watch / rack-simulate)
 │   ├── alignment.py          # ROI mapping and temperature statistics
-│   └── urtc_thermal.py       # the CAN messages of URTC's thermal inspection tool (host side) and a simulated head
+│   ├── calibration.py        # the JSON thermal calibration (gain, offsets, dead pixels)
+│   ├── urtc_thermal.py       # the CAN messages of URTC's thermal inspection tool (host side) and a simulated head
+│   ├── slcan_link.py         # the serial CAN (SLCAN) adapter that carries them, used by `capture`
+│   ├── inspection.py         # judges the components of a plan by temperature
+│   ├── export.py             # JSON Lines, OPC UA node list and DataLake export of the readings
+│   ├── sensor_drift.py       # drift of a sensor against a saved baseline
+│   ├── rack_check.py         # per-slot verdict of the pre-heat of the tool rack
+│   ├── rack_watch.py         # the same over a series of frames, with the swap decision
+│   └── rack_text.py          # the words of the rack check in the eight languages
 └── tests/                    # pytest
 ```
 
@@ -82,8 +91,9 @@ ruff check .
 CLI commands), `tests/test_alignment.py` (ROI coordinate mapping, out-of-bounds/degenerate-input
 guards including a ROI with no real overlap with the thermal frame at all, ROI stats
 extraction), `tests/test_robustness.py` (invalid pixels, sensor variants, degenerate input,
-packaging), `tests/test_calibration.py` (the JSON thermal calibration) and `tests/test_docs.py` (the CLI reference matches the CLI).
+packaging), `tests/test_calibration.py` (the JSON thermal calibration), `tests/test_urtc_thermal.py` and `tests/test_slcan_link.py` (the thermal exchange and the serial adapter, against a simulated head), `tests/test_inspection.py`, `tests/test_rack_check.py` and `tests/test_rack_watch.py` (the inspection and the rack check) and `tests/test_docs.py` (the CLI reference matches the CLI).
 
 See [`vision_companion/cli.py`](vision_companion/cli.py) and
-[`vision_companion/alignment.py`](vision_companion/alignment.py) for the real, working code. A real
-MLX9064x/camera capture step will be added once hardware exists.
+[`vision_companion/alignment.py`](vision_companion/alignment.py) for the real, working code. `capture` reads
+one image through a serial CAN adapter, but it has only been played against a simulated adapter and head;
+a capture from a real MLX9064x or camera waits for hardware.

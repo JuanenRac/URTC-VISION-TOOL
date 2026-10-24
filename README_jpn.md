@@ -108,10 +108,18 @@ URTC-VISION-TOOL/
 │       ├── requirements.txt        # numpy + pillow
 │       ├── vision_companion/
 │       │   ├── __init__.py         # コンパニオンのバージョン（1 か所だけで定義）
-│       │   ├── cli.py              # 実際に動作する CLI（バージョン/自己診断/analyze-roi）
+│       │   ├── cli.py              # 実際に動作する CLI（バージョン/自己診断/analyze-roi / capture / inspect / drift-check / rack-check / rack-watch / rack-simulate）
 │       │   ├── alignment.py        # 本物：RGB<->熱画像 ROI マッピング + 温度統計抽出
-│       │   └── calibration.py      # 実装済み: JSON から読み込む熱キャリブレーション（ゲイン、オフセット、不良ピクセル）
-│       ├── tests/                  # 135 件の実際の pytest ケース（cli.py + alignment.py）
+│       │   ├── calibration.py      # 実装済み: JSON から読み込む熱キャリブレーション（ゲイン、オフセット、不良ピクセル）
+│       │   ├── urtc_thermal.py     # 実装済み: CAN 経由で URTC ヘッドから熱画像を読み取る（0x250-0x255、模擬ヘッド付き）
+│       │   ├── slcan_link.py       # 実装済み: それを運ぶ SLCAN シリアルアダプター（`capture` が使用）
+│       │   ├── inspection.py       # 実装済み: 計画の各部品を温度で判定し、時系列をエクスポート
+│       │   ├── export.py           # 実装済み: 測定値の JSON Lines、OPC UA ノード一覧、DataLake へのエクスポート
+│       │   ├── sensor_drift.py     # 実装済み: 保存した基準値に対するセンサーのドリフト
+│       │   ├── rack_check.py       # 実装済み: ラックの予熱をスロットごとに判定
+│       │   ├── rack_watch.py       # 実装済み: 一連のフレームに対する同じ判定で、交換が許可される時期を示す
+│       │   └── rack_text.py        # 実装済み: ラック点検の文言（8 言語）
+│       ├── tests/                  # 135 件の実際の pytest ケース（コンパニオン全体）
 │       └── README.md               # コンパニオン専用の使用方法ドキュメント
 ├── tests/                          # 実際のホストネイティブなファームウェアテストハーネス（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、センサーシナリオ、鮮度、堅牢性）
 ├── docs/                           # コマンドラインリファレンス（CLI_REFERENCE.md）
@@ -204,7 +212,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-135 件の実際の pytest ケースが `cli.py` と `alignment.py` の両方をカバー
+135 件の実際の pytest ケースが `cli.py`、`alignment.py`、およびパッケージのその他のモジュールをカバー
 します：
 
 ```bash

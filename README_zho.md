@@ -107,10 +107,18 @@ URTC-VISION-TOOL/
 │       ├── requirements.txt        # numpy + pillow
 │       ├── vision_companion/
 │       │   ├── __init__.py         # 配套软件的版本号（仅在此处定义）
-│       │   ├── cli.py              # 真实可用的 CLI（版本/自检/analyze-roi）
+│       │   ├── cli.py              # 真实可用的 CLI（版本/自检/analyze-roi / capture / inspect / drift-check / rack-check / rack-watch / rack-simulate）
 │       │   ├── alignment.py        # 真实：RGB<->热成像 ROI 映射 + 温度统计提取
-│       │   └── calibration.py      # 真实：从 JSON 加载的热校准（增益、偏移、坏点）
-│       ├── tests/                  # 135 个真实 pytest 用例（cli.py + alignment.py）
+│       │   ├── calibration.py      # 真实：从 JSON 加载的热校准（增益、偏移、坏点）
+│       │   ├── urtc_thermal.py     # 真实：通过 CAN 从 URTC 工具头读取热图像（0x250-0x255），含模拟工具头
+│       │   ├── slcan_link.py       # 真实：承载它的 SLCAN 串口适配器（由 `capture` 使用）
+│       │   ├── inspection.py       # 真实：按温度判断计划中的各元件并导出序列
+│       │   ├── export.py           # 真实：把读数导出为 JSON Lines、OPC UA 节点列表和 DataLake
+│       │   ├── sensor_drift.py     # 真实：传感器相对于已保存基线的漂移
+│       │   ├── rack_check.py       # 真实：机架预热按槽位给出的判定
+│       │   ├── rack_watch.py       # 真实：对一系列帧做同样的判定，并说明何时允许更换
+│       │   └── rack_text.py        # 真实：机架检查的八种语言文字
+│       ├── tests/                  # 135 个真实 pytest 用例（整个配套软件）
 │       └── README.md               # 配套软件专属使用文档
 ├── tests/                          # 真实的主机原生固件测试套件（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、传感器场景、新鲜度、健壮性）
 ├── docs/                           # 命令行参考（CLI_REFERENCE.md）
@@ -199,7 +207,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-135 个真实 pytest 用例覆盖了 `cli.py` 和 `alignment.py`：
+135 个真实 pytest 用例覆盖了 `cli.py`、`alignment.py` 以及包中的其他模块：
 
 ```bash
 pip install -e ".[dev]"

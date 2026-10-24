@@ -100,10 +100,18 @@ URTC-VISION-TOOL/
 │       ├── requirements.txt        # numpy + pillow
 │       ├── vision_companion/
 │       │   ├── __init__.py         # La versione del companion, definita una sola volta
-│       │   ├── cli.py              # CLI reale e funzionante (version / selftest / analyze-roi)
+│       │   ├── cli.py              # CLI reale e funzionante (version / selftest / analyze-roi / capture / inspect / drift-check / rack-check / rack-watch / rack-simulate)
 │       │   ├── alignment.py        # Reale: mappatura ROI RGB<->termico + estrazione statistiche di temperatura
-│       │   └── calibration.py      # Reale: calibrazione termica (guadagno, offset, pixel morti) caricata da JSON
-│       ├── tests/                  # 135 casi pytest reali (cli.py + alignment.py)
+│       │   ├── calibration.py      # Reale: calibrazione termica (guadagno, offset, pixel morti) caricata da JSON
+│       │   ├── urtc_thermal.py     # Reale: legge un'immagine termica da una testa URTC via CAN (0x250-0x255), con una testa simulata
+│       │   ├── slcan_link.py       # Reale: l'adattatore seriale SLCAN che la trasporta (usato da `capture`)
+│       │   ├── inspection.py       # Reale: giudica i componenti di un piano in base alla temperatura ed esporta la serie
+│       │   ├── export.py           # Reale: esportazione delle letture in JSON Lines, elenco di nodi OPC UA e DataLake
+│       │   ├── sensor_drift.py     # Reale: deriva di un sensore rispetto a un riferimento salvato
+│       │   ├── rack_check.py       # Reale: verdetto per slot del preriscaldamento di un rack
+│       │   ├── rack_watch.py       # Reale: lo stesso su una serie di frame; dice quando uno scambio è permesso
+│       │   └── rack_text.py        # Reale: le parole del controllo del rack negli otto idiomi
+│       ├── tests/                  # 135 casi pytest reali (tutto il companion)
 │       └── README.md               # Documentazione specifica del companion
 ├── tests/                          # Harness di test firmware nativo host reale (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, scenari sensore, freschezza, robustezza)
 ├── docs/                           # Riferimento della riga di comando (CLI_REFERENCE.md)
@@ -178,7 +186,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-135 casi pytest reali coprono sia `cli.py` che `alignment.py`:
+135 casi pytest reali coprono `cli.py`, `alignment.py` e gli altri moduli del pacchetto:
 
 ```bash
 pip install -e ".[dev]"

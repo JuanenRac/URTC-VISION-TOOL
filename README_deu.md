@@ -100,10 +100,18 @@ URTC-VISION-TOOL/
 │       ├── requirements.txt        # numpy + pillow
 │       ├── vision_companion/
 │       │   ├── __init__.py         # Die Version des Companions, nur einmal definiert
-│       │   ├── cli.py              # Echte, funktionierende CLI (version / selftest / analyze-roi)
+│       │   ├── cli.py              # Echte, funktionierende CLI (version / selftest / analyze-roi / capture / inspect / drift-check / rack-check / rack-watch / rack-simulate)
 │       │   ├── alignment.py        # Echt: RGB<->Thermal-ROI-Zuordnung + Temperaturstatistik-Extraktion
-│       │   └── calibration.py      # Echt: thermische Kalibrierung (Verstärkung, Offsets, tote Pixel) aus JSON geladen
-│       ├── tests/                  # 135 echte pytest-Fälle (cli.py + alignment.py)
+│       │   ├── calibration.py      # Echt: thermische Kalibrierung (Verstärkung, Offsets, tote Pixel) aus JSON geladen
+│       │   ├── urtc_thermal.py     # Echt: liest ein Wärmebild von einem URTC-Kopf über CAN (0x250-0x255), mit simuliertem Kopf
+│       │   ├── slcan_link.py       # Echt: der serielle SLCAN-Adapter, der es transportiert (von `capture` verwendet)
+│       │   ├── inspection.py       # Echt: beurteilt die Komponenten eines Plans nach der Temperatur und exportiert die Reihe
+│       │   ├── export.py           # Echt: Export der Messwerte als JSON Lines, OPC-UA-Knotenliste und DataLake
+│       │   ├── sensor_drift.py     # Echt: Drift eines Sensors gegenüber einer gespeicherten Referenz
+│       │   ├── rack_check.py       # Echt: Urteil je Slot über das Vorheizen eines Racks
+│       │   ├── rack_watch.py       # Echt: dasselbe über eine Reihe von Frames; sagt, wann ein Wechsel erlaubt ist
+│       │   └── rack_text.py        # Echt: die Wörter der Rack-Prüfung in den acht Sprachen
+│       ├── tests/                  # 135 echte pytest-Fälle (das ganze Companion-Paket)
 │       └── README.md               # Companion-spezifische Nutzungsdokumentation
 ├── tests/                          # Echter hostnativer Firmware-Testharness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, Sensor-Szenarien, Aktualität, Robustheit)
 ├── docs/                           # Kommandozeilen-Referenz (CLI_REFERENCE.md)
@@ -178,7 +186,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-135 echte pytest-Fälle decken sowohl `cli.py` als auch `alignment.py` ab:
+135 echte pytest-Fälle decken `cli.py`, `alignment.py` und die übrigen Module des Pakets ab:
 
 ```bash
 pip install -e ".[dev]"
