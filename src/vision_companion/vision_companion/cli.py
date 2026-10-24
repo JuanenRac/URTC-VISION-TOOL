@@ -7,8 +7,8 @@
 # Host-side (CM5 / dev machine, NOT the STM32 - see ../../src/main.c's own
 # header comment) companion for URTC-VISION-TOOL's dual-modal thermal+RGB tool
 # head. There is no real MLX9064x/RGB camera wired up yet (no PCB exists -
-# see ../../hardware/README.md), so `capture` (reading the real sensors over
-# I2C/USB) isn't implemented here yet. What IS real and fully working today is
+# see ../../hardware/README.md), so reading the real sensors over
+# I2C/USB is not implemented here. (`capture` reads the image from a URTC head over a serial CAN adapter, played against a simulated head only.) What IS real and fully working today is
 # the processing pipeline those captures will feed: synthetic-frame
 # generation, false-color thermal rendering, and stats reporting - this
 # runs end-to-end with no hardware attached, and the real capture step only has to
@@ -221,6 +221,48 @@ def cmd_selftest(args: argparse.Namespace) -> int:
     print(f"  rgb frame:     {rgb.shape[1]}x{rgb.shape[0]}")
     print(f"    -> {rgb_png_path}")
     print("selftest OK - synthetic pipeline ran end-to-end (no hardware attached).")
+    return EXIT_OK
+
+
+def cmd_capture(args: argparse.Namespace) -> int:
+    """Reads one calibrated thermal image from a URTC head with the thermal inspection tool, over a serial CAN adapter (SLCAN), and
+    saves it like the selftest does, so that inspect, drift-check and rack-check can take the .npy file."""
+    from . import slcan_link
+
+    value_range = tuple(args.range) if getattr(args, "range", None) else None
+    if value_range is not None and not value_range[1] > value_range[0]:
+        print(f"error: --range needs HIGH greater than LOW, got {value_range[0]} {value_range[1]}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    try:
+        calibration = _load_cal(args)
+    except CalibrationError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    try:
+        thermal = slcan_link.capture(args.port, variant=args.variant, bitrate_kbps=args.bitrate)
+    except slcan_link.LinkError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_BAD_INPUT
+    except slcan_link.ThermalProtocolError as error:
+        print(f"error: the head did not deliver an image: {error}", file=sys.stderr)
+        return EXIT_NO_DATA
+    if calibration is not None:
+        try:
+            thermal = calibration.apply(thermal)
+        except CalibrationError as error:
+            print(f"error: {error}", file=sys.stderr)
+            return EXIT_BAD_INPUT
+    out_dir = Path(args.out)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    npy_path = out_dir / "thermal_frame.npy"
+    png_path = out_dir / "thermal_frame_falsecolor.png"
+    np.save(npy_path, thermal)
+    thermal_to_false_color(thermal, value_range).save(png_path)
+    print(f"vision-companion capture v{__version__}")
+    print(f"  thermal frame: {thermal.shape[1]}x{thermal.shape[0]} "
+          f"min={thermal.min():.2f}C max={thermal.max():.2f}C mean={thermal.mean():.2f}C")
+    print(f"    -> {npy_path}")
+    print(f"    -> {png_path}")
     return EXIT_OK
 
 
@@ -442,6 +484,19 @@ def build_parser() -> argparse.ArgumentParser:
     )
     selftest.add_argument("--calibration", metavar="FILE", help=calibration_help)
     selftest.set_defaults(func=cmd_selftest)
+
+    capture_cmd = subparsers.add_parser(
+        "capture",
+        help="Read one calibrated thermal image from a URTC head with the thermal inspection tool through a serial CAN adapter "
+             "(SLCAN, 500 kbit/s) and save it as .npy and false-colour PNG.",
+    )
+    capture_cmd.add_argument("--port", required=True, help="serial port of the adapter (COM3, /dev/ttyACM0) or a pyserial URL (socket://127.0.0.1:7777)")
+    capture_cmd.add_argument("--bitrate", type=int, default=500, choices=[10, 20, 50, 100, 125, 250, 500, 800, 1000], help="bit rate of the bus in kbit/s (default: %(default)s)")
+    capture_cmd.add_argument("--out", default="capture_output", help="Output directory (default: ./capture_output)")
+    capture_cmd.add_argument("--variant", choices=sorted(THERMAL_VARIANTS), default=DEFAULT_VARIANT, help=variant_help)
+    capture_cmd.add_argument("--range", nargs=2, type=float, metavar=("LOW", "HIGH"), help="Fixed false-color scale in degrees C instead of the frame's own min/max")
+    capture_cmd.add_argument("--calibration", metavar="FILE", help=calibration_help)
+    capture_cmd.set_defaults(func=cmd_capture)
 
     analyze_roi = subparsers.add_parser(
         "analyze-roi",

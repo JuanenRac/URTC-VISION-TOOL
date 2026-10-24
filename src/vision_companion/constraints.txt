@@ -9,5 +9,6 @@
 # here, and not by surprise in the middle of an unrelated change.
 numpy>=1.26,<3
 pillow>=10.0,<14
+pyserial>=3.5,<4
 pytest>=8,<10
 ruff>=0.6,<1

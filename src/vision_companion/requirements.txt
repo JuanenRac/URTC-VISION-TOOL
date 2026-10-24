@@ -8,3 +8,4 @@
 # then `python -m vision_companion`).
 numpy>=1.26
 pillow>=10.0
+pyserial>=3.5

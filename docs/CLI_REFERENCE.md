@@ -18,15 +18,18 @@ codes.
 
 ```
 $ vision-companion -h
-usage: vision-companion [-h] {version,selftest,analyze-roi,inspect,drift-check,rack-check,rack-watch,rack-simulate} ...
+usage: vision-companion [-h] {version,selftest,capture,analyze-roi,inspect,drift-check,rack-check,rack-watch,rack-simulate} ...
 
 URTC-VISION-TOOL vision companion - thermal+RGB capture/processing pipeline.
 
 positional arguments:
-  {version,selftest,analyze-roi,inspect,drift-check,rack-check,rack-watch,rack-simulate}
+  {version,selftest,capture,analyze-roi,inspect,drift-check,rack-check,rack-watch,rack-simulate}
     version             Print the companion's version and exit.
     selftest            Run the full synthetic thermal+RGB pipeline end-to-end
                         and save its output (no hardware needed).
+    capture             Read one calibrated thermal image from a URTC head
+                        through a serial CAN adapter (SLCAN, 500 kbit/s) and
+                        save it as .npy and false-colour PNG.
     analyze-roi         Map an RGB-space bounding box to thermal space and
                         report real temperature stats for it (runs against a
                         synthetic thermal frame - no hardware needed).
@@ -112,6 +115,23 @@ $ ls -la /tmp/vc_selftest_out
 -rw-r--r-- 1 juane 197609 3200 thermal_frame.npy
 -rw-r--r-- 1 juane 197609 3846 thermal_frame_falsecolor.png
 ```
+
+### `capture --port PORT [--bitrate KBPS] [--out DIR] [--variant VARIANT] [--range LOW HIGH] [--calibration FILE]`
+
+Reads one calibrated thermal image from a URTC head that carries the thermal inspection tool, through a serial CAN adapter
+(SLCAN, as the CANable and similar adapters speak it), and saves it the way `selftest` does: `thermal_frame.npy` and
+`thermal_frame_falsecolor.png` in `--out` (default `./capture_output`). The `.npy` file is the one `inspect`, `drift-check` and
+`rack-check` take with `--frame` or `--frames`.
+
+`--port` is whatever pyserial can open: `COM3`, `/dev/ttyACM0` or a pyserial URL such as `socket://127.0.0.1:7777`. `--bitrate`
+(kbit/s, default 500, the rate of a URTC bus) must be one of the SLCAN rates: 10, 20, 50, 100, 125, 250, 500, 800 or 1000. The
+adapter is closed, set up, opened, used and closed again; the exchange is the one of `urtc_thermal.py`: `0x250` starts a capture,
+`0x251` is polled until the head says it is ready, and each of the 48 chunks (12 for the 90641) is asked with `0x254` and answered
+with four `0x255` frames. The `--range` and `--calibration` options are the ones of `selftest`.
+
+Exit codes: `0` the image was read and saved; `1` the head did not deliver an image (it reported an error, never became ready or left a
+chunk unanswered); `2` the adapter could not be opened or used (pyserial missing, a port that does not exist), or the arguments are wrong.
+It has been run against a simulated adapter with a simulated head only: no real adapter, bus or head was used.
 
 ### `analyze-roi x0 y0 x1 y1 [--variant VARIANT] [--calibration FILE]`
 
@@ -275,6 +295,6 @@ The code is in `src/vision_companion/vision_companion/calibration.py`.
 | Code | Meaning |
 |------|---------|
 | `0` | ok |
-| `1` | no thermal data: the requested region does not overlap the thermal field of view, or holds no valid pixel |
+| `1` | no thermal data: the requested region does not overlap the thermal field of view, or holds no valid pixel; `capture`: the head did not deliver an image |
 | `3` | `inspect`: at least one component failed its rule; `drift-check`: drift or dead pixels were found; `rack-check`: a slot has a fault |
-| `2` | invalid usage or input: a missing subcommand, a bad argument type or value, a degenerate region, an empty `--range`, a `--calibration` file that cannot be read or is not valid |
+| `2` | invalid usage or input: a missing subcommand, a bad argument type or value, a degenerate region, an empty `--range`, a `--calibration` file that cannot be read or is not valid, `capture`: an adapter that cannot be opened |

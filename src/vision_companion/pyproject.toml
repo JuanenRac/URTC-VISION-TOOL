@@ -24,6 +24,7 @@ authors = [{ name = "JuanenRac (Electro Hobby 3D)", email = "electrohobby3d@gmai
 dependencies = [
     "numpy>=1.26",
     "pillow>=10.0",
+    "pyserial>=3.5",
 ]
 
 [project.optional-dependencies]
