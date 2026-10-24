@@ -78,17 +78,21 @@ class SimulatedAdapter:
         if message is None or self.silent:
             return
         self.requests.append(message)
+        pieces: list[bytes] = []
         if self.garbage_before_answers:
             # an error bell, an extended frame, junk and a frame of another node
-            connection.sendall(b"\x07\rT0000000100\rtZZZ\rt1230\r")
-        answers = self.head.handle(message)
-        for answer in answers:
+            pieces.append(b"\x07\rT0000000100\rtZZZ\rt1230\r")
+        for answer in self.head.handle(message):
             if answer.arbitration_id == CAN_ID_CALIBRATED_CHUNK and self.drop_chunk_frames > 0:
                 self.drop_chunk_frames -= 1
                 continue
-            connection.sendall(format_frame(answer))
-            if self.chunk_frame_delay_s:
+            pieces.append(format_frame(answer))
+        if self.chunk_frame_delay_s:
+            for piece in pieces:
+                connection.sendall(piece)
                 time.sleep(self.chunk_frame_delay_s)
+        elif pieces:
+            connection.sendall(b"".join(pieces))  # one write: the answer reaches the line as one burst
 
     def close(self) -> None:
         try:

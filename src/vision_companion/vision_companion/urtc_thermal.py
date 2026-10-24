@@ -250,8 +250,8 @@ def read_frame(
     """Runs a whole capture over two callables: ``send(message)`` and ``receive() -> list[CanMessage]``.
 
     ``receive`` returns the messages that arrived since the last call (an empty list for none). The four frames of a
-    chunk can come in pieces on a slow line, so as long as frames of the chunk keep arriving it goes on receiving, and
-    the chunk counts as lost when a whole wait brings none. Raises :class:`ThermalProtocolError` when the head reports
+    chunk can come in pieces on a slow line, so as long as anything keeps arriving it goes on receiving, and the chunk
+    counts as lost when a whole wait brings nothing. Raises :class:`ThermalProtocolError` when the head reports
     an error, never becomes ready, or does not answer a chunk request with its four frames.
     """
     send(trigger_message())
@@ -272,10 +272,10 @@ def read_frame(
         send(assembler.next_request())
         done = False
         for _look in range(FRAMES_PER_CHUNK + 1):
-            arrived = [m for m in receive() if m.arbitration_id == CAN_ID_CALIBRATED_CHUNK]
-            for frame in arrived:
+            heard = receive()
+            for frame in (m for m in heard if m.arbitration_id == CAN_ID_CALIBRATED_CHUNK):
                 done = assembler.feed(frame) or done
-            if done or not arrived:
+            if done or not heard:
                 break
         if not done:
             index = assembler.missing[0]
