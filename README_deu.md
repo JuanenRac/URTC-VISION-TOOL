@@ -127,7 +127,7 @@ URTC-VISION-TOOL/
 ├── bump.py                         # Ausdrücklicher Befehl zum Erhöhen der Version (Kompilieren erhöht nie)
 ├── bump_version.py                 # Versionserhöhung nach Kilometerzähler-Prinzip (generisch, geteilt mit URTC / URTC-SMART-RACK)
 ├── bump_manifest_version.py        # Synchronisiert die Version von urtc.project.json mit der nativen (--sync)
-├── build_firmware.sh / .bat        # Echter Build: Host-Tests + Version erhöhen + kompilieren + linken + nach firmware/ veröffentlichen
+├── build_firmware.sh / .bat        # Echter Build: Host-Tests + kompilieren + linken + nach firmware/ veröffentlichen (ändert nie die Version)
 ├── build-test.sh / .bat            # Build-/Kompilierprüfung ohne Versionserhöhung
 └── README.md
 ```
@@ -244,6 +244,7 @@ Dieses Projekt ist Teil des HYDRA-UMC-Robotik-Ökosystems desselben Autors (Juan
 
 *URTC-Werkzeugplattform*
 - **[URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER)** — Desktop-GUI-Flash-Tool für URTC-Platinen, CAN-OTA plus Full-Chip-SWD/JTAG.
+- **[URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON)** — das CAN-Protokoll einmal als Daten geschrieben (Spezifikation, erzeugte Tabellen, Konformitätsvektoren) und der Code, den die Programme teilen; dieses Repository trägt Kopien der Teile, die es verwendet.
 - **[URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY)** — ein Gateway vor dem CAN-Bus, das nur Kennungen einer Liste durchlässt, ihre Rate begrenzt und einen Sitzungsschlüssel verlangt.
 - **[URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO)** — browserbasierte Alternative zu URTC-TESTER über die Web-Serial-API, ohne lokale Installation.
 

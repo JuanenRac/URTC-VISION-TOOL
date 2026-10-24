@@ -83,25 +83,25 @@ flowchart LR
 URTC-VISION-TOOL/
 ├── src/
 │   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
-│   ├── sensor_frame.h / .c         # Real: versioned frame format + CRC8 parse/encode
+│   ├── sensor_frame.h / .c         # Real: formato de trama versionado + análise/codificação CRC8
 │   ├── urtc_crc8.h                 # Real: CRC-8 partilhado com o rack de ferramentas (copiado de URTC-COMMON)
 │   ├── urtc_frame.h                # Real: camada de trama partilhada com o rack de ferramentas (copiada de URTC-COMMON)
 │   ├── urtc_rate_limiter.h         # Real: limitador de intervalo mínimo da ligação (copiado de URTC-COMMON)
-│   ├── sensor_reading.h / .c       # Real: thermal reading decode + range validation
-│   ├── rate_limiter.h / .c         # Real: minimum-interval frame throttling
+│   ├── sensor_reading.h / .c       # Real: descodificação da leitura térmica + validação de intervalo
+│   ├── rate_limiter.h / .c         # Real: limitação das tramas por intervalo mínimo
 │   ├── sensor_freshness.h / .c     # Real: atualidade por sequência/timestamp (deteção de repetições e de sensor congelado)
-│   ├── sensor_diagnostics.h / .c   # Real: error/latency/bus-reset counters, separate from control
-│   ├── vision_sensor_link.h / .c   # Real: frame-dispatch decision tying sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics together
-│   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
-│   ├── startup_stm32_minimal.c     # Vector table + Reset_Handler (no ST HAL yet, see file header)
-│   ├── STM32_MINIMAL.ld            # Placeholder linker script (128K FLASH / 32K RAM floor)
-│   └── vision_companion/           # Host-side (CM5/dev machine) Python vision pipeline
-│       ├── pyproject.toml          # Packaging + `vision-companion` console script
+│   ├── sensor_diagnostics.h / .c   # Real: contadores de erros/latência/reinícios do barramento, separados do controlo
+│   ├── vision_sensor_link.h / .c   # Real: decisão de despacho de tramas que liga sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics
+│   ├── main.c                      # Ponto de entrada mínimo (ciclo de pulsação de prova de vida)
+│   ├── startup_stm32_minimal.c     # Tabela de vetores + Reset_Handler (ainda sem ST HAL, ver o cabeçalho do ficheiro)
+│   ├── STM32_MINIMAL.ld            # Script de ligação provisório (mínimo de 128K FLASH / 32K RAM)
+│   └── vision_companion/           # Pipeline de visão em Python do lado do anfitrião (CM5/máquina de desenvolvimento)
+│       ├── pyproject.toml          # Empacotamento + script de consola `vision-companion`
 │       ├── requirements.txt        # numpy + pillow
 │       ├── vision_companion/
 │       │   ├── __init__.py         # A versão do companion, definida uma só vez
-│       │   ├── cli.py              # Real, working CLI (version / selftest / analyze-roi / capture / inspect / drift-check / rack-check / rack-watch / rack-simulate)
-│       │   ├── alignment.py        # Real: RGB<->thermal ROI mapping + temperature-stats extraction
+│       │   ├── cli.py              # CLI real e funcional (version / selftest / analyze-roi / capture / inspect / drift-check / rack-check / rack-watch / rack-simulate)
+│       │   ├── alignment.py        # Real: mapeamento de ROI RGB<->térmico + extração de estatísticas de temperatura
 │       │   ├── calibration.py      # Real: calibração térmica (ganho, desvios, píxeis mortos) carregada de JSON
 │       │   ├── urtc_thermal.py     # Real: lê uma imagem térmica de uma cabeça URTC por CAN (0x250-0x255), com uma cabeça simulada
 │       │   ├── slcan_link.py       # Real: o adaptador série SLCAN que a transporta (usado por `capture`)
@@ -112,23 +112,23 @@ URTC-VISION-TOOL/
 │       │   ├── rack_watch.py       # Real: o mesmo sobre uma série de tramas; diz quando uma troca é permitida
 │       │   └── rack_text.py        # Real: as palavras da verificação do rack nos oito idiomas
 │       ├── tests/                  # 135 casos reais de pytest (todo o companion)
-│       └── README.md               # Companion-specific usage docs
-├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios, atualidade, robustez)
+│       └── README.md               # Documentação de uso específica do companion
+├── tests/                          # Harness real de testes de firmware nativos do anfitrião (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, cenários do sensor, atualidade, robustez)
 ├── docs/                           # Referência da linha de comandos (CLI_REFERENCE.md)
 ├── hardware/                       # Notas de hardware (README.md) - ainda sem ficheiros de projeto (sem esquema nem PCB)
 ├── firmware/                       # Saída de compilação (.bin/.elf/.hex), ignorada pelo git - publicada apenas como assets da release do GitHub
-├── build/                          # Intermediate build objects (gitignored)
-├── images/                         # Media and diagrams
+├── build/                          # Objetos intermédios da compilação (ignorados pelo git)
+├── images/                         # Multimédia e diagramas
 ├── tools/
-│   ├── build_test.py               # Non-versioning build/compile check
+│   ├── build_test.py               # Verificação de compilação sem alterar a versão
 │   ├── gcov_floor.py               # Falha se os testes de host executarem menos de src/ do que um mínimo (gcov)
 │   ├── publish_release_assets.py   # Lista os assets da release e imprime o comando gh
-│   └── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
+│   └── ci_validate.py              # Validação de manifesto/CHANGELOG/docs usada pela CI
 ├── bump.py                         # Comando explícito para subir a versão (compilar nunca a sobe)
-├── bump_version.py                 # Odometer-style version bump (generic, shared with URTC / URTC-SMART-RACK)
-├── bump_manifest_version.py        # Syncs urtc.project.json's version to the native one (--sync)
-├── build_firmware.sh / .bat        # Real build: host tests + bump version + compile + link + publish to firmware/
-├── build-test.sh / .bat            # Non-versioning build/compile check
+├── bump_version.py                 # Subida de versão tipo conta-quilómetros (genérica, partilhada com URTC / URTC-SMART-RACK)
+├── bump_manifest_version.py        # Sincroniza a versão de urtc.project.json com a nativa (--sync)
+├── build_firmware.sh / .bat        # Compilação real: testes no anfitrião + compilar + ligar + publicar em firmware/ (nunca altera a versão)
+├── build-test.sh / .bat            # Verificação de compilação sem alterar a versão
 └── README.md
 ```
 
@@ -244,6 +244,7 @@ Este projeto faz parte do ecossistema de robótica HYDRA-UMC do mesmo autor (Jua
 
 *Plataforma de Ferramentas URTC*
 - **[URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER)** — ferramenta de gravação com interface gráfica para desktop para placas URTC, CAN-OTA mais SWD/JTAG de chip completo.
+- **[URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON)** — o protocolo CAN escrito uma só vez como dados (especificação, tabelas geradas, vetores de conformidade) e o código que os programas partilham; este repositório traz cópias das partes que usa.
 - **[URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY)** — uma gateway à frente do barramento CAN que só deixa passar identificadores de uma lista, limita a sua taxa e pede uma chave de sessão.
 - **[URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO)** — alternativa baseada em browser ao URTC-TESTER através da Web Serial API, sem necessidade de instalação local.
 
