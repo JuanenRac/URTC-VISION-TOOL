@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import socket
 import threading
+import time
 
 from vision_companion.slcan_link import format_frame, parse_line
 from vision_companion.urtc_thermal import CAN_ID_CALIBRATED_CHUNK, CanMessage, SimulatedThermalHead
@@ -23,8 +24,10 @@ from vision_companion.urtc_thermal import CAN_ID_CALIBRATED_CHUNK, CanMessage, S
 
 class SimulatedAdapter:
     def __init__(self, head: SimulatedThermalHead, *, drop_chunk_frames: int = 0, garbage_before_answers: bool = False,
-                 silent: bool = False) -> None:
+                 silent: bool = False, chunk_frame_delay_s: float = 0.0) -> None:
         self.head = head
+        # a slow line: the frames of an answer come one by one, this far apart
+        self.chunk_frame_delay_s = chunk_frame_delay_s
         self.drop_chunk_frames = drop_chunk_frames  # how many frames of chunk answers to lose (a line that drops one)
         self.garbage_before_answers = garbage_before_answers
         self.silent = silent
@@ -84,6 +87,8 @@ class SimulatedAdapter:
                 self.drop_chunk_frames -= 1
                 continue
             connection.sendall(format_frame(answer))
+            if self.chunk_frame_delay_s:
+                time.sleep(self.chunk_frame_delay_s)
 
     def close(self) -> None:
         try:

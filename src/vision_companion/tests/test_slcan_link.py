@@ -96,6 +96,12 @@ def test_noise_on_the_line_is_ignored(adapter):
     assert np.allclose(capture(simulated.url, idle_wait_s=FAST), image(), atol=0.006)
 
 
+def test_the_frames_of_a_chunk_that_come_one_by_one_on_a_slow_line_are_put_together(adapter):
+    # the pause between two frames is longer than the silence that ends an answer: the next look completes the chunk
+    simulated = adapter(SimulatedThermalHead(image(16, 12), variant="90641"), chunk_frame_delay_s=0.03)
+    assert np.allclose(capture(simulated.url, variant="90641", idle_wait_s=FAST), image(16, 12), atol=0.006)
+
+
 def test_a_head_that_reports_an_error_is_an_error(adapter):
     head = SimulatedThermalHead(image())
     head.error_on_trigger = True
