@@ -94,7 +94,7 @@ All notable changes to this project are documented here.
 
 ## [0.0.7] - Firmware version boundaries and side-effect-free CI builds
 
-- The firmware version scripts keep their own three-component odometer (0.7.9 -> 0.8.0, 0.9.9 -> 1.0.0, 9.9.9 -> 10.0.0) and no longer hand over to the shared manifest utility, which broke the build at the boundary versions; the successor rule is now a pure function covered by boundary tests that run in CI and as a step of the build script.
+- The firmware version scripts keep their own three-component scheme and no longer hand over to the shared manifest utility, which broke the build at the boundary versions; the successor rule is now a pure function covered by boundary tests that run in CI and as a step of the build script.
 - CI builds (URTC_CI=1) publish firmware images under build/firmware instead of firmware/, so a validation build leaves the tracked images untouched.
 - Verified: unit tests and shell syntax checks only; the ARM firmware build itself was not run.
 
