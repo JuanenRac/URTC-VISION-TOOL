@@ -9,6 +9,7 @@
   the number of `TEST_ASSERT(` checks that really exist in tests/, and the number
   of pytest cases quoted must be the number of cases that pytest collects in vision_companion.
 """
+import importlib.util
 import json
 import os
 import re
@@ -80,7 +81,10 @@ class PublishedNumbersTests(unittest.TestCase):
             self.assertEqual(set(numbers), {str(count)}, f"{name} quotes a stale assertion count")
 
     def test_pytest_case_count_in_manifest_and_readmes(self):
-        # the cases pytest collects (a parametrized test counts once for each value), not the number of functions
+        # the cases pytest collects (a parametrized test counts once for each value), not the number of functions;
+        # the job that runs this file for the firmware has no pytest, so there the count is checked only where pytest is installed
+        if importlib.util.find_spec("pytest") is None:
+            self.skipTest("pytest is not installed here, so the cases of vision_companion cannot be counted")
         companion = ROOT / "src" / "vision_companion"
         result = subprocess.run([sys.executable, "-m", "pytest", "tests", "--collect-only", "-q", "-p", "no:cacheprovider"], cwd=companion,
                                 env={**os.environ, "PYTHONPATH": str(companion)}, capture_output=True, text=True, check=False)
