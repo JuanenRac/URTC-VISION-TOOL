@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.1.6] - One list of host sources, a ring buffer for the sensor and the universal README
 
 - **Related Projects lists the URTC family:** the section names the repositories of URTC by group, each with one short line about what it is for, and, in one short line each, the sister projects (independent ecosystems of the same author that share the base and the tools), in the eight languages. It no longer says that URTC is part of another ecosystem. `CONTRIBUTING.md` places the tool head in the URTC ecosystem.
 - **The number of pytest cases of the companion is the number that pytest collects** (183, a parametrized test counts once for each value) in the manifest and in the READMEs, and the test that keeps them honest now counts the collected cases instead of the test functions.
