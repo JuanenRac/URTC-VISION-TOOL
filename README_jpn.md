@@ -15,7 +15,9 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C で、165 件の `TEST_ASSERT` チェック（`tests/test_*.c`、ホストの C コンパイラでコンパイル・実行）がすべて通過しており、このリポジトリの CI が実際に実行しています：`.github/workflows/ci.yml` のファームウェアステップが `build_firmware.sh` を呼び出し、そのステップ 2 が STM32 ビルドの前に必ず `tests/` をコンパイル・実行します。ホスト側の `vision_companion` パッケージ（`alignment.py`、`cli.py`）も本物で、135 件の pytest ケースがすべて通過しており、CI はこのスイートも実行します（専用ステップが `src/vision_companion/requirements.txt` をインストールし、そこで `pytest tests/` を実行）。したがって、どちらの側の退行もビルドを失敗させます。README の冒頭にある通り、このボードの PCB／回路図はまだ存在しないため、ここにあるものは本物の MLX9064x センサーや RGB カメラを読んだことも、本物の CAN トランシーバーを駆動したこともありません——`main.c`/`startup_stm32_minimal.c` は、仮のリンカースクリプトで Cortex-M4F のクロスコンパイルとリンクが成功することを示すだけです。何がリリースされたかは `CHANGELOG.md` を参照してください。
+---
+
+**正直な現状確認 - 実際に今動くもの:** ファームウェア側のセンサープロトコル（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）は本物の純粋な C で、165 件の `TEST_ASSERT` チェック（`tests/test_*.c`、ホストの C コンパイラでコンパイル・実行）がすべて通過しており、このリポジトリの CI が実際に実行しています：`.github/workflows/ci.yml` のファームウェアステップが `build_firmware.sh` を呼び出し、そのステップ 2 が STM32 ビルドの前に必ず `tests/` をコンパイル・実行します。ホスト側の `vision_companion` パッケージ（`alignment.py`、`cli.py`）も本物で、183 件の pytest ケースがすべて通過しており、CI はこのスイートも実行します（専用ステップが `src/vision_companion/requirements.txt` をインストールし、そこで `pytest tests/` を実行）。したがって、どちらの側の退行もビルドを失敗させます。README の冒頭にある通り、このボードの PCB／回路図はまだ存在しないため、ここにあるものは本物の MLX9064x センサーや RGB カメラを読んだことも、本物の CAN トランシーバーを駆動したこともありません——`main.c`/`startup_stm32_minimal.c` は、仮のリンカースクリプトで Cortex-M4F のクロスコンパイルとリンクが成功することを示すだけです。何がリリースされたかは `CHANGELOG.md` を参照してください。
 
 ---
 
@@ -27,9 +29,12 @@
 |---|---|
 | バージョン | `0.1.5` |
 | 成熟度 | 機能する |
+| テスト | 183 (`pytest`) |
 | 技術 | C / STM32 / Python vision companion |
 | 対象 | マイコン基板（ファームウェア）。ビルドは PC で行います |
 | 実機での確認 | まだです：このバージョンについて実機での動作記録はありません |
+
+**移動先：** [概要](#-概要) · [アーキテクチャ](#-アーキテクチャ) · [機能](#-機能) · [セキュリティ](#-セキュリティと安全) · [インターフェース](#-インターフェース) · [クイックスタート](#-クイックスタート) · [テスト](#-テスト) · [構成](#-リポジトリの構成) · [関連](#-関連プロジェクト)
 
 <!-- urtc-section:status_vision_tool -->
 ## 🚦 プロジェクトの状況
@@ -45,7 +50,7 @@
 
 <!-- /urtc-section:status_vision_tool -->
 
-## 1. 🛠️ 技術概要
+## 🎯 概要
 
 **URTC-VISION-TOOL** は、視覚的知覚と熱知覚を単一の URTC 互換エフェクター
 に統合した専用のロボット工具ヘッドです。高度な QA、PCB の熱画像検査、
@@ -68,11 +73,22 @@ RGB グローバルシャッターカメラと MLX9064x ファミリーの熱セ
 * 📡 **URTC との統合** — 決定済み：このヘッドは URTC の工具ヘッドであり、第二のプロトコルではなく、URTC の熱画像検査ツール（工具プロファイル 22、MLX90640/90641/90642）とその CAN メッセージ `0x250`-`0x255`（トリガー、ステータス、生および校正済みのピクセルブロック。URTC の `docs/CANBUS.TXT` に記載）を再利用します。このやり取りのホスト側は本物で、ハードウェアなしでテスト済みです（`urtc_thermal.py`、模擬ヘッド付き）。ヘッドのファームウェア、CAN トランシーバー、実装済み基板はまだ存在しないため、バス上で動いたことはありません。*（このリポジトリのセンサー側フレームプロトコル（下記）は、ホストでテスト済みの別個の部品であり、熱画像は運びません。）*
 * 🔒 **センサープロトコルの範囲チェック** — バージョン管理されたフレーミング、CRC8 チェックサム、測定範囲検証、レート制限、フレームの鮮度チェック（シーケンスとタイムスタンプ）、そして制御判断とは独立した専用のエラー/レイテンシ/バスリセット診断カウンター。フレームのバージョン 2：複数バイトの値（タイムスタンプと温度の読み取り値）はすべてバスと同じビッグエンディアンで、バージョン 1 のフレームは拒否されます。*（純粋な C として実装され、PC 上でのみテスト済みです。ボードや実際のセンサーで動作したことはなく、安全機能でもありません）*
 * ✅ **Cortex-M4F ファームウェアツールチェーン** — 兄弟リポジトリ URTC と URTC-SMART-RACK と同じツールチェーンを用いて、`arm-none-eabi-gcc` でクロスコンパイルおよびリンクされる実際のベアメタルイメージ。*（実装済み——下記の「ビルド」を参照）*
-* ✅ **`vision_companion` 処理パイプライン** — 実際に動作する Python パッケージ：合成された熱画像+RGB フレーム生成、疑似カラー熱画像レンダリング、RGB->熱画像 ROI アライメント + 温度統計抽出、統計レポート、135 件の実際の pytest ケースでカバー、ハードウェア接続なしでエンドツーエンドに実行可能。*（実装済み——下記の「VISION COMPANION」を参照）*
+* ✅ **`vision_companion` 処理パイプライン** — 実際に動作する Python パッケージ：合成された熱画像+RGB フレーム生成、疑似カラー熱画像レンダリング、RGB->熱画像 ROI アライメント + 温度統計抽出、統計レポート、183 件の実際の pytest ケースでカバー、ハードウェア接続なしでエンドツーエンドに実行可能。*（実装済み——下記の「VISION COMPANION」を参照）*
 
----
+## 🧩 URTC での役割
 
-## 2. 🔄 ビジョンツールフロー
+URTC-VISION-TOOL は RGB カメラと MLX9064x 熱センサーを一体にしたツールヘッドで、品質検査、基板の熱検査、実装ヘッドの位置合わせに使います。URTC のツールヘッドで、2 つ目のプロトコルを作る代わりに URTC の熱検査ツールとその CAN メッセージ `0x250` から `0x255` を再利用し、ビジョンノード（Hailo-8）と HYDRA-UMC コントローラーに 2 種類のデータを渡すので、部品を有無だけでなく温度でも判断できます。現時点で実在するのは、ファームウェアのセンサープロトコルとホスト側のビジョンコンパニオンで、どちらもコンピューター上で試験されています。ボードはまだ存在しません。補完的なツールで、URTC の子ではありません。
+
+## 🏛️ アーキテクチャ
+
+<p align="center">
+  <img src="images/architecture.svg" alt="URTC-VISION-TOOL のアーキテクチャ：誰が使い、何を持ち、何に依存するか" width="100%">
+</p>
+
+このリポジトリの各部分の関係：誰が使い、何を持ち、何に依存するか。図は `docs/architecture.json` から描かれ、コードと照合されます。
+
+<details>
+<summary>図のテキスト版 (Mermaid)</summary>
 
 ```mermaid
 flowchart LR
@@ -85,9 +101,9 @@ flowchart LR
     SYNC --> DASH["Studio Dashboard"]
 ```
 
----
+</details>
 
-## 3. 🧱 アーキテクチャと設計上の決定
+### アーキテクチャと設計上の決定
 
 * **本プロジェクトが 2 つの独立したバージョン管理系統を持つ理由。** `src/firmware_common.h`（STM32 側のファームウェア）と `src/vision_companion/vision_companion/__init__.py`（独立したホスト側 Python パッケージ）は独立してバージョン管理されています——異なるハードウェア（MCU 対ホストの CM5/PC）上で動作し、異なるスケジュールで出荷されるためです。
 * **URTC 自体の子プロジェクトではない理由。** URTC-SMART-RACK 自身の README と同じ理由です——URTC のファームウェアの慣例を共有する補完ツールであり、その統合階層の一部ではありません。
@@ -97,67 +113,32 @@ flowchart LR
 * **センサーフレームプロトコルが独自のタイムスタンプフィールドを持つ理由。** 実際のセンサー側ミリ秒単位のタイムスタンプにより、呼び出し元は、MCU がいつそのフレームの解析にたどり着くかとは無関係に、読み取りが実際に*いつ*行われたかを知ることができます——単に「たった今届いた」という前提では失われてしまう、履歴管理/診断における実際の価値です。
 * **診断カウンター（`sensor_diagnostics.c`）が自ら受理/拒否の判断を一切行わない理由。** フレームが信頼できるかどうかを決定するのは `sensor_frame.c`（フレーミング）、`sensor_reading.c`（範囲）、`rate_limiter.c`（レート制限）のみであり——診断はそれらが決定した結果を記録するだけです。この境界を厳格に保つことで、診断側のバグが誤って不正なデータを通過させてしまうことは決してなくなります。これは診断ノート自身が言う「separar diagnostico de salida de control」そのものです。
 
----
+## ✨ 機能
 
-## 📂 リポジトリ構成
+**領域ごとの熱検査、系列の書き出し、センサーのドリフト、ラック確認(ホストでのテストのみ):** `inspect` は、計画にある各部品を種類ごとの温度ルールで判定し、各領域の最小・最大・平均を HYDRA-UMC データレイク向けのサンプル、JSON 行、OPC-UA ノード値として書き出せます。`drift-check` は基準シーンのフレームを基準データと比べ(不良画素、オフセットのドリフト)、校正ファイルを書き出せます。`rack-check` は熱フレームからツールラックの先端を判定します。`rack-watch` はラックの加熱中に先端を追い、各スロットがいつ目標に達したか、工具を交換してよいかを示します。`rack-simulate` は模擬ラック(正常または異常あり)のフレームを書き出し、カメラなしで試せます。ラックのコマンドは 8 言語で表示します(`--lang`)。[CLI リファレンス](docs/CLI_REFERENCE.md)を参照してください。合成フレームでのみ実行しており、カメラも基板も使っていません。
 
-```text
-URTC-VISION-TOOL/
-├── src/
-│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
-│   ├── sensor_frame.h / .c         # 本物：バージョン管理されたフレーム形式 + CRC8 パース/エンコード
-│   ├── urtc_crc8.h                 # 本物：ツールラックと共有する CRC-8（URTC-COMMON からコピー）
-│   ├── urtc_frame.h                # 本物：ツールラックと共有するフレーム層（URTC-COMMON からコピー）
-│   ├── urtc_rate_limiter.h         # 本物：リンクの最小間隔リミッター（URTC-COMMON からコピー）
-│   ├── sensor_reading.h / .c       # 本物：熱画像読み取りのデコード + 範囲検証
-│   ├── rate_limiter.h / .c         # 本物：最小間隔によるフレームのスロットリング
-│   ├── sensor_freshness.h / .c     # 本物：シーケンス/タイムスタンプによる鮮度チェック（重複・固着センサーの検出）
-│   ├── sensor_diagnostics.h / .c   # 本物：エラー/レイテンシ/バスリセットのカウンター、制御からは分離
-│   ├── vision_sensor_link.h / .c   # 本物：sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics を結びつけるフレームディスパッチの判断
-│   ├── main.c                      # 最小限のエントリポイント（生存証明のハートビートループ）
-│   ├── startup_stm32_minimal.c     # ベクターテーブル + Reset_Handler（ST HAL はまだなし、ファイルヘッダー参照）
-│   ├── STM32_MINIMAL.ld            # プレースホルダーリンカスクリプト（128K FLASH / 32K RAM の下限）
-│   └── vision_companion/           # ホスト側（CM5/開発機）の Python 視覚パイプライン
-│       ├── pyproject.toml          # パッケージング + `vision-companion` コンソールスクリプト
-│       ├── requirements.txt        # numpy + pillow
-│       ├── vision_companion/
-│       │   ├── __init__.py         # コンパニオンのバージョン（1 か所だけで定義）
-│       │   ├── cli.py              # 実際に動作する CLI（バージョン/自己診断/analyze-roi / capture / inspect / drift-check / rack-check / rack-watch / rack-simulate）
-│       │   ├── alignment.py        # 本物：RGB<->熱画像 ROI マッピング + 温度統計抽出
-│       │   ├── calibration.py      # 実装済み: JSON から読み込む熱キャリブレーション（ゲイン、オフセット、不良ピクセル）
-│       │   ├── urtc_thermal.py     # 実装済み: CAN 経由で URTC ヘッドから熱画像を読み取る（0x250-0x255、模擬ヘッド付き）
-│       │   ├── slcan_link.py       # 実装済み: それを運ぶ SLCAN シリアルアダプター（`capture` が使用）
-│       │   ├── inspection.py       # 実装済み: 計画の各部品を温度で判定し、時系列をエクスポート
-│       │   ├── export.py           # 実装済み: 測定値の JSON Lines、OPC UA ノード一覧、DataLake へのエクスポート
-│       │   ├── sensor_drift.py     # 実装済み: 保存した基準値に対するセンサーのドリフト
-│       │   ├── rack_check.py       # 実装済み: ラックの予熱をスロットごとに判定
-│       │   ├── rack_watch.py       # 実装済み: 一連のフレームに対する同じ判定で、交換が許可される時期を示す
-│       │   └── rack_text.py        # 実装済み: ラック点検の文言（8 言語）
-│       ├── tests/                  # 135 件の実際の pytest ケース（コンパニオン全体）
-│       └── README.md               # コンパニオン専用の使用方法ドキュメント
-├── tests/                          # 実際のホストネイティブなファームウェアテストハーネス（sensor_frame、sensor_reading、rate_limiter、sensor_diagnostics、センサーシナリオ、鮮度、堅牢性）
-├── docs/                           # コマンドラインリファレンス（CLI_REFERENCE.md）
-├── hardware/                       # ハードウェアに関するメモ（README.md）—— 設計ファイルはまだなし（回路図も PCB もなし）
-├── firmware/                       # ビルド出力（.bin/.elf/.hex）、git の無視対象——GitHub リリースのアセットとしてのみ公開
-├── build/                          # 中間ビルドオブジェクト（gitignore 対象）
-├── images/                         # メディアと図表
-├── tools/
-│   ├── build_test.py               # バージョンを更新しないビルド/コンパイル確認
-│   ├── gcov_floor.py               # ホストテストが src/ を下限より少なくしか実行しないと失敗する（gcov）
-│   ├── publish_release_assets.py   # 添付するリリースアセットを列挙し gh コマンドを表示
-│   ├── ci_validate.py              # CI が使用する manifest/CHANGELOG/docs の検証
-│   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # ci_validate.py が使う共有チェック
-├── bump.py                         # 明示的なバージョン加算コマンド（コンパイルでは加算されない）
-├── bump_version.py                 # オドメーター式バージョンインクリメント（汎用スクリプト、URTC / URTC-SMART-RACK と共有）
-├── bump_manifest_version.py        # urtc.project.json のバージョンをネイティブ側と同期（--sync）
-├── build_firmware.sh / .bat        # 実際のビルド：ホストテスト + コンパイル + リンク + firmware/ へ公開（バージョンは変更しない）
-├── build-test.sh / .bat            # バージョンを更新しないビルド/コンパイル確認
-└── README.md
-```
+**シリアル CAN アダプター経由の熱画像取得（新規、模擬アダプターと模擬ヘッドでのみ確認）:** `capture --port PORT` は、熱検査ツールを載せた URTC ヘッドから、SLCAN アダプター（シリアルポートまたは pyserial の URL）を通して `0x250` から `0x255` のやり取りで校正済みの画像を 1 枚読み取り、`.npy` と擬似カラー PNG として保存します。これは `inspect`、`drift-check`、`rack-check` にそのまま渡せます。ヘッドがエラーを報告する、準備完了にならない、またはブロックに応答しない場合は、分かりやすいメッセージでコマンドを終了します（終了コード 1）。開けないポートの場合は終了コード 2 で終了します。実際のアダプター、バス、ヘッドでは実行していません。
 
----
+## 🔒 セキュリティと安全
 
-## 4. ⚙️ ビルド（ファームウェア）
+| 脅威 | 防御 |
+|---|---|
+| センサーからの壊れた、または古いフレーム | バージョン付きフレームと CRC-8（`sensor_frame.c`）。バージョン 2 ではタイムスタンプと熱の読み取り値を含む複数バイトの値はバスと同じビッグエンディアンで、バージョン 1 のフレームは拒否されます |
+| センサーが出せないはずの読み取り値 | `sensor_reading.c` が熱の読み取り値をデコードし、範囲外のものを拒否します |
+| フレームの洪水 | `rate_limiter.c` が最小間隔でフレームを保留します |
+| 再生されたフレームや固まったセンサー | `sensor_freshness.c` がシーケンスとセンサー自身のタイムスタンプを検査します |
+| カウンターの不具合で不正なデータが通ること | `sensor_diagnostics.c` は他のモジュールの判断（エラー、遅延、バスのリセット）を記録するだけで、フレームを受理も拒否もしません |
+
+これはすべてコンピューター上で試験された純粋な C で、ボード上でも実際のセンサーでも動いたことはなく、安全機能でもありません。
+
+## 🔌 インターフェース
+
+* **URTC の熱検査メッセージ**（`0x250` から `0x255`：トリガー、状態、生および校正済みのピクセルチャンク。URTC の `docs/CANBUS.TXT` に記載）：このやり取りのホスト側は `urtc_thermal.py` で、ハードウェアなしに模擬ヘッドで試験されています。`capture --port PORT` は SLCAN アダプター（シリアルポートまたは pyserial URL）経由でこれを実行し、画像を `.npy` と擬似カラー PNG で保存します。ヘッドがエラーを報告する、準備完了にならない、チャンクに応答しない場合は終了コード 1 で、ポートを開けない場合は終了コード 2 で終わります。
+* **ファームウェアのセンサーフレーム：** バージョン 2、ビッグエンディアン、CRC-8（`sensor_frame.c`）。独立したホスト試験済みの部品で、熱画像は運びません。
+* **コマンドライン `vision-companion`：** `version`、`selftest`、`analyze-roi`、`capture`、`inspect`、`drift-check`、`rack-check`、`rack-watch`、`rack-simulate`。各オプションと終了コードは [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) にあります。
+* **エクスポート：** `inspect` の読み取り値は JSON Lines、OPC UA ノード値、HYDRA-UMC データレイク用のサンプルとして書き出せます。
+
+## 🚀 クイックスタート
 
 ARM GNU ツールチェーン（`arm-none-eabi-gcc`、`arm-none-eabi-objcopy`、
 `arm-none-eabi-size`）と Python 3 が必要です。
@@ -171,24 +152,7 @@ chmod +x build_firmware.sh   # 初回のみ
 build_firmware.bat
 ```
 
-このビルドはまず *ホスト自身* の C コンパイラ（`arm-none-eabi-gcc` では
-ありません——これらは純粋なロジックテストであり、MCU レジスタには一切
-触れません）で `tests/` をコンパイルして実行し、アサーションが一つでも
-失敗すればビルド全体を失敗させます。それが終わって初めて `src/firmware_common.h`
-のバージョンを増加させ（オドメーター規則、エコシステムの他の部分と同じ）、
-`main.c` と `startup_stm32_minimal.c` を Cortex-M4F 向けにコンパイルし、
-プレースホルダーである `STM32_MINIMAL.ld` のメモリマップとリンクし、
-バージョン管理された `.elf`/`.bin`/`.hex` ファイルを `firmware/` に公開します。
-
-`src/` のすべてのモジュールも Cortex-M4F 向けにコンパイルされ、確認のためにすべてをまとめてリンクします（ターゲットには C ライブラリがありません）。現時点でイメージに含まれるのは `main.c` と起動ファイルだけです。バージョンを上げた後にビルドが失敗した場合、バージョン、マニフェスト、変更履歴は元の状態に戻されます。`URTC_CI=1` では追跡対象のファイルは一切変更されません。
-
-実際のハードウェアにフラッシュできるものは
-今のところ何もありません——対象の STM32 部品、ピン配置、MLX9064x の配線、
-RGB カメラインターフェースを確認できる PCB が存在しないためです。
-
-ファームウェアイメージ（`.bin`、`.hex`、`.elf`）は git で管理されません。リリースビルドは `firmware/URTC_VISION_TOOL_FIRMWARE_v<バージョン>.*` に書き出し（git の無視対象。CI モード、つまり `URTC_CI=1` では `build/firmware`）、各バージョンの GitHub リリースのアセットとしてのみ公開されます。`python tools/publish_release_assets.py` がファイルを検査し、不足している `.sha256` ファイルを書き出して、添付するファイルを含む正確な `gh release create` コマンドを表示します。
-
-## 5. 🐍 ビジョンコンパニオン（ホスト側 Python）
+### ビジョンコンパニオン（ホスト側 Python）
 
 この部分は今日、ハードウェアを一切接続することなく完全に動作します：
 
@@ -227,7 +191,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-135 件の実際の pytest ケースが `cli.py`、`alignment.py`、およびパッケージのその他のモジュールをカバー
+183 件の実際の pytest ケースが `cli.py`、`alignment.py`、およびパッケージのその他のモジュールをカバー
 します：
 
 ```bash
@@ -239,19 +203,78 @@ pytest
 を、実際に取得した出力付きの全コマンド・フラグ・終了コード一覧については
 [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md) を参照してください。
 
----
+<!-- urtc-section:compatibility -->
+### 要件と互換性
 
-## 6. 📋 チェンジログ
+どのバージョンの URTC プログラムが連携して動作し、それぞれがどのプロトコルバージョンを話すかは、URTC-COMMON が生成する互換性表に載っています：[docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md)。
+<!-- /urtc-section:compatibility -->
 
-バージョン履歴の全文は [`CHANGELOG.md`](CHANGELOG.md) を参照。ファームウェアと
-`vision_companion` は独立してバージョン管理されており(上記のビルドおよび
-ビジョンコンパニオンを参照)、実際の変更ごとに個別のエントリを持つ。
+## 🧪 テスト
 
----
+テストは 2 系統あります。ファームウェア側は `tests/` の C（165 件の `TEST_ASSERT` 検査）で、センサーフレーム、読み取り値、レート制限、診断、鮮度、リンク全体のシナリオ、不正な入力への堅牢性、URTC-COMMON の共有ベクトルを扱い、コンピューター自身の C コンパイラーでコンパイル・実行し、CI では AddressSanitizer、UBSan、カバレッジ下限も使います。ホスト側は `vision_companion` パッケージで、183 件の pytest ケース（`cd src/vision_companion && pytest`）がハードウェアなしでパイプライン全体を動かします：合成画像、疑似カラー、位置合わせ、校正、模擬ヘッドに対する熱画像の取得、検査、ドリフト、ラックの検査です。4 つの Python テストファイルがビルドスクリプト、リリースの成果物、バージョンファイルを検査します。`bash build_firmware.sh` はクロスコンパイルの前に C のテストを実行し、アサーションが 1 つでも失敗すると失敗します。
 
-**領域ごとの熱検査、系列の書き出し、センサーのドリフト、ラック確認(ホストでのテストのみ):** `inspect` は、計画にある各部品を種類ごとの温度ルールで判定し、各領域の最小・最大・平均を HYDRA-UMC データレイク向けのサンプル、JSON 行、OPC-UA ノード値として書き出せます。`drift-check` は基準シーンのフレームを基準データと比べ(不良画素、オフセットのドリフト)、校正ファイルを書き出せます。`rack-check` は熱フレームからツールラックの先端を判定します。`rack-watch` はラックの加熱中に先端を追い、各スロットがいつ目標に達したか、工具を交換してよいかを示します。`rack-simulate` は模擬ラック(正常または異常あり)のフレームを書き出し、カメラなしで試せます。ラックのコマンドは 8 言語で表示します(`--lang`)。[CLI リファレンス](docs/CLI_REFERENCE.md)を参照してください。合成フレームでのみ実行しており、カメラも基板も使っていません。
+## 🏗️ ビルドとリリース
 
-**シリアル CAN アダプター経由の熱画像取得（新規、模擬アダプターと模擬ヘッドでのみ確認）:** `capture --port PORT` は、熱検査ツールを載せた URTC ヘッドから、SLCAN アダプター（シリアルポートまたは pyserial の URL）を通して `0x250` から `0x255` のやり取りで校正済みの画像を 1 枚読み取り、`.npy` と擬似カラー PNG として保存します。これは `inspect`、`drift-check`、`rack-check` にそのまま渡せます。ヘッドがエラーを報告する、準備完了にならない、またはブロックに応答しない場合は、分かりやすいメッセージでコマンドを終了します（終了コード 1）。開けないポートの場合は終了コード 2 で終了します。実際のアダプター、バス、ヘッドでは実行していません。
+ビルドはまず `tests/` を*コンピューター自身の* C コンパイラー（`arm-none-eabi-gcc` ではありません。純粋なロジックのテストで、MCU のレジスタには触れません）でコンパイル・実行し、アサーションが 1 つでも失敗するとビルド全体が失敗します。その後はじめて `main.c` と `startup_stm32_minimal.c` を Cortex-M4F 用にコンパイルし、仮の `STM32_MINIMAL.ld` メモリマップとリンクして、バージョン付きの `.elf`/`.bin`/`.hex` を `firmware/` に出力します。ビルドがバージョンを変えることはありません。
+
+`src/` 以下のすべてのモジュールも Cortex-M4F 用にコンパイルされ、検査としてまとめてリンクされます（ターゲットには C ライブラリがありません）。現時点でイメージに入っているのは `main.c` と起動ファイルだけです。`URTC_CI=1` を設定すると、バージョン管理されたファイルには一切触れません。
+
+実際のハードウェアにフラッシュできるものは
+今のところ何もありません——対象の STM32 部品、ピン配置、MLX9064x の配線、
+RGB カメラインターフェースを確認できる PCB が存在しないためです。
+
+ファームウェアイメージ（`.bin`、`.hex`、`.elf`）は git で管理されません。リリースビルドは `firmware/URTC_VISION_TOOL_FIRMWARE_v<バージョン>.*` に書き出し（git の無視対象。CI モード、つまり `URTC_CI=1` では `build/firmware`）、各バージョンの GitHub リリースのアセットとしてのみ公開されます。`python tools/publish_release_assets.py` がファイルを検査し、不足している `.sha256` ファイルを書き出して、添付するファイルを含む正確な `gh release create` コマンドを表示します。
+
+バージョンの全履歴は [`CHANGELOG.md`](CHANGELOG.md) を参照してください。各バージョンにそれぞれの項目があります。
+
+## 📂 リポジトリの構成
+
+<p align="center">
+  <img src="images/repository-structure.svg" alt="URTC-VISION-TOOL のリポジトリ構成" width="100%">
+</p>
+
+<details>
+<summary>ツリーのテキスト版</summary>
+
+```text
+URTC-VISION-TOOL/
+├── src/                                               ファームウェア（純粋な C のセンサープロトコル、URTC-COMMON の検査済みコピー、エントリーポイント、仮のリンカースクリプト）と Python コンパニオン
+├── tests/                                             C のホストテスト（165 件の検査）とビルドスクリプトの Python 検査
+├── docs/                                              CLI_REFERENCE.md：すべてのコマンドと終了コード
+├── hardware/                                          回路図も PCB もまだありません
+├── tools/                                             ビルド、カバレッジ、リリースのツール
+├── images/                                            バナーとこの README の画像
+├── .github/                                           CI ワークフローと Issue・プルリクエストのテンプレート
+├── build-test.sh build-test.bat                       リポジトリを変更しないビルド・テストのスクリプト
+├── test.sh test.bat                                   テストを実行
+├── urtc.project.json                                  マニフェスト：バージョン、役割、成熟度、ビルドコマンド
+├── CHANGELOG.md                                       各バージョンの変更内容
+├── SECURITY.md SUPPORT.md LICENSE                     セキュリティポリシー、サポート、ライセンス
+├── CONTRIBUTING.md CODE_OF_CONDUCT.md                 貢献方法と行動規範
+├── .gitattributes .gitignore                          Git の設定
+├── build_firmware.sh build_firmware.bat               ホストテスト、クロスコンパイル、公開
+├── bump.py bump_version.py bump_manifest_version.py   バージョンを上げるスクリプト
+└── LICENSE.md ruff.toml                               ドキュメントのライセンスと lint 設定
+```
+
+</details>
+
+## 🗺️ ロードマップと既知の制限
+
+**現時点で分かっている制限**
+
+* このボードにはまだ PCB も回路図もありません（`hardware/` 参照）。ここにあるものは、実際の MLX9064x を I2C で読んだことも、RGB カメラや CAN トランシーバーを動かしたこともありません。`main.c` と起動ファイルが示すのは、仮のリンカースクリプトで Cortex-M4F 向けのクロスコンパイルとリンクが通るということだけです。
+* ヘッドのファームウェアはまだ存在しません。熱データのやり取りのホスト側は、模擬ヘッドと模擬 SLCAN アダプターに対してだけ試験されています。
+* `alignment.py` は視野が共通であると仮定し、各軸を線形に拡縮します。本当のピクセル単位の校正（チェッカーボード、レンズ歪み）には実際のカメラが必要です。
+* サブミリ単位の精度、同期した実際の取得、検査ルールの温度の限界は、実際の部品では試していません。
+
+**次のステップ**
+
+* ボードを設計し、STM32 の部品とカメラのインターフェースを決め、センサーとカメラのドライバーを書き、試験台で実際のヘッドに対して熱画像の取得を実行します。
+
+## 🌍 言語
+
+README とテキストは、英語、スペイン語、フランス語、イタリア語、ドイツ語、中国語、日本語、ヨーロッパポルトガル語で提供されています。
 
 ## 🔗 関連プロジェクト
 
@@ -344,10 +367,7 @@ pytest
 - **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — 保守インシデントコーディネーター: 低権限のエッジ役割がサニタイズされたインベントリ/ヘルスのスナップショットを収集し、コントロールプレーン役割がそれを読み取り専用でレンダリングして AI プロバイダーに診断の提案を依頼します - パッチを適用することも、何かをデプロイすることも決してありません。
 - **[HYDRA-UMC-DEV-SERVER](https://github.com/JuanenRac/HYDRA-UMC-DEV-SERVER)** — 再現可能な開発ホスト（Raspberry Pi 5 / CM5）。エコシステムのソースコードを保管し、永続キューのもとで境界の明確なビルド/テストタスクを実行する。運用中の CM5 とは明確に異なる、開発専用の役割。
 
-
----
-
-## 📚 ドキュメント & コミュニティ
+## 📚 ドキュメント
 
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** —— プルリクエストのための技術スタックとコーディング指針。
 - **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** —— このコミュニティで期待される行動規範。
@@ -355,16 +375,20 @@ pytest
 - **[SUPPORT.md](SUPPORT.md)** —— 質問の投稿先とバグの報告先。
 - **[LICENSE.md](LICENSE.md)** —— このプロジェクト自身のライセンス。
 
+## 🤝 コントリビュートとコミュニティ
+
+* プルリクエストの前に `URTC_CI=1 python tools/ci_validate.py` を実行してください。通過する必要があります。[CONTRIBUTING.md](CONTRIBUTING.md) と[行動規範](CODE_OF_CONDUCT.md)を参照してください。
+* README は 8 言語で提供されています。文章の変更は 8 つのファイルすべてで行い、他のリポジトリと共有するセクションは URTC-COMMON の `tools/readme_sections.py` が書き込みます。
+* CAN プロトコルの変更は URTC-COMMON（`spec/can_protocol.json`）から始まり、検査済みのコピーを通じてこのリポジトリに届きます。
+* ビルドしただけのものを、ボード上で動いているかのように書かないでください。
+* 脆弱性は非公開で報告してください：[SECURITY.md](SECURITY.md)。質問、アイデア、報告：electrohobby3d@gmail.com（[SUPPORT.md](SUPPORT.md)）。
+
 ## 👤 作者
+
 **JuanenRac** (Electro Hobby 3D)
 📧 electrohobby3d@gmail.com
 📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
 
-<!-- urtc-section:compatibility -->
-## 🧩 互換性
-
-どのバージョンの URTC プログラムが連携して動作し、それぞれがどのプロトコルバージョンを話すかは、URTC-COMMON が生成する互換性表に載っています：[docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md)。
-<!-- /urtc-section:compatibility -->
-
 ## 📜 ライセンス
+
 GPL-3.0-or-later —— 詳細は LICENSE を参照してください。

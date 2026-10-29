@@ -1,0 +1,354 @@
+{
+  "repo": "URTC-VISION-TOOL",
+  "ecosystem": "urtc",
+  "svg": "en",
+  "cards": [
+    {
+      "name": "src/",
+      "span": 3,
+      "accent": "a",
+      "tree": {
+        "en": "the firmware (pure C sensor protocol, checked copies of URTC-COMMON, entry point, placeholder linker script) and the Python companion",
+        "es": "el firmware (protocolo del sensor en C puro, copias comprobadas de URTC-COMMON, punto de entrada, script de enlazado provisional) y el acompañante en Python",
+        "de": "die Firmware (reines C-Sensorprotokoll, geprüfte Kopien von URTC-COMMON, Einstiegspunkt, vorläufiges Linker-Skript) und der Python-Companion",
+        "fr": "le firmware (protocole du capteur en C pur, copies vérifiées d'URTC-COMMON, point d'entrée, script d'édition de liens provisoire) et le compagnon Python",
+        "it": "il firmware (protocollo del sensore in C puro, copie verificate di URTC-COMMON, punto di ingresso, script di link provvisorio) e il companion Python",
+        "zh": "固件（纯 C 传感器协议、URTC-COMMON 的核对副本、入口点、占位链接脚本）和 Python 伴随程序",
+        "ja": "ファームウェア（純粋な C のセンサープロトコル、URTC-COMMON の検査済みコピー、エントリーポイント、仮のリンカースクリプト）と Python コンパニオン",
+        "pt": "o firmware (protocolo do sensor em C puro, cópias verificadas do URTC-COMMON, ponto de entrada, script de ligação provisório) e o acompanhante em Python"
+      },
+      "rows": [
+        {
+          "name": "sensor_frame.c  sensor_reading.c",
+          "desc": {
+            "en": "the frame and the thermal reading",
+            "es": "la trama y la lectura térmica",
+            "de": "der Frame und der Wärmemesswert",
+            "fr": "la trame et la mesure thermique",
+            "it": "il frame e la lettura termica",
+            "zh": "帧和热读数",
+            "ja": "フレームと熱の読み取り値",
+            "pt": "a trama e a leitura térmica"
+          }
+        },
+        {
+          "name": "rate_limiter.c  sensor_freshness.c",
+          "desc": {
+            "en": "rate and freshness checks",
+            "es": "comprobaciones de tasa y frescura",
+            "de": "Raten- und Aktualitätsprüfungen",
+            "fr": "contrôles de débit et de fraîcheur",
+            "it": "controlli di frequenza e freschezza",
+            "zh": "速率与新鲜度检查",
+            "ja": "レートと鮮度の検査",
+            "pt": "verificações de taxa e atualidade"
+          }
+        },
+        {
+          "name": "sensor_diagnostics.c  vision_sensor_link.c",
+          "desc": {
+            "en": "counters and the dispatch",
+            "es": "contadores y el reparto",
+            "de": "Zähler und die Verteilung",
+            "fr": "compteurs et aiguillage",
+            "it": "contatori e smistamento",
+            "zh": "计数器和分发",
+            "ja": "カウンターと振り分け",
+            "pt": "contadores e encaminhamento"
+          }
+        },
+        {
+          "name": "main.c  STM32_MINIMAL.ld",
+          "desc": {
+            "en": "entry point, placeholder map",
+            "es": "punto de entrada, mapa provisional",
+            "de": "Einstiegspunkt, vorläufige Karte",
+            "fr": "point d'entrée, carte provisoire",
+            "it": "punto di ingresso, mappa provvisoria",
+            "zh": "入口点、占位内存映射",
+            "ja": "エントリーポイント、仮のマップ",
+            "pt": "ponto de entrada, mapa provisório"
+          }
+        },
+        {
+          "name": "vision_companion/",
+          "desc": {
+            "en": "alignment, thermal capture, inspection, export",
+            "es": "alineación, captura térmica, inspección, exportación",
+            "de": "Ausrichtung, Wärmeaufnahme, Prüfung, Export",
+            "fr": "alignement, capture thermique, inspection, export",
+            "it": "allineamento, acquisizione termica, ispezione, esportazione",
+            "zh": "对准、热图像采集、检测、导出",
+            "ja": "位置合わせ、熱画像の取得、検査、エクスポート",
+            "pt": "alinhamento, captura térmica, inspeção, exportação"
+          }
+        }
+      ]
+    },
+    {
+      "name": "tests/",
+      "span": 1,
+      "accent": "b",
+      "tree": {
+        "en": "host C tests (165 checks) and Python checks of the build scripts",
+        "es": "pruebas de host en C (165 comprobaciones) y comprobaciones en Python de los scripts de compilación",
+        "de": "C-Host-Tests (165 Prüfungen) und Python-Prüfungen der Build-Skripte",
+        "fr": "tests hôte en C (165 vérifications) et contrôles Python des scripts de compilation",
+        "it": "test host in C (165 controlli) e controlli Python degli script di compilazione",
+        "zh": "C 主机测试（165 项检查）和构建脚本的 Python 检查",
+        "ja": "C のホストテスト（165 件の検査）とビルドスクリプトの Python 検査",
+        "pt": "testes de host em C (165 verificações) e verificações em Python dos scripts de compilação"
+      },
+      "rows": [
+        {
+          "desc": {
+            "en": "C and Python files",
+            "es": "archivos C y Python",
+            "de": "C- und Python-Dateien",
+            "fr": "fichiers C et Python",
+            "it": "file C e Python",
+            "zh": "C 和 Python 文件",
+            "ja": "C と Python のファイル",
+            "pt": "ficheiros C e Python"
+          }
+        }
+      ]
+    },
+    {
+      "name": "docs/ hardware/",
+      "kind": "group",
+      "span": 2,
+      "columns": 1,
+      "rows": [
+        {
+          "name": "docs/",
+          "desc": {
+            "en": "CLI_REFERENCE.md: every command and exit code",
+            "es": "CLI_REFERENCE.md: cada comando y código de salida",
+            "de": "CLI_REFERENCE.md: jeder Befehl und Exit-Code",
+            "fr": "CLI_REFERENCE.md : chaque commande et code de sortie",
+            "it": "CLI_REFERENCE.md: ogni comando e codice di uscita",
+            "zh": "CLI_REFERENCE.md：每个命令和退出码",
+            "ja": "CLI_REFERENCE.md：すべてのコマンドと終了コード",
+            "pt": "CLI_REFERENCE.md: cada comando e código de saída"
+          }
+        },
+        {
+          "name": "hardware/",
+          "desc": {
+            "en": "no schematic or PCB yet",
+            "es": "todavía sin esquema ni PCB",
+            "de": "noch kein Schaltplan, keine Leiterplatte",
+            "fr": "pas encore de schéma ni de PCB",
+            "it": "ancora nessuno schema né PCB",
+            "zh": "目前没有原理图和 PCB",
+            "ja": "回路図も PCB もまだありません",
+            "pt": "ainda sem esquema nem PCB"
+          }
+        }
+      ]
+    },
+    {
+      "name": "tools/ images/ .github/",
+      "kind": "group",
+      "span": 3,
+      "columns": 2,
+      "rows": [
+        {
+          "name": "tools/",
+          "desc": {
+            "en": "build, coverage, release tools",
+            "es": "compilación, cobertura y herramientas de release",
+            "de": "Build-, Abdeckungs- und Release-Werkzeuge",
+            "fr": "outils de compilation, couverture et release",
+            "it": "strumenti di compilazione, copertura e release",
+            "zh": "构建、覆盖率和发布工具",
+            "ja": "ビルド、カバレッジ、リリースのツール",
+            "pt": "ferramentas de compilação, cobertura e release"
+          }
+        },
+        {
+          "name": "images/",
+          "desc": {
+            "en": "banner and the pictures of this README",
+            "es": "banner e imágenes de este README",
+            "de": "Banner und Bilder dieses READMEs",
+            "fr": "bannière et images de ce README",
+            "it": "banner e immagini di questo README",
+            "zh": "横幅和本 README 的图片",
+            "ja": "バナーとこの README の画像",
+            "pt": "faixa e imagens deste README"
+          }
+        },
+        {
+          "name": ".github/",
+          "desc": {
+            "en": "CI workflow, issue and pull-request templates",
+            "es": "flujo de CI y plantillas de issues y pull requests",
+            "de": "CI-Workflow sowie Vorlagen für Issues und Pull Requests",
+            "fr": "workflow de CI et modèles d'issues et de pull requests",
+            "it": "workflow di CI e modelli per issue e pull request",
+            "zh": "CI 工作流以及 Issue 和 Pull Request 模板",
+            "ja": "CI ワークフローと Issue・プルリクエストのテンプレート",
+            "pt": "fluxo de CI e modelos de issues e pull requests"
+          }
+        }
+      ]
+    },
+    {
+      "name": {
+        "en": "Files at the root",
+        "es": "Archivos de la raíz",
+        "de": "Dateien im Wurzelverzeichnis",
+        "fr": "Fichiers à la racine",
+        "it": "File nella radice",
+        "zh": "根目录文件",
+        "ja": "ルートのファイル",
+        "pt": "Ficheiros na raiz"
+      },
+      "kind": "group",
+      "span": 3,
+      "columns": 2,
+      "rows": [
+        {
+          "name": "build-test.sh  build-test.bat",
+          "desc": {
+            "en": "build and test scripts that change nothing in the repository",
+            "es": "scripts de compilación y pruebas que no cambian nada en el repositorio",
+            "de": "Build- und Testskripte, die im Repository nichts ändern",
+            "fr": "scripts de compilation et de test qui ne changent rien dans le dépôt",
+            "it": "script di compilazione e test che non cambiano nulla nel repository",
+            "zh": "构建并测试的脚本，不会修改仓库内容",
+            "ja": "リポジトリを変更しないビルド・テストのスクリプト",
+            "pt": "scripts de compilação e testes que não alteram nada no repositório"
+          },
+          "tree_name": "build-test.sh build-test.bat"
+        },
+        {
+          "name": "test.sh  test.bat",
+          "desc": {
+            "en": "run the tests",
+            "es": "ejecutan las pruebas",
+            "de": "führen die Tests aus",
+            "fr": "lancent les tests",
+            "it": "eseguono i test",
+            "zh": "运行测试",
+            "ja": "テストを実行",
+            "pt": "executam os testes"
+          },
+          "tree_name": "test.sh test.bat"
+        },
+        {
+          "name": "urtc.project.json",
+          "desc": {
+            "en": "manifest: version, role, maturity and build command",
+            "es": "manifiesto: versión, papel, madurez y comando de compilación",
+            "de": "Manifest: Version, Rolle, Reifegrad und Build-Befehl",
+            "fr": "manifeste : version, rôle, maturité et commande de compilation",
+            "it": "manifesto: versione, ruolo, maturità e comando di compilazione",
+            "zh": "清单：版本、角色、成熟度和构建命令",
+            "ja": "マニフェスト：バージョン、役割、成熟度、ビルドコマンド",
+            "pt": "manifesto: versão, papel, maturidade e comando de compilação"
+          }
+        },
+        {
+          "name": "CHANGELOG.md",
+          "desc": {
+            "en": "what changed in each version",
+            "es": "qué cambió en cada versión",
+            "de": "was sich in jeder Version geändert hat",
+            "fr": "ce qui a changé à chaque version",
+            "it": "che cosa è cambiato in ogni versione",
+            "zh": "每个版本的变更",
+            "ja": "各バージョンの変更内容",
+            "pt": "o que mudou em cada versão"
+          }
+        },
+        {
+          "name": "SECURITY.md  SUPPORT.md  LICENSE",
+          "desc": {
+            "en": "security policy, support and license",
+            "es": "política de seguridad, soporte y licencia",
+            "de": "Sicherheitsrichtlinie, Support und Lizenz",
+            "fr": "politique de sécurité, assistance et licence",
+            "it": "politica di sicurezza, supporto e licenza",
+            "zh": "安全政策、支持和许可证",
+            "ja": "セキュリティポリシー、サポート、ライセンス",
+            "pt": "política de segurança, suporte e licença"
+          },
+          "tree_name": "SECURITY.md SUPPORT.md LICENSE"
+        },
+        {
+          "name": "CONTRIBUTING.md  CODE_OF_CONDUCT.md",
+          "desc": {
+            "en": "how to contribute and the code of conduct",
+            "es": "cómo contribuir y código de conducta",
+            "de": "wie man mitwirkt, und der Verhaltenskodex",
+            "fr": "comment contribuer et code de conduite",
+            "it": "come contribuire e codice di condotta",
+            "zh": "如何参与贡献和行为准则",
+            "ja": "貢献方法と行動規範",
+            "pt": "como contribuir e código de conduta"
+          },
+          "tree_name": "CONTRIBUTING.md CODE_OF_CONDUCT.md"
+        },
+        {
+          "name": ".gitattributes  .gitignore",
+          "desc": {
+            "en": "Git settings",
+            "es": "ajustes de Git",
+            "de": "Git-Einstellungen",
+            "fr": "réglages Git",
+            "it": "impostazioni di Git",
+            "zh": "Git 设置",
+            "ja": "Git の設定",
+            "pt": "definições do Git"
+          },
+          "tree_name": ".gitattributes .gitignore"
+        },
+        {
+          "name": "build_firmware.sh  build_firmware.bat",
+          "tree_name": "build_firmware.sh build_firmware.bat",
+          "desc": {
+            "en": "host tests, cross-compile, publish",
+            "es": "pruebas de host, compilación cruzada, publicación",
+            "de": "Host-Tests, Cross-Kompilierung, Veröffentlichung",
+            "fr": "tests hôte, compilation croisée, publication",
+            "it": "test host, compilazione incrociata, pubblicazione",
+            "zh": "主机测试、交叉编译、发布",
+            "ja": "ホストテスト、クロスコンパイル、公開",
+            "pt": "testes de host, compilação cruzada, publicação"
+          }
+        },
+        {
+          "name": "bump.py  bump_version.py  bump_manifest_version.py",
+          "desc": {
+            "en": "scripts that raise the version",
+            "es": "scripts que suben la versión",
+            "de": "Skripte, die die Version erhöhen",
+            "fr": "scripts qui augmentent la version",
+            "it": "script che alzano la versione",
+            "zh": "提升版本号的脚本",
+            "ja": "バージョンを上げるスクリプト",
+            "pt": "scripts que sobem a versão"
+          },
+          "tree_name": "bump.py bump_version.py bump_manifest_version.py"
+        },
+        {
+          "name": "LICENSE.md  ruff.toml",
+          "tree_name": "LICENSE.md ruff.toml",
+          "desc": {
+            "en": "documentation license and lint settings",
+            "es": "licencia de la documentación y ajustes de lint",
+            "de": "Dokumentationslizenz und Lint-Einstellungen",
+            "fr": "licence de la documentation et réglages de lint",
+            "it": "licenza della documentazione e impostazioni di lint",
+            "zh": "文档许可证和 lint 设置",
+            "ja": "ドキュメントのライセンスと lint 設定",
+            "pt": "licença da documentação e definições de lint"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -15,7 +15,9 @@
   <img src="https://img.shields.io/badge/Stack-C%20%2F%20Python-3776AB.svg" alt="C/Python">
 </p>
 
-**Vérification d'honnêteté - ce qui fonctionne réellement aujourd'hui :** le protocole capteurs côté firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) est du vrai C pur couvert par 165 vérifications `TEST_ASSERT` qui passent (`tests/test_*.c`, compilées et exécutées avec le compilateur C de l'hôte), et la CI de ce dépôt les exécute réellement : l'étape firmware de `.github/workflows/ci.yml` appelle `build_firmware.sh`, dont l'étape 2 compile et exécute toujours `tests/` avant de toucher au build STM32. Le paquet `vision_companion` côté hôte (`alignment.py`, `cli.py`) est lui aussi réel et couvert par 135 cas pytest qui passent, et la CI exécute aussi cette suite (une étape dédiée installe `src/vision_companion/requirements.txt` et y lance `pytest tests/`), donc une régression dans l'une ou l'autre moitié fait échouer le build. Comme le dit déjà l'introduction du README : il n'existe pas encore de PCB/schéma pour cette carte, donc rien ici n'a jamais lu un vrai capteur MLX9064x ou une caméra RGB, ni piloté un vrai transceiver CAN - `main.c`/`startup_stm32_minimal.c` prouvent seulement que la compilation croisée et l'édition de liens Cortex-M4F réussissent avec un script d'édition de liens provisoire. Voir `CHANGELOG.md` pour ce qui a réellement été publié.
+---
+
+**Vérification d'honnêteté - ce qui fonctionne réellement aujourd'hui :** le protocole capteurs côté firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) est du vrai C pur couvert par 165 vérifications `TEST_ASSERT` qui passent (`tests/test_*.c`, compilées et exécutées avec le compilateur C de l'hôte), et la CI de ce dépôt les exécute réellement : l'étape firmware de `.github/workflows/ci.yml` appelle `build_firmware.sh`, dont l'étape 2 compile et exécute toujours `tests/` avant de toucher au build STM32. Le paquet `vision_companion` côté hôte (`alignment.py`, `cli.py`) est lui aussi réel et couvert par 183 cas pytest qui passent, et la CI exécute aussi cette suite (une étape dédiée installe `src/vision_companion/requirements.txt` et y lance `pytest tests/`), donc une régression dans l'une ou l'autre moitié fait échouer le build. Comme le dit déjà l'introduction du README : il n'existe pas encore de PCB/schéma pour cette carte, donc rien ici n'a jamais lu un vrai capteur MLX9064x ou une caméra RGB, ni piloté un vrai transceiver CAN - `main.c`/`startup_stm32_minimal.c` prouvent seulement que la compilation croisée et l'édition de liens Cortex-M4F réussissent avec un script d'édition de liens provisoire. Voir `CHANGELOG.md` pour ce qui a réellement été publié.
 
 ---
 
@@ -27,9 +29,12 @@
 |---|---|
 | Version | `0.1.5` |
 | Maturité | Fonctionnel |
+| Tests | 183 (`pytest`) |
 | Technologie | C / STM32 / Python vision companion |
 | Cible | Une carte à microcontrôleur (le firmware) ; compilé sur un PC |
 | Sur matériel réel | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
+
+**Aller à :** [Présentation](#-présentation) · [Architecture](#-architecture) · [Fonctionnalités](#-fonctionnalités) · [Sécurité](#-sécurité-et-protection) · [Interfaces](#-interfaces) · [Démarrage rapide](#-démarrage-rapide) · [Tests](#-tests) · [Structure](#-structure-du-dépôt) · [Liés](#-projets-liés)
 
 <!-- urtc-section:status_vision_tool -->
 ## 🚦 État du projet
@@ -45,7 +50,7 @@
 
 <!-- /urtc-section:status_vision_tool -->
 
-## 1. 🛠️ APERÇU TECHNIQUE
+## 🎯 Présentation
 
 **URTC-VISION-TOOL** est une tête d'outil robotique spécialisée qui fusionne la perception visuelle et thermique en un seul effecteur compatible URTC. Conçue pour le contrôle qualité avancé, l'inspection thermique de PCB et l'alignement Pick-and-Place haute précision.
 
@@ -60,11 +65,22 @@ Aucun PCB/schéma n'existe encore pour cette carte (voir `hardware/`), donc rien
 * 📡 **Intégration à URTC** — décidée : cette tête est une tête d'outil URTC et réutilise l'outil d'inspection thermique d'URTC (profil d'outil 22, MLX90640/90641/90642) et ses messages CAN `0x250`-`0x255` (déclenchement, état, blocs de pixels bruts et calibrés, documentés dans `docs/CANBUS.TXT` d'URTC) au lieu d'un second protocole. Le côté hôte de cet échange est réel et testé sans matériel (`urtc_thermal.py`, avec une tête simulée) ; le firmware de la tête, un transceiver CAN et une carte montée n'existent pas encore, donc rien de tout cela n'a tourné sur un bus. *(Le protocole de trames côté capteur de ce dépôt, ci-dessous, est une brique distincte testée sur l'hôte ; il ne transporte pas l'image thermique.)*
 * 🔒 **Contrôles de Plage du Protocole Capteur** — trame versionnée avec somme de contrôle CRC8, validation de plage de mesure, limitation de débit, contrôle de fraîcheur des trames (séquence et horodatage) et compteurs de diagnostic dédiés d'erreurs/latence/réinitialisations de bus. Trame en version 2 : toute valeur sur plusieurs octets (l'horodatage et la mesure thermique) est en big-endian, comme le bus, et une trame de version 1 est refusée. *(implémenté en C pur et testé uniquement sur un PC ; jamais exécuté sur une carte ni avec un vrai capteur, et pas une fonction de sécurité)*
 * ✅ **Chaîne d'outils firmware Cortex-M4F** — une image bare-metal réelle qui compile et se lie réellement avec `arm-none-eabi-gcc`, la même chaîne d'outils que les dépôts frères URTC et URTC-SMART-RACK. *(implémenté — voir COMPILATION ci-dessous)*
-* ✅ **Pipeline de traitement `vision_companion`** — un vrai paquet Python fonctionnel : génération synthétique de trames thermiques+RGB, rendu thermique en fausses couleurs, alignement de ROI RGB->thermique + extraction de statistiques de température, rapport de statistiques, le tout couvert par 135 cas pytest réels, fonctionne de bout en bout sans matériel connecté. *(implémenté — voir COMPAGNON DE VISION ci-dessous)*
+* ✅ **Pipeline de traitement `vision_companion`** — un vrai paquet Python fonctionnel : génération synthétique de trames thermiques+RGB, rendu thermique en fausses couleurs, alignement de ROI RGB->thermique + extraction de statistiques de température, rapport de statistiques, le tout couvert par 183 cas pytest réels, fonctionne de bout en bout sans matériel connecté. *(implémenté — voir COMPAGNON DE VISION ci-dessous)*
 
----
+## 🧩 Rôle dans URTC
 
-## 2. 🔄 FLUX DE LA TÊTE DE VISION
+URTC-VISION-TOOL est une tête d'outil qui réunit une caméra RVB et un capteur thermique MLX9064x, pour le contrôle qualité, l'inspection thermique de cartes et l'alignement d'une tête de placement. C'est une tête d'outil URTC : elle réutilise l'outil d'inspection thermique d'URTC et ses messages CAN `0x250` à `0x255` plutôt qu'un second protocole, et fournit au nœud de vision (Hailo-8) et au contrôleur HYDRA-UMC des données de deux natures, si bien qu'un composant se juge non seulement à sa présence mais à sa température. Ce qui est réel aujourd'hui, c'est le protocole du capteur du firmware et le compagnon de vision côté hôte, tous deux testés sur un ordinateur ; aucune carte n'existe encore. C'est un outil complémentaire, pas un enfant d'URTC.
+
+## 🏛️ Architecture
+
+<p align="center">
+  <img src="images/architecture.svg" alt="Architecture de URTC-VISION-TOOL : qui l'utilise, ce qu'il contient et de quoi il dépend" width="100%">
+</p>
+
+Comment les parties de ce dépôt s'articulent : qui l'utilise, ce qu'il contient et de quoi il dépend. L'image est dessinée à partir de `docs/architecture.json` et vérifiée par rapport au code.
+
+<details>
+<summary>Version texte du diagramme (Mermaid)</summary>
 
 ```mermaid
 flowchart LR
@@ -77,9 +93,9 @@ flowchart LR
     SYNC --> DASH["Tableau de Bord Studio"]
 ```
 
----
+</details>
 
-## 3. 🧱 ARCHITECTURE & DÉCISIONS DE CONCEPTION
+### ARCHITECTURE & DÉCISIONS DE CONCEPTION
 
 * **Pourquoi ce projet a 2 pistes de version indépendantes.** `src/firmware_common.h` (le firmware côté STM32) et `src/vision_companion/vision_companion/__init__.py` (un paquet Python séparé côté hôte) sont versionnés indépendamment - ils tournent sur du matériel différent (MCU contre hôte CM5/PC) et sont publiés selon des calendriers différents.
 * **Pourquoi ce n'est pas un enfant d'URTC lui-même.** Même raison que le propre README d'URTC-SMART-RACK - un Outil Complémentaire qui partage les conventions de firmware d'URTC, sans faire partie de sa hiérarchie d'intégration.
@@ -89,67 +105,32 @@ flowchart LR
 * **Pourquoi le protocole de trame du capteur porte son propre champ d'horodatage.** Un véritable horodatage en millisecondes côté capteur permet à l'appelant de savoir *quand* une lecture a réellement été effectuée, indépendamment du moment où le MCU parvient à analyser la trame - une réelle valeur d'historisation/diagnostic qu'une simple hypothèse « vient d'arriver » ferait perdre.
 * **Pourquoi les compteurs de diagnostic (`sensor_diagnostics.c`) ne prennent jamais eux-mêmes de décision d'acceptation/rejet.** Seuls `sensor_frame.c` (trame), `sensor_reading.c` (plage) et `rate_limiter.c` (limitation de débit) décident si une trame est fiable - le diagnostic se contente d'enregistrer ce qu'ils ont décidé. Maintenir cette frontière stricte signifie qu'un bug de diagnostic ne peut jamais laisser passer accidentellement de mauvaises données, le fameux « separar diagnostico de salida de control » des notes de diagnostic.
 
----
+## ✨ Fonctionnalités
 
-## 📂 STRUCTURE DES DOSSIERS
+**Inspection thermique par région, export de séries, dérive du capteur et contrôle du rack (testé sur l'hôte seulement) :** `inspect` juge chaque composant d'un plan selon la règle de température de son type et peut exporter le minimum, le maximum et la moyenne de chaque région sous forme d'échantillons pour le datalake de HYDRA-UMC, en lignes JSON ou en valeurs de nœuds OPC-UA ; `drift-check` compare des images d'une scène de référence à une base (pixels morts, dérive de décalage) et peut écrire un fichier de calibration ; `rack-check` juge les pointes du rack d'outils à partir d'une image thermique. `rack-watch` suit les pointes pendant que le rack chauffe et indique quand chaque emplacement a atteint sa cible et si l'outil peut être changé ; `rack-simulate` écrit les images d'un rack simulé (sain ou avec un défaut) pour l'essayer sans caméra ; les commandes du rack s'affichent en huit langues (`--lang`). Voir [la référence de la CLI](docs/CLI_REFERENCE.md). Exécuté sur des images synthétiques seulement ; aucune caméra ni carte n'a été utilisée.
 
-```text
-URTC-VISION-TOOL/
-├── src/
-│   ├── firmware_common.h           # FIRMWARE_VERSION_MAJOR/MINOR/PATCH
-│   ├── sensor_frame.h / .c         # Réel : format de trame versionné + parsing/encodage CRC8
-│   ├── urtc_crc8.h                 # Réel : CRC-8 partagé avec le rack d'outils (copié depuis URTC-COMMON)
-│   ├── urtc_frame.h                # Réel : couche de trame partagée avec le rack d'outils (copiée depuis URTC-COMMON)
-│   ├── urtc_rate_limiter.h         # Réel : limiteur d'intervalle minimal de la liaison (copié depuis URTC-COMMON)
-│   ├── sensor_reading.h / .c       # Réel : décodage de lecture thermique + validation de plage
-│   ├── rate_limiter.h / .c         # Réel : limitation de trame par intervalle minimal
-│   ├── sensor_freshness.h / .c     # Réel : fraîcheur par séquence/horodatage (détection des répétitions et du capteur figé)
-│   ├── sensor_diagnostics.h / .c   # Réel : compteurs d'erreurs/latence/réinitialisations de bus, séparés du contrôle
-│   ├── vision_sensor_link.h / .c   # Réel : décision de dispatch de trame reliant sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics
-│   ├── main.c                      # Point d'entrée minimal (boucle de battement de vie)
-│   ├── startup_stm32_minimal.c     # Table des vecteurs + Reset_Handler (pas de HAL ST pour l'instant, voir l'en-tête du fichier)
-│   ├── STM32_MINIMAL.ld            # Script de liaison provisoire (plancher 128K FLASH / 32K RAM)
-│   └── vision_companion/           # Pipeline de vision Python côté hôte (CM5/machine de dev)
-│       ├── pyproject.toml          # Packaging + console script `vision-companion`
-│       ├── requirements.txt        # numpy + pillow
-│       ├── vision_companion/
-│       │   ├── __init__.py         # La version du compagnon, définie une seule fois
-│       │   ├── cli.py              # CLI réelle et fonctionnelle (version / selftest / analyze-roi / capture / inspect / drift-check / rack-check / rack-watch / rack-simulate)
-│       │   ├── alignment.py        # Réel : mappage de ROI RGB<->thermique + extraction de statistiques de température
-│       │   ├── calibration.py      # Réel : calibration thermique (gain, décalages, pixels morts) chargée depuis JSON
-│       │   ├── urtc_thermal.py     # Réel : lit une image thermique d'une tête URTC par CAN (0x250-0x255), avec une tête simulée
-│       │   ├── slcan_link.py       # Réel : l'adaptateur série SLCAN qui la transporte (utilisé par `capture`)
-│       │   ├── inspection.py       # Réel : juge les composants d'un plan par la température et exporte la série
-│       │   ├── export.py           # Réel : export des mesures en JSON Lines, liste de nœuds OPC UA et DataLake
-│       │   ├── sensor_drift.py     # Réel : dérive d'un capteur par rapport à une référence enregistrée
-│       │   ├── rack_check.py       # Réel : verdict par emplacement du préchauffage d'un rack
-│       │   ├── rack_watch.py       # Réel : la même chose sur une série de trames ; dit quand un échange est permis
-│       │   └── rack_text.py        # Réel : les mots du contrôle du rack dans les huit langues
-│       ├── tests/                  # 135 cas pytest réels (tout le compagnon)
-│       └── README.md               # Documentation spécifique au compagnon
-├── tests/                          # Harnais de test firmware natif hôte réel (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, scénarios capteur, fraîcheur, robustesse)
-├── docs/                           # Référence de la ligne de commande (CLI_REFERENCE.md)
-├── hardware/                       # Notes matérielles (README.md) - pas encore de fichiers de conception (ni schéma ni PCB)
-├── firmware/                       # Sortie de build (.bin/.elf/.hex), ignorée par git - publiée uniquement comme assets de la release GitHub
-├── build/                          # Objets de build intermédiaires (ignoré par git)
-├── images/                         # Médias et diagrammes
-├── tools/
-│   ├── build_test.py               # Contrôle build/compilation sans gestion de version
-│   ├── gcov_floor.py               # Échoue si les tests hôte exécutent moins de src/ qu'un plancher (gcov)
-│   ├── publish_release_assets.py   # Liste les assets de la release et affiche la commande gh
-│   ├── ci_validate.py              # Validation manifest/CHANGELOG/docs utilisée par la CI
-│   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # Contrôles partagés utilisés par ci_validate.py
-├── bump.py                         # Commande explicite pour monter la version (compiler ne la monte jamais)
-├── bump_version.py                 # Incrémentation de version façon compteur kilométrique (générique, partagé avec URTC / URTC-SMART-RACK)
-├── bump_manifest_version.py        # Synchronise la version de urtc.project.json avec la version native (--sync)
-├── build_firmware.sh / .bat        # Build réel : tests hôte + compile + lie + publie dans firmware/ (ne change jamais la version)
-├── build-test.sh / .bat            # Contrôle build/compilation sans gestion de version
-└── README.md
-```
+**Capture thermique par un adaptateur CAN série (nouveau, joué seulement contre un adaptateur et une tête simulés) :** `capture --port PORT` lit une image calibrée d'une tête URTC qui porte l'outil d'inspection thermique, à travers un adaptateur SLCAN (un port série ou une URL pyserial), avec l'échange de `0x250` à `0x255`, et l'enregistre en `.npy` et en PNG en fausses couleurs, prêt pour `inspect`, `drift-check` et `rack-check`. Une tête qui signale une erreur, ne devient jamais prête ou laisse un bloc sans réponse termine la commande avec un message clair (code de sortie 1), et un port qui ne peut pas être ouvert la termine avec le code 2. Elle n'a pas été exécutée avec un vrai adaptateur, bus ou tête.
 
----
+## 🔒 Sécurité et protection
 
-## 4. ⚙️ COMPILATION (firmware)
+| Menace | Défense |
+|---|---|
+| Une trame corrompue ou ancienne du capteur | Une trame versionnée avec CRC-8 (`sensor_frame.c`) ; en version 2, toute valeur sur plusieurs octets, horodatage et mesure thermique compris, est big-endian comme le bus, et une trame de version 1 est refusée |
+| Une mesure que le capteur ne peut pas avoir faite | `sensor_reading.c` décode la mesure thermique et refuse ce qui est hors plage |
+| Un déluge de trames | `rate_limiter.c` retient les trames par un intervalle minimal |
+| Une trame rejouée ou un capteur figé | `sensor_freshness.c` vérifie la séquence et l'horodatage propre du capteur |
+| Un bogue des compteurs laissant passer de mauvaises données | `sensor_diagnostics.c` enregistre seulement ce que les autres modules ont décidé (erreurs, latence, réinitialisations du bus) ; il n'accepte ni ne refuse jamais une trame |
+
+Tout cela est du C pur testé sur un ordinateur ; cela n'a jamais tourné sur une carte ni avec un vrai capteur, et ce n'est pas une fonction de sécurité.
+
+## 🔌 Interfaces
+
+* **Les messages d'inspection thermique d'URTC** (`0x250` à `0x255` : déclenchement, état, blocs de pixels bruts et calibrés, documentés dans `docs/CANBUS.TXT` d'URTC) : le côté hôte de cet échange est `urtc_thermal.py`, testé sans matériel contre une tête simulée. `capture --port PORT` l'exécute via un adaptateur SLCAN (un port série ou une URL pyserial) et enregistre l'image en `.npy` et en PNG fausses couleurs ; une tête qui signale une erreur, ne devient jamais prête ou laisse un bloc sans réponse termine la commande avec le code de sortie 1, et un port impossible à ouvrir avec le code 2.
+* **La trame du capteur du firmware :** version 2, big-endian, CRC-8 (`sensor_frame.c`) ; c'est une brique distincte, testée sur l'hôte, qui ne transporte pas l'image thermique.
+* **La ligne de commande `vision-companion` :** `version`, `selftest`, `analyze-roi`, `capture`, `inspect`, `drift-check`, `rack-check`, `rack-watch` et `rack-simulate`, avec chaque option et code de sortie dans [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md).
+* **Exports :** les mesures de `inspect` en JSON Lines, en valeurs de nœuds OPC UA ou en échantillons pour le lac de données de HYDRA-UMC.
+
+## 🚀 Démarrage rapide
 
 Nécessite la chaîne d'outils ARM GNU (`arm-none-eabi-gcc`, `arm-none-eabi-objcopy`, `arm-none-eabi-size`) et Python 3.
 
@@ -162,15 +143,7 @@ chmod +x build_firmware.sh   # une seule fois
 build_firmware.bat
 ```
 
-Le build compile et exécute d'abord `tests/` avec le compilateur C de *l'hôte lui-même* (jamais `arm-none-eabi-gcc` - ce sont des tests de logique pure, aucun registre MCU touché) et fait échouer tout le build si une assertion échoue. Ce n'est qu'ensuite qu'il incrémente la version de `src/firmware_common.h` (règle du compteur kilométrique, comme le reste de l'écosystème), compile `main.c` et `startup_stm32_minimal.c` pour Cortex-M4F, les lie avec la carte mémoire provisoire `STM32_MINIMAL.ld`, et publie des fichiers `.elf`/`.bin`/`.hex` versionnés dans `firmware/`.
-
-Chaque module de `src/` est aussi compilé pour Cortex-M4F, et tous sont liés ensemble par contrôle (la cible n'a pas de bibliothèque C), même si l'image ne contient aujourd'hui que `main.c` et le fichier de démarrage. Si la compilation échoue après l'augmentation de la version, la version, le manifeste et le changelog sont remis dans leur état précédent. Avec `URTC_CI=1`, aucun fichier suivi n'est modifié.
-
-Il n'y a encore rien à flasher sur du matériel réel - aucun PCB n'existe pour confirmer la référence STM32 cible, le brochage, le câblage du MLX9064x, ou l'interface de la caméra RGB.
-
-Les images du firmware (`.bin`, `.hex`, `.elf`) ne sont pas versionnées dans git : un build de release écrit `firmware/URTC_VISION_TOOL_FIRMWARE_v<version>.*` (ignoré par git ; `build/firmware` en mode CI, `URTC_CI=1`) et elles ne sont publiées que comme assets de la release GitHub de chaque version. `python tools/publish_release_assets.py` vérifie les fichiers, écrit le fichier `.sha256` manquant et affiche la commande `gh release create` exacte avec les fichiers à joindre.
-
-## 5. 🐍 COMPAGNON DE VISION (Python côté hôte)
+### COMPAGNON DE VISION (Python côté hôte)
 
 Cette partie fonctionne aujourd'hui, entièrement, sans aucun matériel connecté :
 
@@ -201,7 +174,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-135 cas pytest réels couvrent `cli.py`, `alignment.py` et les autres modules du paquet :
+183 cas pytest réels couvrent `cli.py`, `alignment.py` et les autres modules du paquet :
 
 ```bash
 pip install -e ".[dev]"
@@ -210,19 +183,78 @@ pytest
 
 Voir `src/vision_companion/README.md` pour la documentation complète du compagnon, et [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md) pour chaque commande, option et code de sortie avec une sortie réelle capturée.
 
----
+<!-- urtc-section:compatibility -->
+### Prérequis et compatibilité
 
-## 6. 📋 CHANGELOG
+Les versions des programmes URTC qui fonctionnent ensemble, et la version du protocole que parle chacune, figurent dans le tableau de compatibilité que génère URTC-COMMON : [docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md).
+<!-- /urtc-section:compatibility -->
 
-Voir [`CHANGELOG.md`](CHANGELOG.md) pour l'historique complet des versions — le firmware et `vision_companion` sont versionnés indépendamment (voir COMPILATION et COMPAGNON DE VISION ci-dessus), et chaque changement réel y a sa propre entrée.
+## 🧪 Tests
 
----
+Deux suites. Le côté firmware est du C dans `tests/` (165 vérifications `TEST_ASSERT`) : la trame du capteur, la mesure, le limiteur de débit, les diagnostics, la fraîcheur, les scénarios de toute la liaison, la robustesse face aux entrées erronées et les vecteurs partagés d'URTC-COMMON, compilés et exécutés avec le compilateur C de la machine et, en CI, avec AddressSanitizer, UBSan et un plancher de couverture. Le côté hôte est le paquet `vision_companion`, avec 183 cas pytest (`cd src/vision_companion && pytest`) qui exécutent toute la chaîne sans matériel : images synthétiques, fausses couleurs, alignement, calibration, la capture thermique contre une tête simulée, l'inspection, la dérive et le contrôle du râtelier. Quatre fichiers de test Python vérifient les scripts de compilation, les ressources de release et les fichiers de version. `bash build_firmware.sh` exécute les tests C avant la compilation croisée et échoue si une assertion échoue.
 
-**Inspection thermique par région, export de séries, dérive du capteur et contrôle du rack (testé sur l'hôte seulement) :** `inspect` juge chaque composant d'un plan selon la règle de température de son type et peut exporter le minimum, le maximum et la moyenne de chaque région sous forme d'échantillons pour le datalake de HYDRA-UMC, en lignes JSON ou en valeurs de nœuds OPC-UA ; `drift-check` compare des images d'une scène de référence à une base (pixels morts, dérive de décalage) et peut écrire un fichier de calibration ; `rack-check` juge les pointes du rack d'outils à partir d'une image thermique. `rack-watch` suit les pointes pendant que le rack chauffe et indique quand chaque emplacement a atteint sa cible et si l'outil peut être changé ; `rack-simulate` écrit les images d'un rack simulé (sain ou avec un défaut) pour l'essayer sans caméra ; les commandes du rack s'affichent en huit langues (`--lang`). Voir [la référence de la CLI](docs/CLI_REFERENCE.md). Exécuté sur des images synthétiques seulement ; aucune caméra ni carte n'a été utilisée.
+## 🏗️ Compilation et publication
 
-**Capture thermique par un adaptateur CAN série (nouveau, joué seulement contre un adaptateur et une tête simulés) :** `capture --port PORT` lit une image calibrée d'une tête URTC qui porte l'outil d'inspection thermique, à travers un adaptateur SLCAN (un port série ou une URL pyserial), avec l'échange de `0x250` à `0x255`, et l'enregistre en `.npy` et en PNG en fausses couleurs, prêt pour `inspect`, `drift-check` et `rack-check`. Une tête qui signale une erreur, ne devient jamais prête ou laisse un bloc sans réponse termine la commande avec un message clair (code de sortie 1), et un port qui ne peut pas être ouvert la termine avec le code 2. Elle n'a pas été exécutée avec un vrai adaptateur, bus ou tête.
+La compilation commence par compiler et exécuter `tests/` avec le compilateur C *de la machine* (jamais `arm-none-eabi-gcc` : ce sont des tests de logique pure, sans toucher aux registres du MCU) et échoue entièrement si une assertion échoue. Ensuite seulement elle compile `main.c` et `startup_stm32_minimal.c` pour Cortex-M4F, les lie avec la carte mémoire provisoire `STM32_MINIMAL.ld` et publie des fichiers `.elf`/`.bin`/`.hex` versionnés dans `firmware/`. Compiler ne change jamais la version.
 
-## 🔗 Projets Liés
+Chaque module de `src/` est aussi compilé pour Cortex-M4F et tous sont liés ensemble par vérification (aucune bibliothèque C n'est disponible sur la cible), même si l'image ne contient aujourd'hui que `main.c` et le fichier de démarrage. Avec `URTC_CI=1`, aucun fichier suivi n'est touché.
+
+Il n'y a encore rien à flasher sur du matériel réel - aucun PCB n'existe pour confirmer la référence STM32 cible, le brochage, le câblage du MLX9064x, ou l'interface de la caméra RGB.
+
+Les images du firmware (`.bin`, `.hex`, `.elf`) ne sont pas versionnées dans git : un build de release écrit `firmware/URTC_VISION_TOOL_FIRMWARE_v<version>.*` (ignoré par git ; `build/firmware` en mode CI, `URTC_CI=1`) et elles ne sont publiées que comme assets de la release GitHub de chaque version. `python tools/publish_release_assets.py` vérifie les fichiers, écrit le fichier `.sha256` manquant et affiche la commande `gh release create` exacte avec les fichiers à joindre.
+
+Voir [`CHANGELOG.md`](CHANGELOG.md) pour l'historique complet des versions ; chaque version y a sa propre entrée.
+
+## 📂 Structure du dépôt
+
+<p align="center">
+  <img src="images/repository-structure.svg" alt="Structure du dépôt URTC-VISION-TOOL" width="100%">
+</p>
+
+<details>
+<summary>Version texte de l'arborescence</summary>
+
+```text
+URTC-VISION-TOOL/
+├── src/                                               le firmware (protocole du capteur en C pur, copies vérifiées d'URTC-COMMON, point d'entrée, script d'édition de liens provisoire) et le compagnon Python
+├── tests/                                             tests hôte en C (165 vérifications) et contrôles Python des scripts de compilation
+├── docs/                                              CLI_REFERENCE.md : chaque commande et code de sortie
+├── hardware/                                          pas encore de schéma ni de PCB
+├── tools/                                             outils de compilation, couverture et release
+├── images/                                            bannière et images de ce README
+├── .github/                                           workflow de CI et modèles d'issues et de pull requests
+├── build-test.sh build-test.bat                       scripts de compilation et de test qui ne changent rien dans le dépôt
+├── test.sh test.bat                                   lancent les tests
+├── urtc.project.json                                  manifeste : version, rôle, maturité et commande de compilation
+├── CHANGELOG.md                                       ce qui a changé à chaque version
+├── SECURITY.md SUPPORT.md LICENSE                     politique de sécurité, assistance et licence
+├── CONTRIBUTING.md CODE_OF_CONDUCT.md                 comment contribuer et code de conduite
+├── .gitattributes .gitignore                          réglages Git
+├── build_firmware.sh build_firmware.bat               tests hôte, compilation croisée, publication
+├── bump.py bump_version.py bump_manifest_version.py   scripts qui augmentent la version
+└── LICENSE.md ruff.toml                               licence de la documentation et réglages de lint
+```
+
+</details>
+
+## 🗺️ Feuille de route et limites connues
+
+**Limites connues aujourd'hui**
+
+* Aucun PCB ni schéma n'existe encore pour cette carte (voir `hardware/`) : rien de tout cela n'a jamais lu un vrai MLX9064x en I2C, une caméra RVB ou un transceiveur CAN. `main.c` et le fichier de démarrage prouvent seulement que la compilation croisée et l'édition de liens pour Cortex-M4F réussissent avec un script provisoire.
+* Le firmware de la tête n'existe pas encore : le côté hôte de l'échange thermique n'est testé que contre une tête et un adaptateur SLCAN simulés.
+* `alignment.py` suppose un champ de vision commun et remet chaque axe à l'échelle linéairement ; une vraie calibration pixel par pixel (damier, distorsion de l'objectif) demande de vraies caméras.
+* La précision sub-millimétrique, la capture réelle synchronisée et les limites thermiques des règles d'inspection n'ont pas été essayées sur de vraies pièces.
+
+**Ensuite**
+
+* Concevoir la carte, fixer la référence STM32 et l'interface de la caméra, écrire les pilotes du capteur et de la caméra, et lancer la capture thermique contre une vraie tête sur banc.
+
+## 🌍 Langues
+
+Le README et les textes existent en anglais, espagnol, français, italien, allemand, chinois, japonais et portugais européen.
+
+## 🔗 Projets liés
 
 Ce projet fait partie de l'écosystème robotique HYDRA-UMC du même auteur (JuanenRac / Electro Hobby 3D). Bon à savoir, car une demande pourrait en réalité concerner l'un de ceux-ci plutôt que ce dépôt.
 
@@ -313,10 +345,7 @@ Ce projet fait partie de l'écosystème robotique HYDRA-UMC du même auteur (Jua
 - **[HYDRA-UMC-OPS-AGENT](https://github.com/JuanenRac/HYDRA-UMC-OPS-AGENT)** — coordinateur d'incidents de maintenance : un rôle edge à faible privilège collecte un instantané d'inventaire/santé assaini, un rôle control-plane le rend en lecture seule et demande à un fournisseur d'IA de suggérer un diagnostic - n'applique jamais de correctif ni ne déploie rien.
 - **[HYDRA-UMC-DEV-SERVER](https://github.com/JuanenRac/HYDRA-UMC-DEV-SERVER)** — hôte de développement reproductible (Raspberry Pi 5 / CM5) qui héberge le code source de l'écosystème et exécute des tâches de compilation/test délimitées via une file d'attente durable ; un rôle de développement dédié, explicitement distinct d'un CM5 opérationnel.
 
-
----
-
-## 📚 Documentation & Communauté
+## 📚 Documentation
 
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — pile technologique et lignes directrices de codage pour une pull request.
 - **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** — les normes de comportement attendues dans cette communauté.
@@ -324,16 +353,20 @@ Ce projet fait partie de l'écosystème robotique HYDRA-UMC du même auteur (Jua
 - **[SUPPORT.md](SUPPORT.md)** — où poser des questions et signaler des bugs.
 - **[LICENSE.md](LICENSE.md)** — la licence propre de ce projet.
 
+## 🤝 Contribuer et communauté
+
+* Avant une pull request, lancez `URTC_CI=1 python tools/ci_validate.py` : il doit réussir. Voir [CONTRIBUTING.md](CONTRIBUTING.md) et le [code de conduite](CODE_OF_CONDUCT.md).
+* Le README existe en huit langues : une modification du texte se fait dans les huit fichiers, et les sections partagées avec d'autres dépôts sont écrites par `tools/readme_sections.py` d'URTC-COMMON.
+* Un changement du protocole CAN commence dans URTC-COMMON (`spec/can_protocol.json`) et arrive dans ce dépôt par la copie vérifiée.
+* Ne décrivez pas comme fonctionnant sur une carte ce qui a seulement été compilé.
+* Signalez une vulnérabilité en privé : [SECURITY.md](SECURITY.md). Questions, idées et rapports : electrohobby3d@gmail.com ([SUPPORT.md](SUPPORT.md)).
+
 ## 👤 AUTEUR
+
 **JuanenRac** (Electro Hobby 3D)
 📧 electrohobby3d@gmail.com
 📺 [youtube.com/@electrohobby3d](https://youtube.com/@electrohobby3d)
 
-<!-- urtc-section:compatibility -->
-## 🧩 Compatibilité
-
-Les versions des programmes URTC qui fonctionnent ensemble, et la version du protocole que parle chacune, figurent dans le tableau de compatibilité que génère URTC-COMMON : [docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md).
-<!-- /urtc-section:compatibility -->
-
 ## 📜 LICENCE
+
 GPL-3.0-or-later - Voir LICENSE pour plus de détails.

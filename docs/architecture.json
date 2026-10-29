@@ -1,0 +1,161 @@
+{
+  "repo": "URTC-VISION-TOOL",
+  "ecosystem": "urtc",
+  "tagline": "A thermal and RGB inspection head: the sensor protocol of its firmware and a Python companion that judges what the cameras see.",
+  "description": "URTC-VISION-TOOL holds the sensor protocol of the firmware (a versioned frame with a CRC-8, range, rate and freshness checks and diagnostic counters, in pure C) and the vision_companion package, which reads a thermal image from a URTC head over CAN, aligns it with the RGB image, judges the components of a plan and the tips of a tool rack by temperature, and exports the readings. No board exists yet; everything is tested on a computer against simulated heads.",
+  "columns": [
+    "WHO USES IT",
+    "THIS REPOSITORY",
+    "WHAT IT READS"
+  ],
+  "nodes": [
+    {
+      "id": "op",
+      "column": 0,
+      "level": "external",
+      "title": "The operator",
+      "lines": [
+        "the vision-companion command",
+        "line: capture, inspect, drift-check,",
+        "rack-check, rack-watch"
+      ],
+      "code": [
+        "src/vision_companion/vision_companion/cli.py"
+      ]
+    },
+    {
+      "id": "out",
+      "column": 0,
+      "level": "external",
+      "title": "Datalake and OPC UA",
+      "lines": [
+        "readings exported as JSON Lines,",
+        "node values or samples"
+      ],
+      "code": [
+        "src/vision_companion/vision_companion/export.py"
+      ]
+    },
+    {
+      "id": "fw",
+      "column": 1,
+      "level": "tested",
+      "title": "Sensor protocol (C)",
+      "lines": [
+        "frame v2 with CRC-8, range, rate",
+        "and freshness checks, and",
+        "counters that never decide"
+      ],
+      "code": [
+        "src/sensor_frame.c",
+        "src/sensor_reading.c",
+        "src/sensor_freshness.c"
+      ]
+    },
+    {
+      "id": "cap",
+      "column": 1,
+      "level": "tested",
+      "title": "Thermal capture",
+      "lines": [
+        "asks a head for an image with",
+        "0x250 to 0x255 and puts the",
+        "chunks back together"
+      ],
+      "code": [
+        "src/vision_companion/vision_companion/urtc_thermal.py",
+        "src/vision_companion/vision_companion/slcan_link.py"
+      ]
+    },
+    {
+      "id": "sim",
+      "column": 1,
+      "level": "config",
+      "title": "Simulated head",
+      "lines": [
+        "a head and an SLCAN adapter that",
+        "answer like the real ones, so",
+        "everything runs with no hardware"
+      ],
+      "code": [
+        "src/vision_companion/vision_companion/urtc_thermal.py"
+      ]
+    },
+    {
+      "id": "pipe",
+      "column": 1,
+      "level": "tested",
+      "title": "Alignment and judging",
+      "lines": [
+        "RGB to thermal, calibration",
+        "inspection by temperature, drift",
+        "and the rack check"
+      ],
+      "code": [
+        "src/vision_companion/vision_companion/alignment.py",
+        "src/vision_companion/vision_companion/inspection.py",
+        "src/vision_companion/vision_companion/rack_check.py"
+      ]
+    },
+    {
+      "id": "hw",
+      "column": 2,
+      "level": "untested",
+      "title": "RGB camera, MLX9064x",
+      "lines": [
+        "sensors and a CAN transceiver;",
+        "the PCB does not exist yet"
+      ]
+    },
+    {
+      "id": "urtc",
+      "column": 2,
+      "level": "external",
+      "title": "URTC",
+      "lines": [
+        "its thermal inspection tool and",
+        "the messages documented in its",
+        "docs/CANBUS.TXT"
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "op",
+      "to": "cap",
+      "label": "capture",
+      "level": "tested"
+    },
+    {
+      "from": "pipe",
+      "to": "out",
+      "label": "export",
+      "level": "tested"
+    },
+    {
+      "from": "cap",
+      "to": "pipe",
+      "level": "tested"
+    },
+    {
+      "from": "fw",
+      "to": "hw",
+      "label": "not run",
+      "level": "untested"
+    },
+    {
+      "from": "cap",
+      "to": "urtc",
+      "label": "CAN",
+      "level": "contract"
+    }
+  ],
+  "legend": {
+    "tested": "covered by tests on a computer",
+    "contract": "a protocol of another repository",
+    "config": "stands in for the hardware",
+    "untested": "has not run on real hardware",
+    "external": "another repository or a device"
+  },
+  "footer": "165 C checks and 183 pytest cases pass; nothing has read a real sensor."
+}
