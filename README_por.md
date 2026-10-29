@@ -237,6 +237,8 @@ URTC-VISION-TOOL/
 
 </details>
 
+A lista anotada de cada ficheiro de código, uma linha por ficheiro, está em [docs/SOURCE_MAP.md](docs/SOURCE_MAP.md).
+
 ## 🗺️ Roteiro e limites conhecidos
 
 **Limites conhecidos hoje**

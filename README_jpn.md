@@ -259,6 +259,8 @@ URTC-VISION-TOOL/
 
 </details>
 
+各ソースファイルの注釈付き一覧（1 ファイル 1 行）は [docs/SOURCE_MAP.md](docs/SOURCE_MAP.md) にあります。
+
 ## 🗺️ ロードマップと既知の制限
 
 **現時点で分かっている制限**

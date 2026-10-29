@@ -253,6 +253,8 @@ URTC-VISION-TOOL/
 
 </details>
 
+每个源文件的带注释清单（每个文件一行）见 [docs/SOURCE_MAP.md](docs/SOURCE_MAP.md)。
+
 ## 🗺️ 路线图与已知限制
 
 **目前已知的限制**
