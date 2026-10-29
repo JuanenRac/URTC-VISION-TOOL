@@ -7,10 +7,13 @@
   list, so a new file cannot be left out of the build.
 - The number of test assertions quoted in the manifest and in the READMEs must be
   the number of `TEST_ASSERT(` checks that really exist in tests/, and the number
-  of pytest cases quoted must be the number of test functions of vision_companion.
+  of pytest cases quoted must be the number of cases that pytest collects in vision_companion.
 """
 import json
+import os
 import re
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 
@@ -77,9 +80,13 @@ class PublishedNumbersTests(unittest.TestCase):
             self.assertEqual(set(numbers), {str(count)}, f"{name} quotes a stale assertion count")
 
     def test_pytest_case_count_in_manifest_and_readmes(self):
-        count = 0
-        for path in (ROOT / "src" / "vision_companion" / "tests").glob("test_*.py"):
-            count += len(re.findall(r"(?m)^def test_", path.read_text(encoding="utf-8", errors="replace")))
+        # the cases pytest collects (a parametrized test counts once for each value), not the number of functions
+        companion = ROOT / "src" / "vision_companion"
+        result = subprocess.run([sys.executable, "-m", "pytest", "tests", "--collect-only", "-q", "-p", "no:cacheprovider"], cwd=companion,
+                                env={**os.environ, "PYTHONPATH": str(companion)}, capture_output=True, text=True, check=False)
+        found = re.search(r"(\d+) tests? collected", result.stdout)
+        self.assertTrue(found, "pytest could not collect the cases of vision_companion: " + result.stdout[-300:] + result.stderr[-300:])
+        count = int(found.group(1))
         self.assertGreater(count, 0)
 
         manifest = json.loads(read("urtc.project.json"))
