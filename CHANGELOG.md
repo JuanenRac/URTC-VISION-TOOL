@@ -4,7 +4,7 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
-- **Related Projects lists the URTC family:** the section names the repositories of URTC by group and, in one short line each, the sister projects (independent ecosystems of the same author that share the base and the tools), in the eight languages. It no longer says that URTC is part of another ecosystem. `CONTRIBUTING.md` places the tool head in the URTC ecosystem.
+- **Related Projects lists the URTC family:** the section names the repositories of URTC by group, each with one short line about what it is for, and, in one short line each, the sister projects (independent ecosystems of the same author that share the base and the tools), in the eight languages. It no longer says that URTC is part of another ecosystem. `CONTRIBUTING.md` places the tool head in the URTC ecosystem.
 - **The number of pytest cases of the companion is the number that pytest collects** (183, a parametrized test counts once for each value) in the manifest and in the READMEs, and the test that keeps them honest now counts the collected cases instead of the test functions.
 - **The README follows the universal layout in the eight languages:** the sections are in the fixed order with the fixed names, the vision tool flow is drawn from `docs/architecture.json` (the Mermaid source stays in a collapsible block), the Repository Structure comes from `docs/structure.json`, and the sections for role, security, interfaces, testing and roadmap are new. The number of companion test cases is current (183).
 - **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.
