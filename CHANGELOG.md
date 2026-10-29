@@ -8,6 +8,7 @@ All notable changes to this project are documented here.
 - **The README follows the universal layout in the eight languages:** the sections are in the fixed order with the fixed names, the vision tool flow is drawn from `docs/architecture.json` (the Mermaid source stays in a collapsible block), the Repository Structure comes from `docs/structure.json`, and the sections for role, security, interfaces, testing and roadmap are new. The number of companion test cases is current (183).
 - **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.
 - **Project status is the second section of the README,** right after At a glance, in the eight languages.
+- **The full CI runs every night:** a scheduled workflow runs the complete baseline again on the default branch and opens (or updates) one issue when it fails, so a change in a runner image, a toolchain or a pinned dependency is found the next day instead of with the next unrelated change.
 
 ## [0.1.5] - The rack check closes the loop of the pre-heat and the README files carry sections written once in URTC-COMMON
 
