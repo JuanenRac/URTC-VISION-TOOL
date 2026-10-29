@@ -17,7 +17,7 @@
 
 ---
 
-**诚实核查 - 今天真正能运行的部分：** 固件侧的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）是真实的纯 C 代码，有 165 个通过的 `TEST_ASSERT` 检查（`tests/test_*.c`，用主机自身的 C 编译器编译并运行），并且本仓库的 CI 确实会运行它们：`.github/workflows/ci.yml` 的固件步骤调用 `build_firmware.sh`，其第 2 步总是在进行 STM32 构建之前编译并运行 `tests/`。主机侧的 `vision_companion` 包（`alignment.py`、`cli.py`）同样是真实的，有 183 个通过的 pytest 用例，CI 也会运行这套测试（专门的步骤安装 `src/vision_companion/requirements.txt` 并在该目录运行 `pytest tests/`），因此任何一半出现回归都会导致构建失败。正如 README 开头所说：这块板卡还没有 PCB/原理图，因此这里的任何东西都从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只证明 Cortex-M4F 的交叉编译和链接在占位链接脚本下能够成功。已发布的内容请参见 `CHANGELOG.md`。
+**诚实核查 - 今天真正能运行的部分：** 固件侧的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）是真实的纯 C 代码，有 190 个通过的 `TEST_ASSERT` 检查（`tests/test_*.c`，用主机自身的 C 编译器编译并运行），并且本仓库的 CI 确实会运行它们：`.github/workflows/ci.yml` 的固件步骤调用 `build_firmware.sh`，其第 2 步总是在进行 STM32 构建之前编译并运行 `tests/`。主机侧的 `vision_companion` 包（`alignment.py`、`cli.py`）同样是真实的，有 183 个通过的 pytest 用例，CI 也会运行这套测试（专门的步骤安装 `src/vision_companion/requirements.txt` 并在该目录运行 `pytest tests/`），因此任何一半出现回归都会导致构建失败。正如 README 开头所说：这块板卡还没有 PCB/原理图，因此这里的任何东西都从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只证明 Cortex-M4F 的交叉编译和链接在占位链接脚本下能够成功。已发布的内容请参见 `CHANGELOG.md`。
 
 ---
 
@@ -205,7 +205,7 @@ pytest
 
 ## 🧪 测试
 
-共有两套测试。固件侧是 `tests/` 中的 C 代码（165 个 `TEST_ASSERT` 检查）：传感器帧、读数、速率限制器、诊断、新鲜度、整条链路的场景、对错误输入的鲁棒性以及 URTC-COMMON 的共用向量，用电脑自己的 C 编译器编译运行，在 CI 中还使用 AddressSanitizer、UBSan 和覆盖率下限。主机侧是 `vision_companion` 软件包，有 183 个 pytest 用例（`cd src/vision_companion && pytest`），在没有硬件的情况下运行整条流程：合成图像、伪彩色、对准、校准、针对模拟头的热图像采集、检测、漂移和机架检查。四个 Python 测试文件检查构建脚本、发布资源和版本文件。`bash build_firmware.sh` 在交叉编译前运行 C 测试，任何断言失败则失败。
+共有两套测试。固件侧是 `tests/` 中的 C 代码（190 个 `TEST_ASSERT` 检查）：传感器帧、读数、速率限制器、诊断、新鲜度、整条链路的场景、对错误输入的鲁棒性以及 URTC-COMMON 的共用向量，用电脑自己的 C 编译器编译运行，在 CI 中还使用 AddressSanitizer、UBSan 和覆盖率下限。主机侧是 `vision_companion` 软件包，有 183 个 pytest 用例（`cd src/vision_companion && pytest`），在没有硬件的情况下运行整条流程：合成图像、伪彩色、对准、校准、针对模拟头的热图像采集、检测、漂移和机架检查。四个 Python 测试文件检查构建脚本、发布资源和版本文件。`bash build_firmware.sh` 在交叉编译前运行 C 测试，任何断言失败则失败。中断将使用的接收路径（`sensor_rx.c`：中断只把字节放入环形缓冲，主循环负责找出帧、在损坏的帧之后重新同步，并丢弃等待过久的半截帧）同样是纯逻辑，测试中逐字节回放。
 
 ## 🏗️ 构建与发布
 
@@ -233,7 +233,7 @@ pytest
 ```text
 URTC-VISION-TOOL/
 ├── src/                                               固件（纯 C 传感器协议、URTC-COMMON 的核对副本、入口点、占位链接脚本）和 Python 伴随程序
-├── tests/                                             C 主机测试（165 项检查）和构建脚本的 Python 检查
+├── tests/                                             C 主机测试（190 项检查）和构建脚本的 Python 检查
 ├── docs/                                              CLI_REFERENCE.md：每个命令和退出码
 ├── hardware/                                          目前没有原理图和 PCB
 ├── tools/                                             构建、覆盖率和发布工具

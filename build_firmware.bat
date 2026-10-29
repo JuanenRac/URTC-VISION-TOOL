@@ -74,11 +74,11 @@ if errorlevel 1 (
     echo       this from a shell that has a native gcc on PATH.
     goto :error
 )
-gcc -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_sensor_frame.c tests\test_sensor_reading.c tests\test_rate_limiter.c tests\test_sensor_diagnostics.c tests\test_vision_sensor_scenarios.c tests\test_robustness.c tests\test_sensor_freshness.c tests\test_sensor_vectors.c src\sensor_frame.c src\sensor_reading.c src\rate_limiter.c src\sensor_diagnostics.c src\vision_sensor_link.c src\sensor_freshness.c
+gcc -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests -o build\host_tests.exe tests\test_main.c tests\test_sensor_frame.c tests\test_sensor_reading.c tests\test_rate_limiter.c tests\test_sensor_diagnostics.c tests\test_vision_sensor_scenarios.c tests\test_robustness.c tests\test_sensor_freshness.c tests\test_sensor_vectors.c tests\test_sensor_rx.c src\sensor_frame.c src\sensor_reading.c src\rate_limiter.c src\sensor_diagnostics.c src\vision_sensor_link.c src\sensor_freshness.c src\sensor_rx.c
 if errorlevel 1 goto :error
 build\host_tests.exe
 if errorlevel 1 goto :error
-echo   OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_freshness.c / sensor_diagnostics.c / vision_sensor_link.c pure-logic tests passed
+echo   OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_freshness.c / sensor_diagnostics.c / vision_sensor_link.c / sensor_rx.c pure-logic tests passed
 echo.
 
 echo === 2b. Build tooling tests ^(version odometer boundaries^) ===

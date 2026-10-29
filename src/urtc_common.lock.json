@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "urtc_common_version": "0.0.7",
+  "urtc_common_version": "0.0.8",
   "files": {
     "urtc_crc8.h": {
       "from": "firmware_base/urtc_crc8.h",
@@ -13,6 +13,10 @@
     "urtc_rate_limiter.h": {
       "from": "firmware_base/urtc_rate_limiter.h",
       "sha256": "85643d90b09c2e6eccfe6da2af257fc3d34e779f291a5ab98fc4e13a1ace5b3b"
+    },
+    "urtc_ring.h": {
+      "from": "firmware_base/urtc_ring.h",
+      "sha256": "9ea1060bcc655079d203482654caf5c877d8b20a4f12d6f99b0f7f9eba80db03"
     }
   }
 }

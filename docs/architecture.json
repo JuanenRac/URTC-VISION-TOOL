@@ -157,5 +157,5 @@
     "untested": "has not run on real hardware",
     "external": "another repository or a device"
   },
-  "footer": "165 C checks and 183 pytest cases pass; nothing has read a real sensor."
+  "footer": "190 C checks and 183 pytest cases pass; nothing has read a real sensor."
 }

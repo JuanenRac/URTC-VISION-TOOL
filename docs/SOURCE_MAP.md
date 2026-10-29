@@ -10,11 +10,13 @@ URTC-VISION-TOOL/
 │   ├── urtc_crc8.h                 # Real: CRC-8 shared with the tool rack (copied from URTC-COMMON)
 │   ├── urtc_frame.h                # Real: frame layer shared with the tool rack (copied from URTC-COMMON)
 │   ├── urtc_rate_limiter.h         # Real: minimum-interval limiter of the link (copied from URTC-COMMON)
+│   ├── urtc_ring.h                 # Real: single-producer / single-consumer byte ring (copied from URTC-COMMON)
 │   ├── sensor_reading.h / .c       # Real: thermal reading decode + range validation
 │   ├── rate_limiter.h / .c         # Real: minimum-interval frame throttling
 │   ├── sensor_freshness.h / .c     # Real: sequence/timestamp freshness (replay and stale-sensor detection)
 │   ├── sensor_diagnostics.h / .c   # Real: error/latency/bus-reset counters, separate from control
 │   ├── vision_sensor_link.h / .c   # Real: frame-dispatch decision tying sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics together
+│   ├── sensor_rx.h / .c            # Real: interrupt-safe receive path - the interrupt only fills the ring, the main loop finds the frames and resynchronises
 │   ├── main.c                      # Minimal entry point (proof-of-life heartbeat loop)
 │   ├── startup_stm32_minimal.c     # Vector table + Reset_Handler (no ST HAL yet, see file header)
 │   ├── STM32_MINIMAL.ld            # Placeholder linker script (128K FLASH / 32K RAM floor)

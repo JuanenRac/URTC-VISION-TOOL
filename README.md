@@ -17,7 +17,7 @@
 
 ---
 
-**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 165 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `cli.py`) is likewise real and backed by 183 passing pytest cases, and CI runs that suite too (its own step installs `src/vision_companion/requirements.txt` and runs `pytest tests/` there), so a regression in either half fails the build. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
+**Honesty check - what actually runs today:** the firmware-side sensor protocol (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) is real, pure C backed by 190 passing `TEST_ASSERT` checks (`tests/test_*.c`, compiled and run against the host's own C compiler), and this repo's own CI genuinely runs it: `.github/workflows/ci.yml`'s firmware step invokes `build_firmware.sh`, whose step 2 always compiles and runs `tests/` before touching the STM32 build. The host-side `vision_companion` package (`alignment.py`, `cli.py`) is likewise real and backed by 183 passing pytest cases, and CI runs that suite too (its own step installs `src/vision_companion/requirements.txt` and runs `pytest tests/` there), so a regression in either half fails the build. As the README's own intro already says: no PCB/schematic exists for this board yet, so nothing here has ever read a real MLX9064x sensor or RGB camera, or driven a real CAN transceiver - `main.c`/`startup_stm32_minimal.c` only prove the Cortex-M4F cross-compile and link succeed against a placeholder linker script. See `CHANGELOG.md` for exactly what has shipped so far.
 
 ---
 
@@ -191,7 +191,7 @@ Which versions of the URTC programs work together, and which protocol version ea
 
 ## 🧪 Testing
 
-Two suites. The firmware side is C in `tests/` (165 `TEST_ASSERT` checks): the sensor frame, the reading, the rate limiter, the diagnostics, the freshness, the scenarios of the whole link, robustness against bad input and the shared vectors of URTC-COMMON, compiled and run with the computer's own C compiler and, in CI, with AddressSanitizer, UBSan and a coverage floor. The host side is the `vision_companion` package, with 183 pytest cases (`cd src/vision_companion && pytest`) that run the whole pipeline with no hardware: synthetic frames, false colour, alignment, calibration, the thermal capture against a simulated head, inspection, drift and the rack check. Four Python test files check the build scripts, the release assets and the version files. `bash build_firmware.sh` runs the C tests before the cross-compile and fails when one assertion fails.
+Two suites. The firmware side is C in `tests/` (190 `TEST_ASSERT` checks): the sensor frame, the reading, the rate limiter, the diagnostics, the freshness, the scenarios of the whole link, robustness against bad input and the shared vectors of URTC-COMMON, compiled and run with the computer's own C compiler and, in CI, with AddressSanitizer, UBSan and a coverage floor. The host side is the `vision_companion` package, with 183 pytest cases (`cd src/vision_companion && pytest`) that run the whole pipeline with no hardware: synthetic frames, false colour, alignment, calibration, the thermal capture against a simulated head, inspection, drift and the rack check. Four Python test files check the build scripts, the release assets and the version files. `bash build_firmware.sh` runs the C tests before the cross-compile and fails when one assertion fails. The receive path an interrupt will use (`sensor_rx.c`: the interrupt only puts the byte in a ring, the main loop finds the frames, resynchronises after a damaged one and drops a half frame that waited too long) is pure logic too, played byte by byte in the tests.
 
 ## 🏗️ Build & Release
 
@@ -217,7 +217,7 @@ See [`CHANGELOG.md`](CHANGELOG.md) for the full version history; each version ha
 ```text
 URTC-VISION-TOOL/
 ├── src/                                               the firmware (pure C sensor protocol, checked copies of URTC-COMMON, entry point, placeholder linker script) and the Python companion
-├── tests/                                             host C tests (165 checks) and Python checks of the build scripts
+├── tests/                                             host C tests (190 checks) and Python checks of the build scripts
 ├── docs/                                              CLI_REFERENCE.md: every command and exit code
 ├── hardware/                                          no schematic or PCB yet
 ├── tools/                                             build, coverage, release tools

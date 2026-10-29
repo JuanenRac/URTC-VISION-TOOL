@@ -9,6 +9,7 @@ All notable changes to this project are documented here.
 - **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.
 - **Project status is the second section of the README,** right after At a glance, in the eight languages.
 - **The full CI runs every night:** a scheduled workflow runs the complete baseline again on the default branch and opens (or updates) one issue when it fails, so a change in a runner image, a toolchain or a pinned dependency is found the next day instead of with the next unrelated change.
+- **The receive path is ready for an interrupt:** `sensor_rx.c` puts the bytes an interrupt receives in a single-producer ring (the shared `urtc_ring.h`), and the main loop finds the frames in them, resynchronises after a damaged one and drops a half frame that waited too long, so the rate limiter, the freshness state and the diagnostics are only touched from one context and never read half updated. It is played byte by byte in the host tests, with the sanitizers, and compiles for the target. The test count is current (190 checks in 10 files).
 
 ## [0.1.5] - The rack check closes the loop of the pre-heat and the README files carry sections written once in URTC-COMMON
 

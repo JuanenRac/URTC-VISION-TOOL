@@ -45,6 +45,19 @@
           }
         },
         {
+          "name": "sensor_rx.c",
+          "desc": {
+            "en": "interrupt-safe receive path",
+            "es": "la ruta de recepción segura para interrupciones",
+            "de": "der interruptsichere Empfangsweg",
+            "fr": "le chemin de réception sûr face aux interruptions",
+            "it": "il percorso di ricezione sicuro per gli interrupt",
+            "zh": "中断安全的接收路径",
+            "ja": "割り込みに安全な受信経路",
+            "pt": "o caminho de receção seguro para interrupções"
+          }
+        },
+        {
           "name": "sensor_diagnostics.c  vision_sensor_link.c",
           "desc": {
             "en": "counters and the dispatch",
@@ -90,14 +103,14 @@
       "span": 1,
       "accent": "b",
       "tree": {
-        "en": "host C tests (165 checks) and Python checks of the build scripts",
-        "es": "pruebas de host en C (165 comprobaciones) y comprobaciones en Python de los scripts de compilación",
-        "de": "C-Host-Tests (165 Prüfungen) und Python-Prüfungen der Build-Skripte",
-        "fr": "tests hôte en C (165 vérifications) et contrôles Python des scripts de compilation",
-        "it": "test host in C (165 controlli) e controlli Python degli script di compilazione",
-        "zh": "C 主机测试（165 项检查）和构建脚本的 Python 检查",
-        "ja": "C のホストテスト（165 件の検査）とビルドスクリプトの Python 検査",
-        "pt": "testes de host em C (165 verificações) e verificações em Python dos scripts de compilação"
+        "en": "host C tests (190 checks) and Python checks of the build scripts",
+        "es": "pruebas de host en C (190 comprobaciones) y comprobaciones en Python de los scripts de compilación",
+        "de": "C-Host-Tests (190 Prüfungen) und Python-Prüfungen der Build-Skripte",
+        "fr": "tests hôte en C (190 vérifications) et contrôles Python des scripts de compilation",
+        "it": "test host in C (190 controlli) e controlli Python degli script di compilazione",
+        "zh": "C 主机测试（190 项检查）和构建脚本的 Python 检查",
+        "ja": "C のホストテスト（190 件の検査）とビルドスクリプトの Python 検査",
+        "pt": "testes de host em C (190 verificações) e verificações em Python dos scripts de compilação"
       },
       "rows": [
         {
