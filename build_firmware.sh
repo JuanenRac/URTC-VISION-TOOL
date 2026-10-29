@@ -114,10 +114,15 @@ COVERAGE_FLAGS=""
 if [ -n "${URTC_COVERAGE_FLOOR:-}" ]; then
     COVERAGE_FLAGS="--coverage -O0"
 fi
+# One list of sources for both build scripts: tools/host_sources.txt.
+HOST_SOURCES=()
+while IFS= read -r source_line || [ -n "$source_line" ]; do
+    source_line="${source_line%$'\r'}"
+    case "$source_line" in ''|'#'*) continue ;; esac
+    HOST_SOURCES+=("$source_line")
+done < tools/host_sources.txt
 "$HOST_CC" -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests $SANITIZE_FLAGS $COVERAGE_FLAGS \
-    -o "$BUILD/host_tests" \
-    tests/test_main.c tests/test_sensor_frame.c tests/test_sensor_reading.c tests/test_rate_limiter.c tests/test_sensor_diagnostics.c tests/test_vision_sensor_scenarios.c tests/test_robustness.c tests/test_sensor_freshness.c tests/test_sensor_vectors.c tests/test_sensor_rx.c \
-    src/sensor_frame.c src/sensor_reading.c src/rate_limiter.c src/sensor_diagnostics.c src/vision_sensor_link.c src/sensor_freshness.c src/sensor_rx.c
+    -o "$BUILD/host_tests" "${HOST_SOURCES[@]}"
 "$BUILD/host_tests"
 if [ -n "${URTC_COVERAGE_FLOOR:-}" ]; then
     python3 tools/gcov_floor.py "$URTC_COVERAGE_FLOOR" "$BUILD"

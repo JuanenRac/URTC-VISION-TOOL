@@ -29,21 +29,23 @@ def read(name):
     return (ROOT / name).read_text(encoding="utf-8", errors="replace")
 
 
-def host_sources_of(script):
-    """The .c files given to the host compiler in one build script."""
-    text = read(script).replace("\\\r\n", " ").replace("\\\n", " ")
-    for line in text.splitlines():
-        if re.search(r"\b(gcc|HOST_CC)\b.*-o\s+\S*host_tests", line):
-            return {Path(token.replace("\\", "/")).as_posix() for token in line.split() if token.endswith(".c")}
-    raise AssertionError(f"{script} has no host test compile command")
+def host_sources():
+    """The .c files of the host build: the one list, tools/host_sources.txt, that both build scripts read."""
+    lines = [line.strip() for line in read("tools/host_sources.txt").splitlines()]
+    return {line for line in lines if line and not line.startswith("#")}
 
 
 class BuildScriptTests(unittest.TestCase):
-    def test_both_scripts_compile_the_same_host_sources(self):
-        self.assertEqual(host_sources_of("build_firmware.sh"), host_sources_of("build_firmware.bat"))
+    def test_both_scripts_read_the_one_list_of_host_sources(self):
+        self.assertIn("tools/host_sources.txt", read("build_firmware.sh"))
+        self.assertIn("tools\\host_sources.txt", read("build_firmware.bat"))
+        for script in ("build_firmware.sh", "build_firmware.bat"):
+            self.assertNotRegex(read(script), r"(?m)^[^#\n]*tests[/\\]test_[a-z0-9_]+\.c", f"{script} lists a test file itself")
+        for name in host_sources():
+            self.assertTrue((ROOT / name).is_file(), f"tools/host_sources.txt lists {name}, which does not exist")
 
     def test_every_module_and_test_file_is_in_the_host_build(self):
-        listed = host_sources_of("build_firmware.sh")
+        listed = host_sources()
         modules = {f"src/{p.name}" for p in (ROOT / "src").glob("*.c")} - {
             "src/main.c", "src/startup_stm32_minimal.c",
         }
