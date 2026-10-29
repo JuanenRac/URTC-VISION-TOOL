@@ -1,6 +1,6 @@
 # Contributing to URTC-VISION-TOOL 🦾
 
-We welcome contributions to the integrated visual and thermal perception toolhead of the HYDRA-UMC ecosystem.
+We welcome contributions to the integrated visual and thermal perception toolhead of the URTC ecosystem.
 
 ## Technology Stack
 - **Language**: C11 (firmware), Python 3.10+ (the `vision_companion` package, with numpy and Pillow).
