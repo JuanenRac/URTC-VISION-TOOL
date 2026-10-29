@@ -31,6 +31,20 @@
 | Destinazione | Una scheda con microcontrollore (il firmware); compilato su un PC |
 | Su hardware reale | Non ancora: per questa versione non risulta alcuna esecuzione su hardware reale |
 
+<!-- urtc-section:status_vision_tool -->
+## 🚦 Stato del progetto
+
+🟢 fatto e verificato · 🟡 funziona, con limiti noti · 🟠 a metà o non verificato · 🔴 non fatto o non funzionante. Nulla è verde se non ha mai girato su hardware reale.
+
+| Parte | Stato | Ciò che il repository può dimostrare |
+| --- | :---: | --- |
+| Software | 🟡 | Funziona su un PC e contro il simulatore; mai usato con una scheda reale. |
+| Test | 🟢 | La suite di test passa nella CI a ogni push. |
+| Hardware reale | 🟠 | Nessuna esecuzione su una scheda reale: la prova al banco è ancora da fare. |
+| Documentazione | 🟡 | README in otto lingue e documenti di riferimento; le traduzioni non sono state riviste da madrelingua. |
+
+<!-- /urtc-section:status_vision_tool -->
+
 ## 1. 🛠️ PANORAMICA TECNICA
 
 **URTC-VISION-TOOL** è una testina robotica specializzata che fonde percezione visiva e termica in un unico effettore compatibile URTC. Progettata per QA avanzato, ispezione termica di PCB e allineamento Pick-and-Place ad alta precisione.
@@ -320,20 +334,6 @@ Questo progetto fa parte dell'ecosistema robotico HYDRA-UMC dello stesso autore 
 
 Quali versioni dei programmi URTC funzionano insieme, e quale versione del protocollo parla ciascuna, è elencato nella tabella di compatibilità generata da URTC-COMMON: [docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md).
 <!-- /urtc-section:compatibility -->
-
-<!-- urtc-section:status_vision_tool -->
-## 💡 Stato del progetto
-
-🟢 fatto e verificato · 🟡 funziona, con limiti noti · 🟠 a metà o non verificato · 🔴 non fatto o non funzionante. Nulla è verde se non ha mai girato su hardware reale.
-
-| Parte | Stato | Ciò che il repository può dimostrare |
-| --- | :---: | --- |
-| Software | 🟡 | Funziona su un PC e contro il simulatore; mai usato con una scheda reale. |
-| Test | 🟢 | La suite di test passa nella CI a ogni push. |
-| Hardware reale | 🟠 | Nessuna esecuzione su una scheda reale: la prova al banco è ancora da fare. |
-| Documentazione | 🟡 | README in otto lingue e documenti di riferimento; le traduzioni non sono state riviste da madrelingua. |
-
-<!-- /urtc-section:status_vision_tool -->
 
 ## 📜 LICENZA
 GPL-3.0-or-later - Vedi LICENSE per i dettagli.

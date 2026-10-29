@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **The layout of the README is checked in the CI:** the validator runs `tools/universal_readme_check.py` and lists, as a warning, what differs from the universal layout of the README.
+- **Project status is the second section of the README,** right after At a glance, in the eight languages.
+
 ## [0.1.5] - The rack check closes the loop of the pre-heat and the README files carry sections written once in URTC-COMMON
 
 - **`capture`: the thermal image of a URTC head through a serial CAN adapter:** `vision-companion capture --port PORT` runs the exchange of `urtc_thermal.py` (`0x250` to `0x255`: start, poll until ready, 48 chunks of four frames, or 12 for the 90641) over an SLCAN adapter (`slcan_link.py`: `C`, `S6`, `O`, the frames as `t` lines; a serial port or a pyserial URL) and saves `thermal_frame.npy` and the false-colour PNG like `selftest` does, so `inspect`, `drift-check` and `rack-check` can take the file. A head that reports an error, never becomes ready or leaves a chunk unanswered ends the command with exit code 1 and a message; a port that cannot be opened, pyserial missing or a bit rate SLCAN does not have ends it with 2. pyserial is now a dependency. 27 tests play a simulated head through a simulated adapter that listens on a local TCP port (`tests/slcan_adapter.py`; pyserial opens `socket://` like a port, so the bytes are real): the image comes back within a hundredth of a degree, the commands of the adapter come in order, a head that needs several polls is waited for, the frames of a chunk that come one by one on a slow line are put together, noise and frames of other nodes on the line are ignored, a lost frame names its chunk, and a saved capture is judged by `inspect`. Not run against a real adapter, bus or head.

@@ -31,6 +31,20 @@
 | Cible | Une carte à microcontrôleur (le firmware) ; compilé sur un PC |
 | Sur matériel réel | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
 
+<!-- urtc-section:status_vision_tool -->
+## 🚦 État du projet
+
+🟢 fait et vérifié · 🟡 fonctionne, avec des limites connues · 🟠 à moitié fait ou non vérifié · 🔴 non fait ou non fonctionnel. Rien n'est vert si cela n'a jamais tourné sur du vrai matériel.
+
+| Partie | État | Ce que le dépôt peut démontrer |
+| --- | :---: | --- |
+| Logiciel | 🟡 | Fonctionne sur un PC et face au simulateur ; jamais utilisé avec une vraie carte. |
+| Tests | 🟢 | La suite de tests passe dans la CI à chaque push. |
+| Matériel réel | 🟠 | Pas encore d'essai sur une vraie carte : l'essai au banc reste à faire. |
+| Documentation | 🟡 | README en huit langues et documents de référence ; les traductions n'ont pas été relues par des locuteurs natifs. |
+
+<!-- /urtc-section:status_vision_tool -->
+
 ## 1. 🛠️ APERÇU TECHNIQUE
 
 **URTC-VISION-TOOL** est une tête d'outil robotique spécialisée qui fusionne la perception visuelle et thermique en un seul effecteur compatible URTC. Conçue pour le contrôle qualité avancé, l'inspection thermique de PCB et l'alignement Pick-and-Place haute précision.
@@ -320,20 +334,6 @@ Ce projet fait partie de l'écosystème robotique HYDRA-UMC du même auteur (Jua
 
 Les versions des programmes URTC qui fonctionnent ensemble, et la version du protocole que parle chacune, figurent dans le tableau de compatibilité que génère URTC-COMMON : [docs/COMPATIBILITY.md](https://github.com/JuanenRac/URTC/blob/main/docs/COMPATIBILITY.md).
 <!-- /urtc-section:compatibility -->
-
-<!-- urtc-section:status_vision_tool -->
-## 💡 État du projet
-
-🟢 fait et vérifié · 🟡 fonctionne, avec des limites connues · 🟠 à moitié fait ou non vérifié · 🔴 non fait ou non fonctionnel. Rien n'est vert si cela n'a jamais tourné sur du vrai matériel.
-
-| Partie | État | Ce que le dépôt peut démontrer |
-| --- | :---: | --- |
-| Logiciel | 🟡 | Fonctionne sur un PC et face au simulateur ; jamais utilisé avec une vraie carte. |
-| Tests | 🟢 | La suite de tests passe dans la CI à chaque push. |
-| Matériel réel | 🟠 | Pas encore d'essai sur une vraie carte : l'essai au banc reste à faire. |
-| Documentation | 🟡 | README en huit langues et documents de référence ; les traductions n'ont pas été relues par des locuteurs natifs. |
-
-<!-- /urtc-section:status_vision_tool -->
 
 ## 📜 LICENCE
 GPL-3.0-or-later - Voir LICENSE pour plus de détails.
