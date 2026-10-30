@@ -204,7 +204,8 @@
           "action": "set_target",
           "tool": 0,
           "temp": 200,
-          "ack": 1
+          "ack": 1,
+          "reply": "A5020A81030100008E"
         },
         {
           "time_ms": 20,
@@ -212,7 +213,8 @@
           "action": "none",
           "tool": 0,
           "temp": 0,
-          "ack": 1
+          "ack": 1,
+          "reply": "A5020A810301000189"
         },
         {
           "time_ms": 40,
@@ -220,7 +222,8 @@
           "action": "none",
           "tool": 0,
           "temp": 0,
-          "ack": 1
+          "ack": 1,
+          "reply": "A502098103010001F2"
         },
         {
           "time_ms": 60,
@@ -228,7 +231,8 @@
           "action": "set_target",
           "tool": 0,
           "temp": 250,
-          "ack": 1
+          "ack": 1,
+          "reply": "A5020B8103010000A7"
         }
       ]
     },
@@ -241,7 +245,8 @@
           "action": "set_target",
           "tool": 0,
           "temp": 200,
-          "ack": 1
+          "ack": 1,
+          "reply": "A502018103010000BA"
         },
         {
           "time_ms": 10,
@@ -249,7 +254,8 @@
           "action": "safe_state",
           "tool": 0,
           "temp": 0,
-          "ack": 0
+          "ack": 0,
+          "reply": "A5020282030100047B"
         },
         {
           "time_ms": 20,
@@ -257,7 +263,8 @@
           "action": "set_target",
           "tool": 0,
           "temp": 200,
-          "ack": 1
+          "ack": 1,
+          "reply": "A502028103010000C1"
         }
       ]
     },
@@ -270,7 +277,8 @@
           "action": "set_target",
           "tool": 19,
           "temp": 300,
-          "ack": 1
+          "ack": 1,
+          "reply": "A5023281030113000C"
         },
         {
           "time_ms": 100,
@@ -278,7 +286,8 @@
           "action": "none",
           "tool": 0,
           "temp": 0,
-          "ack": 1
+          "ack": 1,
+          "reply": "A5023281030113010B"
         },
         {
           "time_ms": 1000,
@@ -286,7 +295,8 @@
           "action": "set_target",
           "tool": 19,
           "temp": 300,
-          "ack": 1
+          "ack": 1,
+          "reply": "A5023281030113000C"
         }
       ]
     },
@@ -299,7 +309,8 @@
           "action": "set_target",
           "tool": 0,
           "temp": 200,
-          "ack": 1
+          "ack": 1,
+          "reply": "A502018103010000BA"
         },
         {
           "time_ms": 10,
@@ -307,7 +318,8 @@
           "action": "none",
           "tool": 0,
           "temp": 0,
-          "ack": 0
+          "ack": 0,
+          "reply": ""
         },
         {
           "time_ms": 20,
@@ -315,7 +327,8 @@
           "action": "none",
           "tool": 0,
           "temp": 0,
-          "ack": 0
+          "ack": 0,
+          "reply": "A5020282037EFF08A8"
         },
         {
           "time_ms": 30,
@@ -323,7 +336,126 @@
           "action": "safe_state",
           "tool": 6,
           "temp": 0,
-          "ack": 0
+          "ack": 0,
+          "reply": "A50201820301060670"
+        }
+      ]
+    },
+    {
+      "name": "every refusal says why",
+      "steps": [
+        {
+          "time_ms": 0,
+          "frame": "A5020101004C",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0,
+          "reply": "A50201820301FF02C5"
+        },
+        {
+          "time_ms": 10,
+          "frame": "A5020201020000D7",
+          "action": "safe_state",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0,
+          "reply": "A50202820301000269"
+        },
+        {
+          "time_ms": 20,
+          "frame": "A5020301031F0000F1",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0,
+          "reply": "A502038203011F03D3"
+        },
+        {
+          "time_ms": 30,
+          "frame": "A50204010300019120",
+          "action": "safe_state",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0,
+          "reply": "A5020482030100048D"
+        },
+        {
+          "time_ms": 40,
+          "frame": "A5020501031B0000AC",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0,
+          "reply": "A502058203011B0563"
+        },
+        {
+          "time_ms": 50,
+          "frame": "A502060103060064DF",
+          "action": "safe_state",
+          "tool": 6,
+          "temp": 0,
+          "ack": 0,
+          "reply": "A502068203010606AF"
+        },
+        {
+          "time_ms": 60,
+          "frame": "A5020740020102AC",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0,
+          "reply": "A50207820340FF08E8"
+        }
+      ]
+    },
+    {
+      "name": "a command that comes too soon is held and the next one is obeyed",
+      "steps": [
+        {
+          "time_ms": 0,
+          "frame": "A5020101030000C830",
+          "action": "set_target",
+          "tool": 0,
+          "temp": 200,
+          "ack": 1,
+          "reply": "A502018103010000BA"
+        },
+        {
+          "time_ms": 5,
+          "frame": "A5020201030000FAD5",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0,
+          "reply": "A50202820301000772"
+        },
+        {
+          "time_ms": 19,
+          "frame": "A5020201030000FAD5",
+          "action": "none",
+          "tool": 0,
+          "temp": 0,
+          "ack": 0,
+          "reply": "A50202820301000772"
+        },
+        {
+          "time_ms": 20,
+          "frame": "A5020201030000FAD5",
+          "action": "set_target",
+          "tool": 0,
+          "temp": 250,
+          "ack": 1,
+          "reply": "A502028103010000C1"
+        },
+        {
+          "time_ms": 25,
+          "frame": "A50201010313012C88",
+          "action": "set_target",
+          "tool": 19,
+          "temp": 300,
+          "ack": 1,
+          "reply": "A502018103011300D2"
         }
       ]
     }
@@ -910,6 +1042,880 @@
       }
     }
   ],
+  "free_tool": {
+    "defaults": {
+      "query_timeout_ms": 250,
+      "max_attempts": 3,
+      "retry_backoff_ms": 2000,
+      "refresh_period_ms": 5000
+    },
+    "jumpers": [
+      {
+        "raw": 0,
+        "kind": "direct",
+        "tool": 0
+      },
+      {
+        "raw": 1,
+        "kind": "direct",
+        "tool": 1
+      },
+      {
+        "raw": 2,
+        "kind": "direct",
+        "tool": 2
+      },
+      {
+        "raw": 3,
+        "kind": "direct",
+        "tool": 3
+      },
+      {
+        "raw": 4,
+        "kind": "direct",
+        "tool": 4
+      },
+      {
+        "raw": 5,
+        "kind": "direct",
+        "tool": 5
+      },
+      {
+        "raw": 6,
+        "kind": "direct",
+        "tool": 6
+      },
+      {
+        "raw": 7,
+        "kind": "direct",
+        "tool": 7
+      },
+      {
+        "raw": 8,
+        "kind": "direct",
+        "tool": 8
+      },
+      {
+        "raw": 9,
+        "kind": "direct",
+        "tool": 9
+      },
+      {
+        "raw": 10,
+        "kind": "direct",
+        "tool": 10
+      },
+      {
+        "raw": 11,
+        "kind": "direct",
+        "tool": 11
+      },
+      {
+        "raw": 12,
+        "kind": "direct",
+        "tool": 12
+      },
+      {
+        "raw": 13,
+        "kind": "direct",
+        "tool": 13
+      },
+      {
+        "raw": 14,
+        "kind": "direct",
+        "tool": 14
+      },
+      {
+        "raw": 15,
+        "kind": "direct",
+        "tool": 15
+      },
+      {
+        "raw": 16,
+        "kind": "direct",
+        "tool": 16
+      },
+      {
+        "raw": 17,
+        "kind": "direct",
+        "tool": 17
+      },
+      {
+        "raw": 18,
+        "kind": "direct",
+        "tool": 18
+      },
+      {
+        "raw": 19,
+        "kind": "direct",
+        "tool": 19
+      },
+      {
+        "raw": 20,
+        "kind": "direct",
+        "tool": 20
+      },
+      {
+        "raw": 21,
+        "kind": "direct",
+        "tool": 21
+      },
+      {
+        "raw": 22,
+        "kind": "direct",
+        "tool": 22
+      },
+      {
+        "raw": 23,
+        "kind": "direct",
+        "tool": 23
+      },
+      {
+        "raw": 24,
+        "kind": "direct",
+        "tool": 24
+      },
+      {
+        "raw": 25,
+        "kind": "invalid",
+        "tool": null
+      },
+      {
+        "raw": 26,
+        "kind": "invalid",
+        "tool": null
+      },
+      {
+        "raw": 27,
+        "kind": "invalid",
+        "tool": null
+      },
+      {
+        "raw": 28,
+        "kind": "invalid",
+        "tool": null
+      },
+      {
+        "raw": 29,
+        "kind": "invalid",
+        "tool": null
+      },
+      {
+        "raw": 30,
+        "kind": "invalid",
+        "tool": null
+      },
+      {
+        "raw": 31,
+        "kind": "free",
+        "tool": null
+      },
+      {
+        "raw": 63,
+        "kind": "free",
+        "tool": null
+      },
+      {
+        "raw": 255,
+        "kind": "free",
+        "tool": null
+      },
+      {
+        "raw": 32,
+        "kind": "direct",
+        "tool": 0
+      }
+    ],
+    "replies": [
+      {
+        "name": "tool 3 chosen",
+        "payload": "1F04",
+        "tool": 3
+      },
+      {
+        "name": "tool 0 chosen",
+        "payload": "1F01",
+        "tool": 0
+      },
+      {
+        "name": "last tool (24) chosen",
+        "payload": "1F19",
+        "tool": 24
+      },
+      {
+        "name": "not set",
+        "payload": "1F00",
+        "tool": null
+      },
+      {
+        "name": "selection 26 names no tool",
+        "payload": "1F1A",
+        "tool": null
+      },
+      {
+        "name": "selection 255",
+        "payload": "1FFF",
+        "tool": null
+      },
+      {
+        "name": "jumpers do not read 31",
+        "payload": "0A04",
+        "tool": null
+      },
+      {
+        "name": "jumpers read 30",
+        "payload": "1E04",
+        "tool": null
+      },
+      {
+        "name": "one byte only",
+        "payload": "1F",
+        "tool": null
+      },
+      {
+        "name": "empty",
+        "payload": "",
+        "tool": null
+      },
+      {
+        "name": "a trailing byte is ignored",
+        "payload": "1F04AA",
+        "tool": 3
+      }
+    ],
+    "scenarios": [
+      {
+        "name": "answered at once",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 100,
+            "reply": "1F04",
+            "query": false,
+            "event": "resolved",
+            "tool": 3
+          },
+          {
+            "time_ms": 200,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": 3
+          }
+        ]
+      },
+      {
+        "name": "silent head: three queries, then a pause, then a new round",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 249,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 250,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 500,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 750,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 2749,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 2750,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          }
+        ]
+      },
+      {
+        "name": "answer after the pause",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 250,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 500,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 750,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 2750,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 2800,
+            "reply": "1F0B",
+            "query": false,
+            "event": "resolved",
+            "tool": 10
+          }
+        ]
+      },
+      {
+        "name": "selection not set",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 50,
+            "reply": "1F00",
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 2049,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 2050,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          }
+        ]
+      },
+      {
+        "name": "answer of a head that is not in free mode",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 50,
+            "reply": "0A04",
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 2050,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          }
+        ]
+      },
+      {
+        "name": "short and oversized selections are refused",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 10,
+            "reply": "1F",
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 20,
+            "reply": "1F1A",
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 30,
+            "reply": "1F19",
+            "query": false,
+            "event": "resolved",
+            "tool": 24
+          }
+        ]
+      },
+      {
+        "name": "refresh confirms the same tool",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 10,
+            "reply": "1F04",
+            "query": false,
+            "event": "resolved",
+            "tool": 3
+          },
+          {
+            "time_ms": 5009,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": 3
+          },
+          {
+            "time_ms": 5010,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": 3
+          },
+          {
+            "time_ms": 5020,
+            "reply": "1F04",
+            "query": false,
+            "event": "confirmed",
+            "tool": 3
+          },
+          {
+            "time_ms": 10019,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": 3
+          },
+          {
+            "time_ms": 10020,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": 3
+          }
+        ]
+      },
+      {
+        "name": "hot change of tool",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 10,
+            "reply": "1F04",
+            "query": false,
+            "event": "resolved",
+            "tool": 3
+          },
+          {
+            "time_ms": 5010,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": 3
+          },
+          {
+            "time_ms": 5020,
+            "reply": "1F0B",
+            "query": false,
+            "event": "changed",
+            "tool": 10
+          },
+          {
+            "time_ms": 5030,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": 10
+          }
+        ]
+      },
+      {
+        "name": "answer withdrawn: not set again",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 10,
+            "reply": "1F04",
+            "query": false,
+            "event": "resolved",
+            "tool": 3
+          },
+          {
+            "time_ms": 5010,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": 3
+          },
+          {
+            "time_ms": 5020,
+            "reply": "1F00",
+            "query": false,
+            "event": "lost",
+            "tool": -1
+          },
+          {
+            "time_ms": 7019,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 7020,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          }
+        ]
+      },
+      {
+        "name": "silent refresh withdraws the identity",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 10,
+            "reply": "1F04",
+            "query": false,
+            "event": "resolved",
+            "tool": 3
+          },
+          {
+            "time_ms": 5010,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": 3
+          },
+          {
+            "time_ms": 5260,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": 3
+          },
+          {
+            "time_ms": 5510,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": 3
+          },
+          {
+            "time_ms": 5760,
+            "reply": null,
+            "query": false,
+            "event": "lost",
+            "tool": -1
+          },
+          {
+            "time_ms": 7760,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          }
+        ]
+      },
+      {
+        "name": "unsolicited answer is used",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 30,
+            "reply": "1F03",
+            "query": false,
+            "event": "resolved",
+            "tool": 2
+          },
+          {
+            "time_ms": 31,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": 2
+          },
+          {
+            "time_ms": 40,
+            "reply": "1F03",
+            "query": false,
+            "event": "confirmed",
+            "tool": 2
+          }
+        ]
+      },
+      {
+        "name": "refresh switched off",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 0
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 10,
+            "reply": "1F04",
+            "query": false,
+            "event": "resolved",
+            "tool": 3
+          },
+          {
+            "time_ms": 100000,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": 3
+          }
+        ]
+      },
+      {
+        "name": "one attempt per round",
+        "config": {
+          "query_timeout_ms": 100,
+          "max_attempts": 1,
+          "retry_backoff_ms": 500,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 0,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 99,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 100,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 599,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 600,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          }
+        ]
+      },
+      {
+        "name": "the clock wraps in the middle of a round",
+        "config": {
+          "query_timeout_ms": 250,
+          "max_attempts": 3,
+          "retry_backoff_ms": 2000,
+          "refresh_period_ms": 5000
+        },
+        "steps": [
+          {
+            "time_ms": 4294967040,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 4294967290,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 244,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 494,
+            "reply": null,
+            "query": false,
+            "event": "none",
+            "tool": -1
+          },
+          {
+            "time_ms": 2496,
+            "reply": null,
+            "query": true,
+            "event": "none",
+            "tool": -1
+          }
+        ]
+      }
+    ]
+  },
   "limits": {
     "ceiling_c": 400,
     "link_timeout_ms": 250,
