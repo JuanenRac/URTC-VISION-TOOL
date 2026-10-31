@@ -194,6 +194,126 @@
       "data": "0500000000000000"
     }
   ],
+  "can_replies": [
+    {
+      "name": "applied",
+      "id": 609,
+      "cmd": 1,
+      "tool": 0,
+      "code": 0,
+      "ack": true,
+      "data": "010000"
+    },
+    {
+      "name": "repeat",
+      "id": 609,
+      "cmd": 1,
+      "tool": 1,
+      "code": 1,
+      "ack": true,
+      "data": "010101"
+    },
+    {
+      "name": "wrong_length",
+      "id": 609,
+      "cmd": 1,
+      "tool": 2,
+      "code": 2,
+      "ack": false,
+      "data": "010202"
+    },
+    {
+      "name": "tool_absent",
+      "id": 609,
+      "cmd": 1,
+      "tool": 3,
+      "code": 3,
+      "ack": false,
+      "data": "010303"
+    },
+    {
+      "name": "temp_out_of_range",
+      "id": 609,
+      "cmd": 1,
+      "tool": 4,
+      "code": 4,
+      "ack": false,
+      "data": "010404"
+    },
+    {
+      "name": "tool_invalid",
+      "id": 609,
+      "cmd": 1,
+      "tool": 5,
+      "code": 5,
+      "ack": false,
+      "data": "010505"
+    },
+    {
+      "name": "not_heatable",
+      "id": 609,
+      "cmd": 1,
+      "tool": 6,
+      "code": 6,
+      "ack": false,
+      "data": "010606"
+    },
+    {
+      "name": "held_rate",
+      "id": 609,
+      "cmd": 1,
+      "tool": 7,
+      "code": 7,
+      "ack": false,
+      "data": "010707"
+    },
+    {
+      "name": "unknown_command",
+      "id": 609,
+      "cmd": 64,
+      "tool": 255,
+      "code": 8,
+      "ack": false,
+      "data": "40FF08"
+    }
+  ],
+  "can_replies_rejected": [
+    {
+      "name": "two bytes",
+      "id": 609,
+      "data": "0100"
+    },
+    {
+      "name": "four bytes",
+      "id": 609,
+      "data": "01000000"
+    },
+    {
+      "name": "empty",
+      "id": 609,
+      "data": ""
+    },
+    {
+      "name": "reason 9, the first that does not exist",
+      "id": 609,
+      "data": "010009"
+    },
+    {
+      "name": "reason 255, which the rack never sends",
+      "id": 609,
+      "data": "0100FF"
+    },
+    {
+      "name": "the order identifier, not the reply",
+      "id": 608,
+      "data": "010000"
+    },
+    {
+      "name": "the next identifier, which is free",
+      "id": 610,
+      "data": "010000"
+    }
+  ],
   "scenarios": [
     {
       "name": "apply, retransmit, stale, new",

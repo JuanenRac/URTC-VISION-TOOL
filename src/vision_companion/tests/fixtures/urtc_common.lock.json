@@ -1,10 +1,10 @@
 {
   "format": 1,
-  "urtc_common_version": "0.0.9",
+  "urtc_common_version": "0.1.1",
   "files": {
     "rack_vectors.json": {
       "from": "conformance/rack_vectors.json",
-      "sha256": "ddba4a0250c75e2bab9b203c273831335486ed3b2a665871420b69bbf950cdd1"
+      "sha256": "53f79281d3276426282e29638fbfd131e3a644d5c297d1afe4ab1525efbecb75"
     },
     "thermal_vectors.json": {
       "from": "conformance/thermal_vectors.json",
