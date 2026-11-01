@@ -35,7 +35,7 @@ def digest(path: Path) -> str:
 
 
 def vendored_files() -> list[str]:
-    found = []
+    found: list[str] = []
     for folder in VENDOR_DIRS:
         found.extend(f"{folder}/{p.name}" for p in sorted((VENDOR / folder).iterdir()) if p.is_file())
     return found
@@ -51,7 +51,7 @@ def reference_root() -> Path | None:
 
 
 def compare_with_lock() -> list[str]:
-    problems = []
+    problems: list[str] = []
     lock = json.loads(LOCK.read_text(encoding="utf-8"))["files"]
     files = vendored_files()
     for rel in files:
@@ -66,7 +66,7 @@ def compare_with_lock() -> list[str]:
 
 
 def compare_with_reference(reference: Path) -> list[str]:
-    problems = []
+    problems: list[str] = []
     for rel in vendored_files():
         other = reference / rel
         if not other.is_file():
