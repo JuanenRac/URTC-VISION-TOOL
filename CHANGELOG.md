@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.1.8] - An interrupt simulator plays the receive interrupt against the real receive path, the Melexis drivers are vendored and watched against drift and the host tests share one executor
 
 - **An interrupt simulator plays the receive interrupt against the real receive path:** `tests/isr_simulator.c` (a suite of its own, Linux only) delivers the bytes of a stream from a `SIGALRM` handler that does what the real handler may do, call `sensor_rx_on_byte()`, while the main loop runs `sensor_rx_poll()` flat out, so the handler preempts it at any instruction. A handler that keeps pace gives every good frame as a reading, in order, with no byte lost and every damaged frame counted by the main loop; a flood against a slow main loop overflows the ring, which counts the bytes it lost, and still produces no invented, repeated or out-of-order reading. The diagnostics, the freshness baseline and the rate limiter are only ever touched by the main loop, so a read of the diagnostics between two polls is a whole snapshot. The shared ring took a copy in which the drop counter is written with an atomic store.
 - **The Melexis drivers are vendored and watched against drift:** `third_party/` holds the official MLX90640, MLX90641 and MLX90642 libraries exactly as the URTC firmware compiles them (each with its Apache-2.0 licence), `third_party/melexis.lock.json` holds the SHA-256 of every file, and `tools/check_shared_drivers.py` (run by the test suite) fails when a file differs, is missing or is not listed, and also compares with the copy in a neighbouring URTC checkout when there is one. Nothing of it is compiled into the image yet: the sensor is still read through the sensor link.
