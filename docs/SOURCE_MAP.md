@@ -38,7 +38,7 @@ URTC-VISION-TOOL/
 │       │   └── rack_text.py        # Real: the words of the rack check in the eight languages
 │       ├── tests/                  # 135 real pytest cases (the whole companion)
 │       └── README.md               # Companion-specific usage docs
-├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios, freshness, robustness)
+├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios, freshness, robustness) and the interrupt simulator (isr_simulator.c)
 ├── docs/                           # Command line reference (CLI_REFERENCE.md)
 ├── hardware/                       # Hardware notes (README.md) - no design files yet (no schematic, no PCB)
 ├── firmware/                       # Build output (.bin/.elf/.hex), git-ignored - published only as assets of the GitHub release

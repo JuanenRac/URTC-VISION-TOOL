@@ -63,7 +63,7 @@ static inline bool urtc_ring_put(urtc_ring_t *ring, uint8_t byte)
     const uint16_t head = ring->head;                          // only this side writes it
     const uint16_t next = (uint16_t)((head + 1u) & ring->mask);
     if (next == URTC_RING_LOAD_ACQUIRE(&ring->tail)) {
-        ring->dropped = (uint16_t)(ring->dropped + 1u);
+        URTC_RING_STORE_RELEASE(&ring->dropped, (uint16_t)(ring->dropped + 1u));   // an atomic store: the consumer reads it from another context
         return false;
     }
     ring->storage[head] = byte;

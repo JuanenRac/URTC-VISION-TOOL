@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "urtc_common_version": "0.0.8",
+  "urtc_common_version": "0.1.6",
   "files": {
     "urtc_crc8.h": {
       "from": "firmware_base/urtc_crc8.h",
@@ -16,7 +16,7 @@
     },
     "urtc_ring.h": {
       "from": "firmware_base/urtc_ring.h",
-      "sha256": "9ea1060bcc655079d203482654caf5c877d8b20a4f12d6f99b0f7f9eba80db03"
+      "sha256": "9fa7c469529d6ada355bb9a26af5aea9ff7a34b9e388e40e89e69467250ecde1"
     }
   }
 }
