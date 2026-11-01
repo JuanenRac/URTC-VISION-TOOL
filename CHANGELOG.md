@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The Python scripts of the repository are type-checked in the CI** (the build and release scripts and their tests, with the same mypy as the firmware repository of the rack); the two tests that load a script by its path now say so when it cannot be loaded.
+
 - **The lights of Project status follow the evidence of the manifest:** the manifest says how far the repository has been shown to work (`evidence`: `host-test`, `simulator`, `bench` or `field`) and the validator fails when a light is above what that evidence and the maturity allow (`tools/status_lights.py`), so a green that never ran on real hardware cannot come back.
 
 ## [0.1.6] - One list of host sources, a ring buffer for the sensor and the universal README

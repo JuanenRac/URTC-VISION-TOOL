@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 _spec = importlib.util.spec_from_file_location("publish_release_assets", ROOT / "tools" / "publish_release_assets.py")
+assert _spec is not None and _spec.loader is not None
 pra = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(pra)
 
