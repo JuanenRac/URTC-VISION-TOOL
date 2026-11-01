@@ -46,6 +46,7 @@
 | Software | 🟡 | Funziona su un PC e contro il simulatore; mai usato con una scheda reale. |
 | Test | 🟢 | La suite di test passa nella CI a ogni push. |
 | Hardware reale | 🟠 | Nessuna esecuzione su una scheda reale: la prova al banco è ancora da fare. |
+| Interfaccia e protocolli | 🟡 | Le rotte o i messaggi offerti sono documentati e provati con un client; non tutti i client li hanno ancora usati |
 | Documentazione | 🟡 | README in otto lingue e documenti di riferimento; le traduzioni non sono state riviste da madrelingua. |
 
 <!-- /urtc-section:status_vision_tool -->

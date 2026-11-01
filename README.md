@@ -46,6 +46,7 @@
 | Software | 🟡 | Works on a PC and against the simulator; never run against a real board. |
 | Tests | 🟢 | The test suite passes in the CI on every push. |
 | Real hardware | 🟠 | No run on a real board yet: the bench test is still pending. |
+| Interface and protocols | 🟡 | The routes or messages it offers are documented and tested with a client; not every client has used them yet |
 | Documentation | 🟡 | README in eight languages and reference documents; the translations were not reviewed by native speakers. |
 
 <!-- /urtc-section:status_vision_tool -->
