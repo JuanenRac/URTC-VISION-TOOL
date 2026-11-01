@@ -242,6 +242,7 @@ URTC-VISION-TOOL/
 ├── tests/                                             C のホストテスト（190 件の検査）とビルドスクリプトの Python 検査
 ├── docs/                                              CLI_REFERENCE.md：すべてのコマンドと終了コード
 ├── hardware/                                          回路図も PCB もまだありません
+├── third_party/                                       Melexis センサーライブラリ
 ├── tools/                                             ビルド、カバレッジ、リリースのツール
 ├── images/                                            バナーとこの README の画像
 ├── .github/                                           CI ワークフローと Issue・プルリクエストのテンプレート

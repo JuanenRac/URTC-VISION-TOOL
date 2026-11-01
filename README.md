@@ -220,6 +220,7 @@ URTC-VISION-TOOL/
 ├── tests/                                             host C tests (190 checks) and Python checks of the build scripts
 ├── docs/                                              CLI_REFERENCE.md: every command and exit code
 ├── hardware/                                          no schematic or PCB yet
+├── third_party/                                       Melexis sensor libraries
 ├── tools/                                             build, coverage, release tools
 ├── images/                                            banner and the pictures of this README
 ├── .github/                                           CI workflow, issue and pull-request templates

@@ -220,6 +220,7 @@ URTC-VISION-TOOL/
 ├── tests/                                             C-Host-Tests (190 Prüfungen) und Python-Prüfungen der Build-Skripte
 ├── docs/                                              CLI_REFERENCE.md: jeder Befehl und Exit-Code
 ├── hardware/                                          noch kein Schaltplan, keine Leiterplatte
+├── third_party/                                       Melexis-Bibliotheken
 ├── tools/                                             Build-, Abdeckungs- und Release-Werkzeuge
 ├── images/                                            Banner und Bilder dieses READMEs
 ├── .github/                                           CI-Workflow sowie Vorlagen für Issues und Pull Requests

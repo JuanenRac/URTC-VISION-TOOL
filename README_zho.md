@@ -236,6 +236,7 @@ URTC-VISION-TOOL/
 ├── tests/                                             C 主机测试（190 项检查）和构建脚本的 Python 检查
 ├── docs/                                              CLI_REFERENCE.md：每个命令和退出码
 ├── hardware/                                          目前没有原理图和 PCB
+├── third_party/                                       Melexis 传感器库
 ├── tools/                                             构建、覆盖率和发布工具
 ├── images/                                            横幅和本 README 的图片
 ├── .github/                                           CI 工作流以及 Issue 和 Pull Request 模板

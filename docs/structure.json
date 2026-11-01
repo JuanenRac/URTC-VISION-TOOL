@@ -128,7 +128,7 @@
       ]
     },
     {
-      "name": "docs/ hardware/",
+      "name": "docs/ hardware/ third_party/",
       "kind": "group",
       "span": 2,
       "columns": 1,
@@ -157,6 +157,19 @@
             "zh": "目前没有原理图和 PCB",
             "ja": "回路図も PCB もまだありません",
             "pt": "ainda sem esquema nem PCB"
+          }
+        },
+        {
+          "name": "third_party/",
+          "desc": {
+            "en": "Melexis sensor libraries",
+            "es": "bibliotecas de Melexis",
+            "de": "Melexis-Bibliotheken",
+            "fr": "bibliothèques Melexis",
+            "it": "librerie Melexis",
+            "zh": "Melexis 传感器库",
+            "ja": "Melexis センサーライブラリ",
+            "pt": "bibliotecas da Melexis"
           }
         }
       ]

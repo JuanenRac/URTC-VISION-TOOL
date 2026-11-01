@@ -220,6 +220,7 @@ URTC-VISION-TOOL/
 ├── tests/                                             testes de host em C (190 verificações) e verificações em Python dos scripts de compilação
 ├── docs/                                              CLI_REFERENCE.md: cada comando e código de saída
 ├── hardware/                                          ainda sem esquema nem PCB
+├── third_party/                                       bibliotecas da Melexis
 ├── tools/                                             ferramentas de compilação, cobertura e release
 ├── images/                                            faixa e imagens deste README
 ├── .github/                                           fluxo de CI e modelos de issues e pull requests
