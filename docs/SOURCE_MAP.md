@@ -46,7 +46,8 @@ URTC-VISION-TOOL/
 ├── images/                         # Media and diagrams
 ├── tools/
 │   ├── build_test.py               # Non-versioning build/compile check
-│   ├── gcov_floor.py               # Fails when the host tests run less of src/ than a floor (gcov)
+│   ├── run_host_tests.py           # Shared executor of the host tests: ctest, sanitizers, coverage floor (same file as the sibling firmware repositories)
+│   ├── host_tests.json             # The suites it builds and runs: sources, includes, flags
 │   ├── publish_release_assets.py   # Lists the release assets to attach and prints the gh command
 │   ├── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
 │   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # Shared checks used by ci_validate.py

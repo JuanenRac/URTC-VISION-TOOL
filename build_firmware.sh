@@ -94,39 +94,16 @@ fi
 echo "  OK   arm-none-eabi-gcc found: $(arm-none-eabi-gcc --version | head -1)"
 
 echo ""
-echo "=== 2. Real logic tests (host gcc, not arm-none-eabi-gcc) ==="
-HOST_CC="${CC:-cc}"
-if ! command -v "$HOST_CC" >/dev/null 2>&1; then
-    HOST_CC=gcc
-fi
-if ! command -v "$HOST_CC" >/dev/null 2>&1; then
-    echo "FAIL: no host C compiler found (tried \$CC and gcc)."
-    exit 1
-fi
+echo "=== 2. Real logic tests (host gcc and ctest, not arm-none-eabi-gcc) ==="
 mkdir -p "$BUILD"
-# URTC_SANITIZE=1 (set by CI) builds the host tests with AddressSanitizer and UBSan.
-SANITIZE_FLAGS=""
-if [ "${URTC_SANITIZE:-0}" = "1" ]; then
-    SANITIZE_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=undefined"
-fi
+# The suites, their sources and flags live in tools/host_tests.json and the executor is tools/run_host_tests.py (the one shared by the URTC firmware
+# repositories: ctest builds and runs them where cmake is installed). URTC_SANITIZE=1 (set by CI) builds them with AddressSanitizer and UBSan.
 # URTC_COVERAGE_FLOOR=<percent> (set by CI) also builds them with gcov counters and fails under that share of executed lines.
-COVERAGE_FLAGS=""
+COVERAGE_ARGS=()
 if [ -n "${URTC_COVERAGE_FLOOR:-}" ]; then
-    COVERAGE_FLAGS="--coverage -O0"
+    COVERAGE_ARGS=(--coverage-floor "$URTC_COVERAGE_FLOOR")
 fi
-# One list of sources for both build scripts: tools/host_sources.txt.
-HOST_SOURCES=()
-while IFS= read -r source_line || [ -n "$source_line" ]; do
-    source_line="${source_line%$'\r'}"
-    case "$source_line" in ''|'#'*) continue ;; esac
-    HOST_SOURCES+=("$source_line")
-done < tools/host_sources.txt
-"$HOST_CC" -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests $SANITIZE_FLAGS $COVERAGE_FLAGS \
-    -o "$BUILD/host_tests" "${HOST_SOURCES[@]}"
-"$BUILD/host_tests"
-if [ -n "${URTC_COVERAGE_FLOOR:-}" ]; then
-    python3 tools/gcov_floor.py "$URTC_COVERAGE_FLOOR" "$BUILD"
-fi
+python3 tools/run_host_tests.py --build-dir "$BUILD" ${COVERAGE_ARGS[@]+"${COVERAGE_ARGS[@]}"}
 echo "  OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_freshness.c / sensor_diagnostics.c / vision_sensor_link.c / sensor_rx.c pure-logic tests passed"
 
 echo ""

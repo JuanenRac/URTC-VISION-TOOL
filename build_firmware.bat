@@ -66,22 +66,19 @@ if errorlevel 1 (
 echo   OK   arm-none-eabi-gcc found
 echo.
 
-echo === 2. Real logic tests (host cl/gcc, not arm-none-eabi-gcc) ===
+echo === 2. Real logic tests (host gcc and ctest, not arm-none-eabi-gcc) ===
 if not exist build mkdir build
-where gcc >nul 2>nul
-if errorlevel 1 (
-    echo FAIL: no host C compiler found ^(gcc^). Install MinGW/MSYS2 or run
-    echo       this from a shell that has a native gcc on PATH.
-    goto :error
+REM The suites, their sources and flags live in tools\host_tests.json; the executor is tools\run_host_tests.py (shared by the URTC firmware repositories).
+set "COVERAGE_ARGS="
+if defined URTC_COVERAGE_FLOOR set "COVERAGE_ARGS=--coverage-floor %URTC_COVERAGE_FLOOR%"
+python tools\run_host_tests.py --build-dir build %COVERAGE_ARGS%
+if errorlevel 2 (
+    echo   WARN host logic tests were not run: they need a host C compiler or WSL
+    goto :host_tests_done
 )
-REM One list of sources for both build scripts: tools\host_sources.txt.
-set "HOST_SOURCES="
-for /f "usebackq eol=# tokens=* delims=" %%f in ("tools\host_sources.txt") do call set "HOST_SOURCES=%%HOST_SOURCES%% %%f"
-gcc -std=c11 -Wall -Wextra -Wconversion -Isrc -Itests -o build\host_tests.exe %HOST_SOURCES%
-if errorlevel 1 goto :error
-build\host_tests.exe
 if errorlevel 1 goto :error
 echo   OK   sensor_frame.c / sensor_reading.c / rate_limiter.c / sensor_freshness.c / sensor_diagnostics.c / vision_sensor_link.c / sensor_rx.c pure-logic tests passed
+:host_tests_done
 echo.
 
 echo === 2b. Build tooling tests ^(version odometer boundaries^) ===

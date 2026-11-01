@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **One executor for the host tests of the firmware, shared with the other firmware repositories:** `tools/run_host_tests.py` (the same text in `URTC`, `URTC-SMART-RACK` and `URTC-VISION-TOOL`, kept in the shared set) builds and runs the suites that `tools/host_tests.json` lists. Where `cmake` and `ctest` are installed (CI and WSL) CMake builds every suite and `ctest` runs it, with at most two compilations at the same time; elsewhere it compiles and runs each suite itself, with the same flags. The sanitizers, the static analysis, the coverage floor and the run through WSL are options of the same tool. `build_firmware.sh` and `build_firmware.bat` call it, so the order of the suites, the flags and the floor are written once.
+- **`tools/host_sources.txt` and `tools/gcov_floor.py` are replaced by `tools/host_tests.json` and the shared executor:** one suite (the whole host build, the companion program left out of the coverage, AddressSanitizer and UBSan when CI sets `URTC_SANITIZE=1`) and the coverage floor measured by the executor itself (`URTC_COVERAGE_FLOOR`, unchanged).
+
 ## [0.1.7] - The Python scripts of the repository are type-checked in the CI and the lights of Project status follow the evidence of the manifest
 
 - **The Python scripts of the repository are type-checked in the CI** (the build and release scripts and their tests, with the same mypy as the firmware repository of the rack); the two tests that load a script by its path now say so when it cannot be loaded.

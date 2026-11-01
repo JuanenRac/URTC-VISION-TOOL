@@ -30,19 +30,30 @@ def read(name):
 
 
 def host_sources():
-    """The .c files of the host build: the one list, tools/host_sources.txt, that both build scripts read."""
-    lines = [line.strip() for line in read("tools/host_sources.txt").splitlines()]
-    return {line for line in lines if line and not line.startswith("#")}
+    """The .c files of the host build: the suites of tools/host_tests.json, which the shared executor (tools/run_host_tests.py) builds and runs."""
+    data = json.loads(read("tools/host_tests.json"))
+    found = set()
+    for suite in data["suites"]:
+        found.add(suite["test"])
+        for entry in suite["sources"]:
+            if entry.startswith("glob:"):
+                found.update(p.relative_to(ROOT).as_posix() for p in ROOT.glob(entry[len("glob:"):]))
+            else:
+                found.add(entry)
+    return found
 
 
 class BuildScriptTests(unittest.TestCase):
-    def test_both_scripts_read_the_one_list_of_host_sources(self):
-        self.assertIn("tools/host_sources.txt", read("build_firmware.sh"))
-        self.assertIn("tools\\host_sources.txt", read("build_firmware.bat"))
+    def test_both_scripts_call_the_shared_executor_with_the_one_list_of_suites(self):
         for script in ("build_firmware.sh", "build_firmware.bat"):
-            self.assertNotRegex(read(script), r"(?m)^[^#\n]*tests[/\\]test_[a-z0-9_]+\.c", f"{script} lists a test file itself")
+            text = read(script)
+            self.assertRegex(text, r"run_host_tests\.py", script)
+            self.assertIn("--coverage-floor", text, script)
+            self.assertNotRegex(text, r"(?m)^[^#\n]*tests[/\\]test_[a-z0-9_]+\.c", f"{script} lists a test file itself")
         for name in host_sources():
-            self.assertTrue((ROOT / name).is_file(), f"tools/host_sources.txt lists {name}, which does not exist")
+            self.assertTrue((ROOT / name).is_file(), f"tools/host_tests.json lists {name}, which does not exist")
+        self.assertFalse((ROOT / "tools" / "host_sources.txt").exists())
+        self.assertFalse((ROOT / "tools" / "gcov_floor.py").exists())
 
     def test_every_module_and_test_file_is_in_the_host_build(self):
         listed = host_sources()
