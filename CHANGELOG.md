@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The Melexis drivers are vendored and watched against drift:** `third_party/` holds the official MLX90640, MLX90641 and MLX90642 libraries exactly as the URTC firmware compiles them (each with its Apache-2.0 licence), `third_party/melexis.lock.json` holds the SHA-256 of every file, and `tools/check_shared_drivers.py` (run by the test suite) fails when a file differs, is missing or is not listed, and also compares with the copy in a neighbouring URTC checkout when there is one. Nothing of it is compiled into the image yet: the sensor is still read through the sensor link.
+
 - **One executor for the host tests of the firmware, shared with the other firmware repositories:** `tools/run_host_tests.py` (the same text in `URTC`, `URTC-SMART-RACK` and `URTC-VISION-TOOL`, kept in the shared set) builds and runs the suites that `tools/host_tests.json` lists. Where `cmake` and `ctest` are installed (CI and WSL) CMake builds every suite and `ctest` runs it, with at most two compilations at the same time; elsewhere it compiles and runs each suite itself, with the same flags. The sanitizers, the static analysis, the coverage floor and the run through WSL are options of the same tool. `build_firmware.sh` and `build_firmware.bat` call it, so the order of the suites, the flags and the floor are written once.
 - **`tools/host_sources.txt` and `tools/gcov_floor.py` are replaced by `tools/host_tests.json` and the shared executor:** one suite (the whole host build, the companion program left out of the coverage, AddressSanitizer and UBSan when CI sets `URTC_SANITIZE=1`) and the coverage floor measured by the executor itself (`URTC_COVERAGE_FLOOR`, unchanged).
 
