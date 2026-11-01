@@ -145,8 +145,12 @@ static outcome_t play(unsigned burst, unsigned pause_us, long timer_us)
             break;
         }
         if (pause_us != 0u) {
-            struct timespec nap = {0, (long)pause_us * 1000L};
-            nanosleep(&nap, NULL);
+            // a slow main loop: busy for that long (a nap would be cut short by every signal, which would hide the overflow)
+            struct timespec t0, t1;
+            clock_gettime(CLOCK_MONOTONIC, &t0);
+            do {
+                clock_gettime(CLOCK_MONOTONIC, &t1);
+            } while ((t1.tv_sec - t0.tv_sec) * 1000000L + (t1.tv_nsec - t0.tv_nsec) / 1000L < (long)pause_us);
         }
     }
     struct itimerval stop = {{0, 0}, {0, 0}};
@@ -170,8 +174,8 @@ int main(void)
     TEST_ASSERT(paced.snapshots_bad == 0u, "the diagnostics read between two polls are a whole snapshot");
     TEST_ASSERT(paced.frame_errors >= FRAMES / 20u, "and every damaged frame was counted by the main loop");
 
-    // A flood (up to 48 bytes per signal) against a main loop that naps two milliseconds between polls: the ring overflows and says so, and what comes out is still real.
-    outcome_t flood = play(48u, 2000u, 300);
+    // A flood (up to 120 bytes per signal, more than the ring holds) against a main loop that naps two milliseconds between polls: the ring overflows and says so, and what comes out is still real.
+    outcome_t flood = play(120u, 2000u, 300);
     TEST_ASSERT(flood.impossible == 0 && flood.out_of_order == 0, "a flood never produces an invented or a repeated reading");
     TEST_ASSERT(rx.overflow_bytes > 0u, "the flood overflows the ring and the receiver counts the bytes it lost");
     TEST_ASSERT(flood.accepted < good, "so frames are lost, not guessed");
