@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.1.7] - The Python scripts of the repository are type-checked in the CI and the lights of Project status follow the evidence of the manifest
 
 - **The Python scripts of the repository are type-checked in the CI** (the build and release scripts and their tests, with the same mypy as the firmware repository of the rack); the two tests that load a script by its path now say so when it cannot be loaded.
 
