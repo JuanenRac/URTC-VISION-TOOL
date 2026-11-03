@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "urtc_common_version": "0.0.7",
+  "urtc_common_version": "0.1.9",
   "files": {
     "rate_vectors.h": {
       "from": "generated/rate_vectors.h",
@@ -12,7 +12,7 @@
     },
     "urtc_fw_vectors.h": {
       "from": "generated/urtc_fw_vectors.h",
-      "sha256": "eb0f0651904541bde601488d2a31b2c73967e90e60af80bd6d5a641759810446"
+      "sha256": "4be234fd1392e2e5c8a0c421a71876829eb587e612dc622573390fc02c26b3df"
     },
     "urtc_test.h": {
       "from": "firmware_base/urtc_test.h",
