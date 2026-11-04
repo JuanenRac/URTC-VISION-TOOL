@@ -1,0 +1,18 @@
+{
+  "python_extra": [
+    {
+      "cwd": "src/vision_companion",
+      "requires": [
+        "numpy",
+        "PIL",
+        "pytest"
+      ],
+      "args": [
+        "-m",
+        "pytest",
+        "-q",
+        "tests"
+      ]
+    }
+  ]
+}

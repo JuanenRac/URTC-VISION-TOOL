@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+- **The build check of the repository is one text for the whole family, with a light mode that CI runs:** `tools/build_test.py` is the same file in every repository of the family (taken from the shared set); what used to differ between its seven variants is data in an optional `tools/build_test.json`. `python tools/build_test.py --check` looks at the manifest, the stack and the files the full check needs and compiles the Python sources, builds and runs nothing, and the baseline step of the workflow now runs it.
+
 ## [0.1.8] - An interrupt simulator plays the receive interrupt against the real receive path, the Melexis drivers are vendored and watched against drift and the host tests share one executor
 
 - **An interrupt simulator plays the receive interrupt against the real receive path:** `tests/isr_simulator.c` (a suite of its own, Linux only) delivers the bytes of a stream from a `SIGALRM` handler that does what the real handler may do, call `sensor_rx_on_byte()`, while the main loop runs `sensor_rx_poll()` flat out, so the handler preempts it at any instruction. A handler that keeps pace gives every good frame as a reading, in order, with no byte lost and every damaged frame counted by the main loop; a flood against a slow main loop overflows the ring, which counts the bytes it lost, and still produces no invented, repeated or out-of-order reading. The diagnostics, the freshness baseline and the rate limiter are only ever touched by the main loop, so a read of the diagnostics between two polls is a whole snapshot. The shared ring took a copy in which the drop counter is written with an atomic store.
