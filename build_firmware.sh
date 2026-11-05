@@ -45,6 +45,8 @@ printf '\n'
 set -e
 URTC_CI_MODE="${URTC_CI:-0}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Running this script is the explicit way to build on this PC, so the lock on local builds is lifted for the host tests it runs.
+export ALLOW_LOCAL_BUILD=1
 # Every path below is relative to the repository root, whatever the directory the script is started from.
 cd "$ROOT"
 BUILD="$ROOT/build"

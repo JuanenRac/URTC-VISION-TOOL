@@ -46,6 +46,8 @@ if defined CI set "KEEP_OPEN=ver >nul"
 if "%URTC_CI%"=="1" set "KEEP_OPEN=ver >nul"
 rem Every path below is relative to the repository root, whatever the directory the script is started from.
 cd /d "%~dp0"
+rem Running this script is the explicit way to build on this PC, so the lock on local builds is lifted for the host tests it runs.
+set "ALLOW_LOCAL_BUILD=1"
 set "VERSION_BUMPED=0"
 if "%URTC_CI%"=="1" goto :banner_ci
 REM HYDRA_UMC_SCRIPT_STANDARD_VERSION_STEP
