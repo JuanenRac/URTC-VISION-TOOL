@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The full build check compiles only on CI or when allowed:** `tools/build_test.py` prints `BUILD_TEST=SKIPPED` (exit status 2) for the stacks that compile unless it runs on a CI runner or `ALLOW_LOCAL_BUILD=1` says so; the light check is not locked.
+
 - **The host C suites compile only on CI or when allowed:** `tools/run_host_tests.py` asks `tools/local_build.py` first and says SKIPPED (exit status 2) on a plain PC; `ALLOW_LOCAL_BUILD=1` allows it and a CI runner always may; the build scripts set it themselves because running one is the explicit way to build.
 
 - **The copy of the shared code is refreshed:** the files taken from URTC-COMMON follow it again (the new frames of the bootloader and of the health report).
