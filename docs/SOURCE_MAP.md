@@ -38,7 +38,7 @@ URTC-VISION-TOOL/
 │       │   └── rack_text.py        # Real: the words of the rack check in the eight languages
 │       ├── tests/                  # 135 real pytest cases (the whole companion)
 │       └── README.md               # Companion-specific usage docs
-├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios, freshness, robustness) and the interrupt simulator (isr_simulator.c)
+├── tests/                          # Real host-native firmware test harness (sensor_frame, sensor_reading, rate_limiter, sensor_diagnostics, sensor scenarios, freshness, robustness) the interrupt simulator (isr_simulator.c) and the virtual sensor link (virtual_sensor.c: the real receive path behind a text port, played by tools/sensor_bench.py)
 ├── docs/                           # Command line reference (CLI_REFERENCE.md)
 ├── hardware/                       # Hardware notes (README.md) - no design files yet (no schematic, no PCB)
 ├── firmware/                       # Build output (.bin/.elf/.hex), git-ignored - published only as assets of the GitHub release
@@ -48,6 +48,7 @@ URTC-VISION-TOOL/
 │   ├── build_test.py               # Non-versioning build/compile check
 │   ├── run_host_tests.py           # Shared executor of the host tests: ctest, sanitizers, coverage floor (same file as the sibling firmware repositories)
 │   ├── host_tests.json             # The suites it builds and runs: sources, includes, flags
+│   ├── sensor_bench.py             # Software bench: scenarios with injected faults through the virtual sensor link, compared with a reference written from the rules of the link
 │   ├── publish_release_assets.py   # Lists the release assets to attach and prints the gh command
 │   ├── ci_validate.py              # Manifest/CHANGELOG/docs validation used by CI
 │   └── _doc_policy.py / _readme_parity.py / _tracked_names.py # Shared checks used by ci_validate.py

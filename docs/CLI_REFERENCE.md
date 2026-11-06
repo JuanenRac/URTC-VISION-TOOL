@@ -290,6 +290,32 @@ counted as invalid in the statistics. A `pixel_offsets_c` map or a dead pixel
 that does not fit the chosen `--variant` is reported as an error (exit `2`).
 The code is in `src/vision_companion/vision_companion/calibration.py`.
 
+## The software bench (a sensor link with no sensor)
+
+`tests/virtual_sensor.c` joins the real modules the vision head receives the thermal sensor with (receive ring, frame assembly with resynchronisation, frame layer, reading validation, freshness, rate limiter, diagnostics and silence watch) the way the main loop of the board will, and compiles them for the host behind a text port: one command per line on standard input, one line per accepted reading on standard output. `tools/sensor_bench.py` builds it and plays scenarios through it:
+
+```
+python tools/sensor_bench.py                  # every scenario (on a plain PC: ALLOW_LOCAL_BUILD=1, which builds inside WSL on Windows)
+python tools/sensor_bench.py --list           # the scenarios and what each one checks
+python tools/sensor_bench.py --only frozen_data
+python tools/sensor_bench.py --seed 7 --events 3000
+python tools/sensor_bench.py --dump DIR       # write the script of every scenario
+python tools/sensor_bench.py --replay FILE    # play a recorded script (the lines below) and print the answers
+```
+
+The scenarios are good readings, the limits of the temperature range and one hundredth beyond them, a payload of the wrong size, another sensor, a repeated and an older sequence, the sequence wrapping from 255 to 0, frozen data, readings that come too fast, a damaged frame, a frame cut short and one that comes in two pieces, noise between frames, a silence that is reported once and a sensor that comes back, a burst that overflows the receive ring, and two seeded random runs of thousands of readings with damaged, cut, noisy, repeated, frozen, out-of-range, foreign, lost and late frames. Each scenario states which readings the link must accept and where its counters must end. The same frames also go through a reference written in the bench from the rules of the link, and the accepted readings and the counters must be identical after every step. The CI builds the bench with the address and undefined-behaviour sanitizers and runs it on every push.
+
+The text port (hexadecimal values, no `0x`, except the clock, which is in milliseconds):
+
+| Line in | Meaning |
+| --- | --- |
+| `T <ms>` | the clock is now `<ms>` (it never goes back); runs the silence watch |
+| `S <bytes>` / `B <bytes>` | bytes from the sensor, polled after each byte / all at once before the loop polls (the ring can overflow) |
+| `Q` | print the counters: frame errors, out of range, malformed, rate limited, unsupported, replays, stale, disconnects, gap between the last two accepted readings, bytes lost by the ring, half frames dropped by the timeout, silent |
+| `M <text>` | print `M <text>`, a marker |
+
+Lines out: `R <centidegrees>` an accepted reading. This bench says nothing about the sensor, the bus driver, the electrical side or the timing of the interrupts; those stay in the bench tests of the real board.
+
 ## Exit codes
 
 | Code | Meaning |

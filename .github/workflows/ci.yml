@@ -60,6 +60,10 @@ jobs:
         run: |
           chmod +x build_firmware.sh
           ./build_firmware.sh
+      - name: Software bench of the sensor link (the real receive path with injected faults)
+        env:
+          URTC_SANITIZE: "1"
+        run: python tools/sensor_bench.py --events 3000
       - name: Keep the images of the build
         if: ${{ hashFiles('build_firmware.sh') != '' }}
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
