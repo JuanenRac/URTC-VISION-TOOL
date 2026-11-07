@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **Portuguese and German name the frames of the sensor protocol as the other documents do:** a frame of the sensor protocol is a "trama" in Portuguese and a "Frame" in German (it was "frame" and "Rahmen"), and the thermal and colour pictures are "fotogramas" in Portuguese.
+
 - **The refresh rate and the filter of the thermal sensor are settings with limits:** `src/melexis_config.c` holds the refresh rate (0.5, 1, 2, 4, 8, 16, 32 or 64 Hz, default 2 Hz), the filter level (0 to 3, averaging 1, 2, 4 or 8 frames, default off), the frame period and shortest interval each rate implies, and a reader of `key=value` text (`refresh_hz`, `filter_level`). A value that is not allowed is never used and never rounded to a neighbour: the field keeps its value and the rejection is counted. 27 new assertions cover every rate and level, bad values, the layout of the text, unknown keys and missing arguments.
 - **The manifest carries the chip and the hardware identifier of the board:** `pcb.chip` and `pcb.hardware_id` in `urtc.project.json`, empty while no board exists (pending). A test checks the shape of a value (`0x` and eight upper-case hexadecimal digits, not 0 and not an erased flash), that evidence from a board needs both, and that a simulator-only repository leaves them empty.
 - **Assertion counts:** the C assertions quoted in the README in eight languages, the manifest and the diagrams are 217.
