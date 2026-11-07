@@ -202,7 +202,7 @@ Cada módulo de `src/` se compila también para Cortex-M4F y todos se enlazan ju
 
 Todavía no hay nada que grabar en hardware real - no existe PCB que confirme la pieza STM32 objetivo, el pinout, el cableado del MLX9064x, o la interfaz de la cámara RGB.
 
-Las imágenes de firmware (`.bin`, `.hex`, `.elf`) no se versionan en git: una compilación de release escribe `firmware/URTC_VISION_TOOL_FIRMWARE_v<versión>.*` (ignorado por git; `build/firmware` en modo CI, `URTC_CI=1`) y se publican solo como assets de la release de GitHub de cada versión. `python tools/publish_release_assets.py` comprueba los ficheros, escribe el fichero `.sha256` que falte e imprime el comando `gh release create` exacto con los ficheros a adjuntar.
+Las imágenes de firmware (`.bin`, `.hex`, `.elf`) no se versionan en git: una compilación de release escribe `firmware/URTC_VISION_TOOL_FIRMWARE_v<versión>.*` (ignorado por git; `build/firmware` en modo CI, `URTC_CI=1`) y se publican solo como assets de la release de GitHub de cada versión. `python tools/publish_release_assets.py` comprueba los archivos, escribe el archivo `.sha256` que falte e imprime el comando `gh release create` exacto con los archivos a adjuntar.
 
 Consulta [`CHANGELOG.md`](CHANGELOG.md) para el historial completo de versiones; cada versión tiene allí su propia entrada.
 
