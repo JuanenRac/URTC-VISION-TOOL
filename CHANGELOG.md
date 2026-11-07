@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The manifest says which version of the shared contracts it needs:** `min_common` in `urtc.project.json` is the oldest version of URTC-COMMON among the copies this repository carries, the value the updater compares with what is installed (a warning only). `tools/min_common.py` of URTC-COMMON checks it and a new copy brings it up to date.
+
 - **Portuguese and German name the frames of the sensor protocol as the other documents do:** a frame of the sensor protocol is a "trama" in Portuguese and a "Frame" in German (it was "frame" and "Rahmen"), and the thermal and colour pictures are "fotogramas" in Portuguese.
 
 - **The refresh rate and the filter of the thermal sensor are settings with limits:** `src/melexis_config.c` holds the refresh rate (0.5, 1, 2, 4, 8, 16, 32 or 64 Hz, default 2 Hz), the filter level (0 to 3, averaging 1, 2, 4 or 8 frames, default off), the frame period and shortest interval each rate implies, and a reader of `key=value` text (`refresh_hz`, `filter_level`). A value that is not allowed is never used and never rounded to a neighbour: the field keeps its value and the rejection is counted. 27 new assertions cover every rate and level, bad values, the layout of the text, unknown keys and missing arguments.
