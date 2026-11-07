@@ -85,7 +85,7 @@ Cómo encajan las partes de este repositorio: quién lo usa, qué contiene y de 
 
 ```mermaid
 flowchart LR
-    TOOL["URTC-VISION-TOOL"] --> RGB["Camara RGB (USB 3.0)"]
+    TOOL["URTC-VISION-TOOL"] --> RGB["Cámara RGB (USB 3.0)"]
     TOOL --> THRM["Sensor Térmico (CAN / I2C)"]
     RGB --> VISION["VISION-NODE (Hailo-8)"]
     THRM --> CORE["Núcleo HYDRA-UMC (STM32)"]
