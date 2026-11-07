@@ -23,8 +23,8 @@
 // reinvented.
 // =============================================================================
 #define FIRMWARE_VERSION_MAJOR 0
-#define FIRMWARE_VERSION_MINOR 1
-#define FIRMWARE_VERSION_PATCH 9
+#define FIRMWARE_VERSION_MINOR 2
+#define FIRMWARE_VERSION_PATCH 0
 #define FIRMWARE_VERSION_BUILD 0
 
 // Encodes MAJOR.MINOR.PATCH as a single monotonically-increasing integer

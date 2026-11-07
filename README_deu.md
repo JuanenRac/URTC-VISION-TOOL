@@ -27,7 +27,7 @@
 
 | | |
 |---|---|
-| Version | `0.1.9` |
+| Version | `0.2.0` |
 | Reifegrad | Funktionsfähig |
 | Tests | 183 (`pytest`) |
 | Technik | C / STM32 / Python vision companion |

@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.2.0] - The Spanish README says "grabar" instead of the calque "flashear": the same word as the window of the programs. (and 7 more changes)
 
 - **The Spanish README says "grabar" instead of the calque "flashear":** the same word as the window of the programs.
 

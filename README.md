@@ -27,7 +27,7 @@
 
 | | |
 |---|---|
-| Version | `0.1.9` |
+| Version | `0.2.0` |
 | Maturity | Functional |
 | Tests | 183 (`pytest`) |
 | Stack | C / STM32 / Python vision companion |
