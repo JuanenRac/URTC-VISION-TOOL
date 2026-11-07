@@ -21,7 +21,7 @@
 
 ---
 
-> **安全与安防现状:**本生态系统不是经认证的安全系统,目前也不存在已组装的 URTC 电路板。引导程序使用 CRC32 和共享密钥的 HMAC-SHA256 校验固件映像,而非非对称签名(计划中);已发布的应用映像使用公开的开发密钥签名(`signing_key_kind: dev`),因此任何人都可以生成引导程序接受的映像;尚未向任何真实电路板发送过任何内容。在依赖此处任何说法来保障人身安全之前,请先阅读[安全基线](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/SECURITY_BASELINE.md)和[威胁模型](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/THREAT_MODEL.md)。
+> **安全与安防现状:**本生态系统不是经认证的安全系统,目前也不存在已组装的 URTC 板卡。引导程序使用 CRC32 和共享密钥的 HMAC-SHA256 校验固件映像,而非非对称签名(计划中);已发布的应用映像使用公开的开发密钥签名(`signing_key_kind: dev`),因此任何人都可以生成引导程序接受的映像;尚未向任何真实板卡发送过任何内容。在依赖此处任何说法来保障人身安全之前,请先阅读[安全基线](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/SECURITY_BASELINE.md)和[威胁模型](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/THREAT_MODEL.md)。
 
 ## 📋 速览
 
@@ -43,9 +43,9 @@
 
 | 部分 | 状态 | 仓库能够证明的内容 |
 | --- | :---: | --- |
-| 软件 | 🟡 | 可在电脑上和模拟器上运行；从未在真实板子上运行过。 |
+| 软件 | 🟡 | 可在电脑上和模拟器上运行；从未在真实板卡上运行过。 |
 | 测试 | 🟢 | 每次推送时测试套件都会在 CI 中通过。 |
-| 真实硬件 | 🟠 | 尚未在真实板子上运行：台架测试仍待进行。 |
+| 真实硬件 | 🟠 | 尚未在真实板卡上运行：台架测试仍待进行。 |
 | 接口与协议 | 🟡 | 提供的路由或消息已有文档，并用客户端测试过；尚未被所有客户端使用 |
 | 文档 | 🟡 | 提供八种语言的 README 和参考文档；翻译未经母语者审阅。 |
 
@@ -70,14 +70,14 @@
 * 🔬 **双模态感知** —— 同步的热成像与 RGB 图像捕获。*（两路帧所馈送的处理流水线是真实的——见下文；真正的同步捕获需要 PCB 和传感器。）*
 * 🌡️ **高精度热成像** —— 集成 MLX90640/41/42 传感器支持。*（伪彩色渲染和按区域统计提取是真实的——见下文；通过 I2C 读取真实的 MLX9064x 需要 PCB。）*
 * 🎯 **Eye-in-Hand 对位** —— 亚毫米级 PnP 与 AOI（自动光学检测）。*（RGB->热成像 ROI 坐标映射与温度统计提取是真实的并已测试——见下文的 `vision_companion/alignment.py`；亚毫米级精度需要真实的已标定摄像头。）*
-* 📡 **与 URTC 的集成** —— 已决定：该刀头是 URTC 的工具头，复用 URTC 的热成像检测工具（工具配置 22，MLX90640/90641/90642）及其 CAN 消息 `0x250`-`0x255`（触发、状态、原始与校准后的像素块，记录在 URTC 的 `docs/CANBUS.TXT` 中），而不是另起第二套协议。该交换的主机端是真实的，并已在没有硬件的情况下测试（`urtc_thermal.py`，带模拟刀头）；刀头固件、CAN 收发器和已装配的电路板都还不存在，因此这些都没有在总线上运行过。*（本仓库的传感器侧帧协议（见下文）是单独的、在主机上测试过的组件，不承载热成像图像。）*
+* 📡 **与 URTC 的集成** —— 已决定：该刀头是 URTC 的工具头，复用 URTC 的热成像检测工具（工具配置 22，MLX90640/90641/90642）及其 CAN 消息 `0x250`-`0x255`（触发、状态、原始与校准后的像素块，记录在 URTC 的 `docs/CANBUS.TXT` 中），而不是另起第二套协议。该交换的主机端是真实的，并已在没有硬件的情况下测试（`urtc_thermal.py`，带模拟刀头）；刀头固件、CAN 收发器和已装配的板卡都还不存在，因此这些都没有在总线上运行过。*（本仓库的传感器侧帧协议（见下文）是单独的、在主机上测试过的组件，不承载热成像图像。）*
 * 🔒 **传感器协议范围检查** —— 版本化帧格式，带 CRC8 校验和，测量范围校验，速率限制，帧新鲜度检查（序列号与时间戳），以及独立于控制决策的专用错误/延迟/总线复位诊断计数器。帧版本 2：所有多字节数值（时间戳与热读数）均与总线一样采用大端序，版本 1 的帧会被拒绝。*（以纯 C 实现，仅在 PC 上测试过；从未在板卡上或配合真实传感器运行过，也不是安全功能）*
 * ✅ **Cortex-M4F 固件工具链** —— 一个真实的裸机镜像，使用与兄弟仓库 URTC 和 URTC-SMART-RACK 相同的工具链，通过 `arm-none-eabi-gcc` 交叉编译并链接。*（已实现——见下方"构建"）*
 * ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 183 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方"VISION COMPANION"）*
 
 ## 🧩 在 URTC 中的角色
 
-URTC-VISION-TOOL 是一个把 RGB 摄像头和 MLX9064x 热传感器合在一起的工具头，用于质量检测、电路板的热检测和贴装头的对准。它是 URTC 的工具头：复用 URTC 的热检测工具及其 CAN 消息 `0x250` 至 `0x255`，而不是再设计一套协议，并向视觉节点（Hailo-8）和 HYDRA-UMC 控制器提供两种数据，因此判断一个元件不仅看它是否存在，还看它的温度。现在真实存在的是固件的传感器协议和主机侧的视觉伴随程序，二者都已在计算机上测试；板子还不存在。它是互补工具，不是 URTC 的子项目。
+URTC-VISION-TOOL 是一个把 RGB 摄像头和 MLX9064x 热传感器合在一起的工具头，用于质量检测、板卡的热检测和贴装头的对准。它是 URTC 的工具头：复用 URTC 的热检测工具及其 CAN 消息 `0x250` 至 `0x255`，而不是再设计一套协议，并向视觉节点（Hailo-8）和 HYDRA-UMC 控制器提供两种数据，因此判断一个元件不仅看它是否存在，还看它的温度。现在真实存在的是固件的传感器协议和主机侧的视觉伴随程序，二者都已在计算机上测试；板卡还不存在。它是互补工具，不是 URTC 的子项目。
 
 ## 🏛️ 架构
 
@@ -115,7 +115,7 @@ flowchart LR
 
 ## ✨ 功能
 
-**按区域的热检测、序列导出、传感器漂移和机架检查(仅在主机上测试):** `inspect` 按每类元件的温度规则判定计划中的每个元件,并可把每个区域的最小值、最大值和平均值导出为 HYDRA-UMC 数据湖的样本、JSON 行或 OPC-UA 节点值;`drift-check` 把参考场景的帧与基线比较(坏点、偏移漂移)并可写出校准文件;`rack-check` 根据热像帧判断工具机架上各个笔尖。`rack-watch` 在机架加热时跟踪笔尖,指出每个槽位何时达到目标以及是否可以更换工具;`rack-simulate` 写出模拟机架(正常或带故障)的帧,无需相机即可试用;机架命令可用八种语言输出(`--lang`)。参见[命令行参考](docs/CLI_REFERENCE.md)。仅在合成帧上运行;没有使用任何相机或电路板。
+**按区域的热检测、序列导出、传感器漂移和机架检查(仅在主机上测试):** `inspect` 按每类元件的温度规则判定计划中的每个元件,并可把每个区域的最小值、最大值和平均值导出为 HYDRA-UMC 数据湖的样本、JSON 行或 OPC-UA 节点值;`drift-check` 把参考场景的帧与基线比较(坏点、偏移漂移)并可写出校准文件;`rack-check` 根据热像帧判断工具机架上各个笔尖。`rack-watch` 在机架加热时跟踪笔尖,指出每个槽位何时达到目标以及是否可以更换工具;`rack-simulate` 写出模拟机架(正常或带故障)的帧,无需相机即可试用;机架命令可用八种语言输出(`--lang`)。参见[命令行参考](docs/CLI_REFERENCE.md)。仅在合成帧上运行;没有使用任何相机或板卡。
 
 **通过串行 CAN 适配器进行热成像采集（新增，仅针对模拟适配器和模拟头验证）：** `capture --port 端口` 通过 SLCAN 适配器（串口或 pyserial URL），用 `0x250` 到 `0x255` 的交互，从带有热检测工具的 URTC 头读取一幅校准图像，并保存为 `.npy` 和伪彩色 PNG，可直接用于 `inspect`、`drift-check` 和 `rack-check`。头报告错误、始终未就绪或某个数据块无应答时，命令会给出清晰提示并结束（退出码 1）；无法打开端口时以退出码 2 结束。尚未用真实的适配器、总线或头运行过。
 
@@ -129,7 +129,7 @@ flowchart LR
 | 重放的帧或卡死的传感器 | `sensor_freshness.c` 检查序号和传感器自己的时间戳 |
 | 计数器中的缺陷放过坏数据 | `sensor_diagnostics.c` 只记录其他模块的决定（错误、延迟、总线复位），从不接受或拒绝任何帧 |
 
-这一切都是在计算机上测试的纯 C；从未在板子上或用真实传感器运行过，也不是安全功能。
+这一切都是在计算机上测试的纯 C；从未在板卡上或用真实传感器运行过，也不是安全功能。
 
 ## 🔌 接口
 
@@ -261,14 +261,14 @@ URTC-VISION-TOOL/
 
 **目前已知的限制**
 
-* 这块板子还没有 PCB 或原理图（见 `hardware/`）：这里的一切从未通过 I2C 读取过真实的 MLX9064x、RGB 摄像头或 CAN 收发器。`main.c` 和启动文件只证明了用占位链接脚本为 Cortex-M4F 交叉编译并链接是成功的。
+* 这块板卡还没有 PCB 或原理图（见 `hardware/`）：这里的一切从未通过 I2C 读取过真实的 MLX9064x、RGB 摄像头或 CAN 收发器。`main.c` 和启动文件只证明了用占位链接脚本为 Cortex-M4F 交叉编译并链接是成功的。
 * 头部的固件还不存在：热数据交换的主机侧只针对模拟头和模拟 SLCAN 适配器测试过。
 * `alignment.py` 假设视场相同并对每个轴做线性缩放；真正逐像素的校准（棋盘格、镜头畸变）需要真实的摄像头。
 * 亚毫米精度、同步的真实采集以及检测规则的热限值都没有在真实部件上试过。
 
 **下一步**
 
-* 设计板子，确定 STM32 型号和摄像头接口，编写传感器和摄像头驱动，并在试验台上针对真实的头运行热图像采集。
+* 设计板卡，确定 STM32 型号和摄像头接口，编写传感器和摄像头驱动，并在试验台上针对真实的头运行热图像采集。
 
 ## 🌍 语言
 
@@ -279,14 +279,14 @@ README 和文本提供英语、西班牙语、法语、意大利语、德语、�
 URTC 由相互独立的仓库组成，每个仓库都有自己的版本、测试和 README。以下是按组划分的家族：
 
 * **URTC Tool Platform:**
-  * [URTC](https://github.com/JuanenRac/URTC) - 工具头电路板的固件(25 个工具配置、CAN 引导程序)以及 CAN 协议参考。
+  * [URTC](https://github.com/JuanenRac/URTC) - 工具头板卡的固件(25 个工具配置、CAN 引导程序)以及 CAN 协议参考。
   * [URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON) - 只写一次的 CAN 协议数据(规范、生成的表格、一致性向量)以及各程序共享的代码。
-  * [URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER) - 通过 CAN 或 SWD/JTAG 更新电路板固件的桌面工具。
+  * [URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER) - 通过 CAN 或 SWD/JTAG 更新板卡固件的桌面工具。
   * [URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY) - 位于 CAN 总线前的网关:只放行列表中的标识符,限制其速率,并要求会话密钥。
   * [URTC-SMART-RACK](https://github.com/JuanenRac/URTC-SMART-RACK) - 用于带预热和生命周期跟踪的工具架的、与硬件无关的 C 逻辑和命令协议。
-  * [URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER) - 桌面实时 CAN 总线测试器,显示电路板所报告工具配置的控件和遥测。
+  * [URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER) - 桌面实时 CAN 总线测试器,显示板卡所报告工具配置的控件和遥测。
   * **URTC-VISION-TOOL** (本仓库) - C 语言的传感器帧协议,以及用于检测工具头的 Python 热成像/RGB 配套程序。
-  * [URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO) - 通过 Web Serial 和 SLCAN 烧录并测试电路板的浏览器应用,无需安装。
+  * [URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO) - 通过 Web Serial 和 SLCAN 烧录并测试板卡的浏览器应用,无需安装。
 * **Ecosystem Operations:**
   * [URTC-DEVTOOLS](https://github.com/JuanenRac/URTC-DEVTOOLS) - 家族共用的仓库工具，作为带版本的整套工具，并用锁文件区分被改动的副本和已过时的副本。
   * [URTC-DOCS](https://github.com/JuanenRac/URTC-DOCS) - 生态系统的架构、接口、安全基线和生成的目录,以及比较所有仓库的工具。
@@ -311,7 +311,7 @@ URTC 由相互独立的仓库组成，每个仓库都有自己的版本、测试
 * 提交 Pull Request 之前请运行 `URTC_CI=1 python tools/ci_validate.py`：必须通过。参见 [CONTRIBUTING.md](CONTRIBUTING.md) 和[行为准则](CODE_OF_CONDUCT.md)。
 * README 有八种语言：修改文字时要同步修改全部八个文件，与其他仓库共用的章节由 URTC-COMMON 的 `tools/readme_sections.py` 写入。
 * 对 CAN 协议的修改从 URTC-COMMON（`spec/can_protocol.json`）开始，并通过经过核对的副本进入本仓库。
-* 不要把仅仅构建过的东西描述为已在板子上运行。
+* 不要把仅仅构建过的东西描述为已在板卡上运行。
 * 请私下报告漏洞：[SECURITY.md](SECURITY.md)。问题、想法和报告：electrohobby3d@gmail.com（[SUPPORT.md](SUPPORT.md)）。
 
 ## 👤 作者
