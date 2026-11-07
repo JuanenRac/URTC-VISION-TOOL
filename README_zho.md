@@ -21,7 +21,7 @@
 
 ---
 
-> **安全与安防现状:**本生态系统不是经认证的安全系统,目前也不存在已组装的 URTC 板卡。引导程序使用 CRC32 和共享密钥的 HMAC-SHA256 校验固件映像,而非非对称签名(计划中);已发布的应用映像使用公开的开发密钥签名(`signing_key_kind: dev`),因此任何人都可以生成引导程序接受的映像;尚未向任何真实板卡发送过任何内容。在依赖此处任何说法来保障人身安全之前,请先阅读[安全基线](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/SECURITY_BASELINE.md)和[威胁模型](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/THREAT_MODEL.md)。
+> **安全与安防现状：**本生态系统不是经认证的安全系统，目前也不存在已组装的 URTC 板卡。引导程序使用 CRC32 和共享密钥的 HMAC-SHA256 校验固件映像，而非非对称签名（计划中）；已发布的应用映像使用公开的开发密钥签名（`signing_key_kind: dev`），因此任何人都可以生成引导程序接受的映像；尚未向任何真实板卡发送过任何内容。在依赖此处任何说法来保障人身安全之前，请先阅读[安全基线](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/SECURITY_BASELINE.md)和[威胁模型](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/THREAT_MODEL.md)。
 
 ## 📋 速览
 
@@ -88,7 +88,7 @@ URTC-VISION-TOOL 是一个把 RGB 摄像头和 MLX9064x 热传感器合在一起
 本仓库各部分如何协作：谁在使用它、它包含什么、它依赖什么。图片由 `docs/architecture.json` 绘制，并与代码核对。
 
 <details>
-<summary>图表的文本版 (Mermaid)</summary>
+<summary>图表的文本版（Mermaid）</summary>
 
 ```mermaid
 flowchart LR
@@ -115,7 +115,7 @@ flowchart LR
 
 ## ✨ 功能
 
-**按区域的热检测、序列导出、传感器漂移和机架检查(仅在主机上测试):** `inspect` 按每类元件的温度规则判定计划中的每个元件,并可把每个区域的最小值、最大值和平均值导出为 HYDRA-UMC 数据湖的样本、JSON 行或 OPC-UA 节点值;`drift-check` 把参考场景的帧与基线比较(坏点、偏移漂移)并可写出校准文件;`rack-check` 根据热像帧判断工具机架上各个笔尖。`rack-watch` 在机架加热时跟踪笔尖,指出每个槽位何时达到目标以及是否可以更换工具;`rack-simulate` 写出模拟机架(正常或带故障)的帧,无需相机即可试用;机架命令可用八种语言输出(`--lang`)。参见[命令行参考](docs/CLI_REFERENCE.md)。仅在合成帧上运行;没有使用任何相机或板卡。
+**按区域的热检测、序列导出、传感器漂移和机架检查（仅在主机上测试）:** `inspect` 按每类元件的温度规则判定计划中的每个元件，并可把每个区域的最小值、最大值和平均值导出为 HYDRA-UMC 数据湖的样本、JSON 行或 OPC-UA 节点值；`drift-check` 把参考场景的帧与基线比较（坏点、偏移漂移）并可写出校准文件；`rack-check` 根据热像帧判断工具机架上各个笔尖。`rack-watch` 在机架加热时跟踪笔尖，指出每个槽位何时达到目标以及是否可以更换工具；`rack-simulate` 写出模拟机架（正常或带故障）的帧，无需相机即可试用；机架命令可用八种语言输出（`--lang`）。参见[命令行参考](docs/CLI_REFERENCE.md)。仅在合成帧上运行；没有使用任何相机或板卡。
 
 **通过串行 CAN 适配器进行热成像采集（新增，仅针对模拟适配器和模拟头验证）：** `capture --port 端口` 通过 SLCAN 适配器（串口或 pyserial URL），用 `0x250` 到 `0x255` 的交互，从带有热检测工具的 URTC 头读取一幅校准图像，并保存为 `.npy` 和伪彩色 PNG，可直接用于 `inspect`、`drift-check` 和 `rack-check`。头报告错误、始终未就绪或某个数据块无应答时，命令会给出清晰提示并结束（退出码 1）；无法打开端口时以退出码 2 结束。尚未用真实的适配器、总线或头运行过。
 
@@ -195,7 +195,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-完整的配套软件文档请见 `src/vision_companion/README.md`,每个命令、参数和
+完整的配套软件文档请见 `src/vision_companion/README.md`，每个命令、参数和
 退出码及其真实捕获输出请见 [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md)。
 
 <!-- urtc-section:compatibility -->
@@ -279,18 +279,18 @@ README 和文本提供英语、西班牙语、法语、意大利语、德语、�
 URTC 由相互独立的仓库组成，每个仓库都有自己的版本、测试和 README。以下是按组划分的家族：
 
 * **URTC Tool Platform:**
-  * [URTC](https://github.com/JuanenRac/URTC) - 工具头板卡的固件(25 个工具配置、CAN 引导程序)以及 CAN 协议参考。
-  * [URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON) - 只写一次的 CAN 协议数据(规范、生成的表格、一致性向量)以及各程序共享的代码。
+  * [URTC](https://github.com/JuanenRac/URTC) - 工具头板卡的固件（25 个工具配置、CAN 引导程序）以及 CAN 协议参考。
+  * [URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON) - 只写一次的 CAN 协议数据（规范、生成的表格、一致性向量）以及各程序共享的代码。
   * [URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER) - 通过 CAN 或 SWD/JTAG 更新板卡固件的桌面工具。
-  * [URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY) - 位于 CAN 总线前的网关:只放行列表中的标识符,限制其速率,并要求会话密钥。
+  * [URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY) - 位于 CAN 总线前的网关：只放行列表中的标识符，限制其速率，并要求会话密钥。
   * [URTC-SMART-RACK](https://github.com/JuanenRac/URTC-SMART-RACK) - 用于带预热和生命周期跟踪的工具架的、与硬件无关的 C 逻辑和命令协议。
-  * [URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER) - 桌面实时 CAN 总线测试器,显示板卡所报告工具配置的控件和遥测。
-  * **URTC-VISION-TOOL** (本仓库) - C 语言的传感器帧协议,以及用于检测工具头的 Python 热成像/RGB 配套程序。
-  * [URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO) - 通过 Web Serial 和 SLCAN 烧录并测试板卡的浏览器应用,无需安装。
+  * [URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER) - 桌面实时 CAN 总线测试器，显示板卡所报告工具配置的控件和遥测。
+  * **URTC-VISION-TOOL** (本仓库) - C 语言的传感器帧协议，以及用于检测工具头的 Python 热成像/RGB 配套程序。
+  * [URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO) - 通过 Web Serial 和 SLCAN 烧录并测试板卡的浏览器应用，无需安装。
 * **Ecosystem Operations:**
   * [URTC-DEVTOOLS](https://github.com/JuanenRac/URTC-DEVTOOLS) - 家族共用的仓库工具，作为带版本的整套工具，并用锁文件区分被改动的副本和已过时的副本。
-  * [URTC-DOCS](https://github.com/JuanenRac/URTC-DOCS) - 生态系统的架构、接口、安全基线和生成的目录,以及比较所有仓库的工具。
-  * [URTC-UPDATER](https://github.com/JuanenRac/URTC-UPDATER) - 检测、安装并更新 URTC 家族仓库的桌面工具,每次只执行一个明确的操作。
+  * [URTC-DOCS](https://github.com/JuanenRac/URTC-DOCS) - 生态系统的架构、接口、安全基线和生成的目录，以及比较所有仓库的工具。
+  * [URTC-UPDATER](https://github.com/JuanenRac/URTC-UPDATER) - 检测、安装并更新 URTC 家族仓库的桌面工具，每次只执行一个明确的操作。
 
 **姊妹项目（相互独立，共用同一基础和工具）：**
 
