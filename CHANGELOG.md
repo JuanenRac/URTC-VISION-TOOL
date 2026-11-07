@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The Spanish README says "grabar" instead of the calque "flashear":** the same word as the window of the programs.
+
 - **The manifest says which version of the shared contracts it needs:** `min_common` in `urtc.project.json` is the oldest version of URTC-COMMON among the copies this repository carries, the value the updater compares with what is installed (a warning only). `tools/min_common.py` of URTC-COMMON checks it and a new copy brings it up to date.
 
 - **Portuguese and German name the frames of the sensor protocol as the other documents do:** a frame of the sensor protocol is a "trama" in Portuguese and a "Frame" in German (it was "frame" and "Rahmen"), and the thermal and colour pictures are "fotogramas" in Portuguese.
