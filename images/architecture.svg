@@ -80,5 +80,5 @@
 <text x="511.76" y="560" font-family="'Segoe UI','Noto Sans','Noto Sans CJK SC','Microsoft YaHei','Yu Gothic','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#C9D1D9" text-anchor="start">has not run on real hardware</text>
 <rect x="713.76" y="548" width="14" height="14" rx="3" fill="none" stroke="#30363D" stroke-width="2"/>
 <text x="735.76" y="560" font-family="'Segoe UI','Noto Sans','Noto Sans CJK SC','Microsoft YaHei','Yu Gothic','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#C9D1D9" text-anchor="start">another repository or a device</text>
-<text x="36" y="604" font-family="'Segoe UI','Noto Sans','Noto Sans CJK SC','Microsoft YaHei','Yu Gothic','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#6E7681" text-anchor="start">190 C checks and 183 pytest cases pass; nothing has read a real sensor.</text>
+<text x="36" y="604" font-family="'Segoe UI','Noto Sans','Noto Sans CJK SC','Microsoft YaHei','Yu Gothic','Helvetica Neue',Helvetica,Arial,sans-serif" font-size="12" font-weight="400" fill="#6E7681" text-anchor="start">217 C checks and 183 pytest cases pass; nothing has read a real sensor.</text>
 </svg>

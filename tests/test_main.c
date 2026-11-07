@@ -17,6 +17,7 @@ int main(void)
     run_sensor_freshness_tests(&failures);
     run_sensor_vectors_tests(&failures);
     run_sensor_rx_tests(&failures);
+    run_melexis_config_tests(&failures);
     run_robustness_tests(&failures);
 
     if (failures == 0) {

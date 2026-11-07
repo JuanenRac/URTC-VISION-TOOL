@@ -17,6 +17,7 @@
    "test": "tests/test_main.c",
    "sources": [
     "glob:tests/test_*.c",
+    "src/melexis_config.c",
     "src/rate_limiter.c",
     "src/sensor_diagnostics.c",
     "src/sensor_frame.c",
@@ -36,6 +37,7 @@
    "name": "isr_simulator",
    "test": "tests/isr_simulator.c",
    "sources": [
+    "src/melexis_config.c",
     "src/rate_limiter.c",
     "src/sensor_diagnostics.c",
     "src/sensor_frame.c",

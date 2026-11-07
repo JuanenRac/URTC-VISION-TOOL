@@ -24,5 +24,6 @@ void run_robustness_tests(int *failures);
 void run_sensor_freshness_tests(int *failures);
 void run_sensor_vectors_tests(int *failures);
 void run_sensor_rx_tests(int *failures);
+void run_melexis_config_tests(int *failures);
 
 #endif // TEST_RUNNER_H

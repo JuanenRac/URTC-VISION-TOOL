@@ -116,5 +116,40 @@ class PublishedNumbersTests(unittest.TestCase):
             self.assertEqual(set(numbers), {str(count)}, f"{name} quotes a stale pytest case count")
 
 
+class PcbFieldsTests(unittest.TestCase):
+    """The manifest carries the chip and the hardware identifier of the board this firmware is for. Empty means the board does not exist yet (pending); a value is
+    only accepted in the exact shape the bootloader compares, and a manifest that claims evidence from a board must have them."""
+
+    def manifest(self):
+        return json.loads(read("urtc.project.json"))
+
+    def test_the_manifest_has_both_fields_as_text(self):
+        pcb = self.manifest().get("pcb")
+        self.assertIsInstance(pcb, dict, "urtc.project.json needs a pcb block (empty values mean pending)")
+        self.assertEqual(set(pcb), {"chip", "hardware_id"})
+        for name, value in pcb.items():
+            self.assertIsInstance(value, str, f"pcb.{name} must be text")
+            self.assertEqual(value, value.strip(), f"pcb.{name} has spaces around it")
+
+    def test_a_value_has_the_shape_the_bootloader_compares_and_empty_means_pending(self):
+        pcb = self.manifest()["pcb"]
+        if pcb["chip"]:
+            self.assertRegex(pcb["chip"], r"^[A-Z0-9][A-Za-z0-9_-]{3,31}$", "pcb.chip is the part number, e.g. STM32G431CBU6")
+        if pcb["hardware_id"]:
+            self.assertRegex(pcb["hardware_id"], r"^0x[0-9A-F]{8}$", "pcb.hardware_id is 0x followed by 8 upper-case hexadecimal digits")
+            self.assertNotEqual(int(pcb["hardware_id"], 16), 0, "a hardware identifier of 0 means none")
+            self.assertNotEqual(int(pcb["hardware_id"], 16), 0xFFFFFFFF, "an erased flash reads as 0xFFFFFFFF, which is not an identifier")
+
+    def test_evidence_from_a_board_needs_both_fields(self):
+        manifest = self.manifest()
+        if manifest["evidence"] in ("bench", "field", "hardware"):
+            self.assertTrue(manifest["pcb"]["chip"] and manifest["pcb"]["hardware_id"], "evidence from a board needs the chip and the hardware identifier of that board")
+
+    def test_the_fields_stay_empty_while_no_board_exists(self):
+        manifest = self.manifest()
+        if manifest["evidence"] == "simulator":
+            self.assertEqual(manifest["pcb"], {"chip": "", "hardware_id": ""}, "a simulator-only repository does not know a board yet: fill the fields when the board exists and change the evidence with a record")
+
+
 if __name__ == "__main__":
     unittest.main()

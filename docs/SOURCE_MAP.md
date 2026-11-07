@@ -14,6 +14,7 @@ URTC-VISION-TOOL/
 │   ├── sensor_reading.h / .c       # Real: thermal reading decode + range validation
 │   ├── rate_limiter.h / .c         # Real: minimum-interval frame throttling
 │   ├── sensor_freshness.h / .c     # Real: sequence/timestamp freshness (replay and stale-sensor detection)
+│   ├── melexis_config.h / .c       # Real: refresh rate and filter level of the thermal sensor, with limits, and a reader of key=value text
 │   ├── sensor_diagnostics.h / .c   # Real: error/latency/bus-reset counters, separate from control
 │   ├── vision_sensor_link.h / .c   # Real: frame-dispatch decision tying sensor_frame/sensor_reading/rate_limiter/sensor_diagnostics together
 │   ├── sensor_rx.h / .c            # Real: interrupt-safe receive path - the interrupt only fills the ring, the main loop finds the frames and resynchronises
