@@ -3,7 +3,8 @@
 # Copyright (C) 2026 JuanenRac (Electro Hobby 3D) <electrohobby3d@gmail.com>
 # GPL-3.0-or-later - see LICENSE
 # =============================================================================
-"""The words of the rack check in the eight languages: the same placeholders in each, no stray spaces, the fallbacks of the lookup, and the register of each language."""
+"""The words of the rack check in the eight languages: the same placeholders in each, no stray spaces, the fallbacks of
+the lookup, and the register of each language."""
 from __future__ import annotations
 
 import re
@@ -18,7 +19,8 @@ PLACEHOLDER = re.compile(r"\{(\w*)\}")
 @pytest.mark.parametrize("lang", rack_text.LANGUAGES)
 def test_every_text_has_the_same_placeholders_as_the_english_one(lang):
     for key in rack_text.KEYS:
-        assert PLACEHOLDER.findall(rack_text.TEXTS[lang][key]) == PLACEHOLDER.findall(rack_text.TEXTS["en"][key]), (lang, key)
+        found = PLACEHOLDER.findall(rack_text.TEXTS[lang][key])
+        assert found == PLACEHOLDER.findall(rack_text.TEXTS["en"][key]), (lang, key)
 
 
 @pytest.mark.parametrize("lang", rack_text.LANGUAGES)
@@ -58,7 +60,12 @@ def test_the_number_is_put_where_each_language_wants_it():
     assert rack_text.text("reached_after", "zh", s="4.0") == "4.0 秒后达到"
 
 
-@pytest.mark.parametrize("lang, forbidden", [("de", r"\b(du|dein\w*|dir|dich)\b"), ("fr", r"\b(tu|ton|ta|tes|toi)\b"), ("pt", r"\b(tu|teu|tua)\b"), ("zh", "您")])
+@pytest.mark.parametrize("lang, forbidden", [
+    ("de", r"(du|dein\w*|dir|dich)"),
+    ("fr", r"(tu|ton|ta|tes|toi)"),
+    ("pt", r"(tu|teu|tua)"),
+    ("zh", "您"),
+])
 def test_no_text_slips_into_another_register(lang, forbidden):
     pattern = re.compile(forbidden)
     assert [key for key in rack_text.KEYS if pattern.search(rack_text.TEXTS[lang][key])] == []
