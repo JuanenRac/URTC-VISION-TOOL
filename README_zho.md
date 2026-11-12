@@ -17,7 +17,7 @@
 
 ---
 
-**诚实核查 - 今天真正能运行的部分：** 固件侧的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）是真实的纯 C 代码，有 217 个通过的 `TEST_ASSERT` 检查（`tests/test_*.c`，用主机自身的 C 编译器编译并运行），并且本仓库的 CI 确实会运行它们：`.github/workflows/ci.yml` 的固件步骤调用 `build_firmware.sh`，其第 2 步总是在进行 STM32 构建之前编译并运行 `tests/`。主机侧的 `vision_companion` 包（`alignment.py`、`cli.py`）同样是真实的，有 183 个通过的 pytest 用例，CI 也会运行这套测试（专门的步骤安装 `src/vision_companion/requirements.txt` 并在该目录运行 `pytest tests/`），因此任何一半出现回归都会导致构建失败。正如 README 开头所说：这块板卡还没有 PCB/原理图，因此这里的任何东西都从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只证明 Cortex-M4F 的交叉编译和链接在占位链接脚本下能够成功。已发布的内容请参见 `CHANGELOG.md`。
+**诚实核查 - 今天真正能运行的部分：** 固件侧的传感器协议（`sensor_frame.c`、`sensor_reading.c`、`rate_limiter.c`、`sensor_freshness.c`、`sensor_diagnostics.c`、`vision_sensor_link.c`）是真实的纯 C 代码，有 217 个通过的 `TEST_ASSERT` 检查（`tests/test_*.c`，用主机自身的 C 编译器编译并运行），并且本仓库的 CI 确实会运行它们：`.github/workflows/ci.yml` 的固件步骤调用 `build_firmware.sh`，其第 2 步总是在进行 STM32 构建之前编译并运行 `tests/`。主机侧的 `vision_companion` 包（`alignment.py`、`cli.py`）同样是真实的，有 200 个通过的 pytest 用例，CI 也会运行这套测试（专门的步骤安装 `src/vision_companion/requirements.txt` 并在该目录运行 `pytest tests/`），因此任何一半出现回归都会导致构建失败。正如 README 开头所说：这块板卡还没有 PCB/原理图，因此这里的任何东西都从未读取过真实的 MLX9064x 传感器或 RGB 摄像头，也从未驱动过真实的 CAN 收发器——`main.c`/`startup_stm32_minimal.c` 只证明 Cortex-M4F 的交叉编译和链接在占位链接脚本下能够成功。已发布的内容请参见 `CHANGELOG.md`。
 
 ---
 
@@ -29,7 +29,7 @@
 |---|---|
 | 版本 | `0.2.0` |
 | 成熟度 | 可用 |
-| 测试 | 183 (`pytest`) |
+| 测试 | 200 (`pytest`) |
 | 技术栈 | C / STM32 / Python vision companion |
 | 目标 | 微控制器板（固件）；在电脑上构建 |
 | 真实硬件 | 尚未：此版本没有在真实硬件上运行的记录 |
@@ -73,7 +73,7 @@
 * 📡 **与 URTC 的集成** —— 已决定：该工具头是 URTC 的工具头，复用 URTC 的热成像检测工具（工具配置 22，MLX90640/90641/90642）及其 CAN 消息 `0x250`-`0x255`（触发、状态、原始与校准后的像素块，记录在 URTC 的 `docs/CANBUS.TXT` 中），而不是另起第二套协议。该交换的主机端是真实的，并已在没有硬件的情况下测试（`urtc_thermal.py`，带模拟工具头）；工具头固件、CAN 收发器和已装配的板卡都还不存在，因此这些都没有在总线上运行过。*（本仓库的传感器侧帧协议（见下文）是单独的、在主机上测试过的组件，不承载热成像图像。）*
 * 🔒 **传感器协议范围检查** —— 版本化帧格式，带 CRC8 校验和，测量范围校验，速率限制，帧新鲜度检查（序列号与时间戳），以及独立于控制决策的专用错误/延迟/总线复位诊断计数器。帧版本 2：所有多字节数值（时间戳与热读数）均与总线一样采用大端序，版本 1 的帧会被拒绝。*（以纯 C 实现，仅在 PC 上测试过；从未在板卡上或配合真实传感器运行过，也不是安全功能）*
 * ✅ **Cortex-M4F 固件工具链** —— 一个真实的裸机镜像，使用与兄弟仓库 URTC 和 URTC-SMART-RACK 相同的工具链，通过 `arm-none-eabi-gcc` 交叉编译并链接。*（已实现——见下方“构建”）*
-* ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 183 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方“视觉配套软件”）*
+* ✅ **`vision_companion` 处理流水线** —— 一个真实可用的 Python 包：合成热成像+RGB 帧生成、伪彩色热成像渲染、RGB->热成像 ROI 对位 + 温度统计提取、统计报告，全部由 200 个真实 pytest 用例覆盖，无需连接任何硬件即可端到端运行。*（已实现——见下方“视觉配套软件”）*
 
 ## 🧩 在 URTC 中的角色
 
@@ -188,7 +188,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-183 个真实 pytest 用例覆盖了 `cli.py`、`alignment.py` 以及包中的其他模块：
+200 个真实 pytest 用例覆盖了 `cli.py`、`alignment.py` 以及包中的其他模块：
 
 ```bash
 pip install -e ".[dev]"
@@ -206,7 +206,7 @@ pytest
 
 ## 🧪 测试
 
-共有两套测试。固件侧是 `tests/` 中的 C 代码（217 个 `TEST_ASSERT` 检查）：传感器帧、读数、速率限制器、诊断、新鲜度、整条链路的场景、对错误输入的鲁棒性以及 URTC-COMMON 的共用向量，用电脑自己的 C 编译器编译运行，在 CI 中还使用 AddressSanitizer、UBSan 和覆盖率下限。主机侧是 `vision_companion` 软件包，有 183 个 pytest 用例（`cd src/vision_companion && pytest`），在没有硬件的情况下运行整条流程：合成图像、伪彩色、对准、校准、针对模拟头的热图像采集、检测、漂移和机架检查。四个 Python 测试文件检查构建脚本、发布资源和版本文件。`bash build_firmware.sh` 在交叉编译前运行 C 测试，任何断言失败则失败。中断将使用的接收路径（`sensor_rx.c`：中断只把字节放入环形缓冲，主循环负责找出帧、在损坏的帧之后重新同步，并丢弃等待过久的半截帧）同样是纯逻辑，测试中逐字节回放。
+共有两套测试。固件侧是 `tests/` 中的 C 代码（217 个 `TEST_ASSERT` 检查）：传感器帧、读数、速率限制器、诊断、新鲜度、整条链路的场景、对错误输入的鲁棒性以及 URTC-COMMON 的共用向量，用电脑自己的 C 编译器编译运行，在 CI 中还使用 AddressSanitizer、UBSan 和覆盖率下限。主机侧是 `vision_companion` 软件包，有 200 个 pytest 用例（`cd src/vision_companion && pytest`），在没有硬件的情况下运行整条流程：合成图像、伪彩色、对准、校准、针对模拟头的热图像采集、检测、漂移和机架检查。四个 Python 测试文件检查构建脚本、发布资源和版本文件。`bash build_firmware.sh` 在交叉编译前运行 C 测试，任何断言失败则失败。中断将使用的接收路径（`sensor_rx.c`：中断只把字节放入环形缓冲，主循环负责找出帧、在损坏的帧之后重新同步，并丢弃等待过久的半截帧）同样是纯逻辑，测试中逐字节回放。
 
 ## 🏗️ 构建与发布
 
