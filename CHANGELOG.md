@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The words of the rack check are tested in the eight languages:** the same placeholders in each, no stray spaces, the fallbacks of the lookup (an unknown language gives English, an unknown key gives the key), the place of the number in each language, and the register of German, French, Portuguese and Chinese.
+
 - **The check of the sensor is tested at its edges:** wrong shapes of the frames, too few frames, a sensor that reads no number at all, frames of another size, no pixel working in both the baseline and the new frames, new and recovered dead pixels, a common drift measured, the suggested calibration, and every way a baseline file can be unreadable or damaged (fixed seeds).
 
 - **The shared document policy check is refreshed:** `tools/_doc_policy.py` and `tools/ci_validate.py` are the current copies, which also fail when a build script changes a version and when a script switches into a virtual environment instead of running its python directly.
