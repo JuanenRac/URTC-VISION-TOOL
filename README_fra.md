@@ -30,7 +30,7 @@
 | Version | `0.2.0` |
 | Maturité | Fonctionnel |
 | Tests | 244 (`pytest`) |
-| Technologie | C / STM32 / Python vision companion |
+| Technologie | C / STM32 / compagnon de vision en Python |
 | Cible | Une carte à microcontrôleur (le firmware) ; compilé sur un PC |
 | Sur matériel réel | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
 
@@ -108,7 +108,7 @@ flowchart LR
 
 ## ✨ Fonctionnalités
 
-**Inspection thermique par région, export de séries, dérive du capteur et contrôle du rack (testé sur l'hôte seulement) :** `inspect` juge chaque composant d'un plan selon la règle de température de son type et peut exporter le minimum, le maximum et la moyenne de chaque région sous forme d'échantillons pour le datalake de HYDRA-UMC, en lignes JSON ou en valeurs de nœuds OPC-UA ; `drift-check` compare des images d'une scène de référence à une base (pixels morts, dérive de décalage) et peut écrire un fichier de calibration ; `rack-check` juge les pointes du rack d'outils à partir d'une image thermique. `rack-watch` suit les pointes pendant que le rack chauffe et indique quand chaque emplacement a atteint sa cible et si l'outil peut être changé ; `rack-simulate` écrit les images d'un rack simulé (sain ou avec un défaut) pour l'essayer sans caméra ; les commandes du rack s'affichent en huit langues (`--lang`). Voir [la référence de la CLI](docs/CLI_REFERENCE.md). Exécuté sur des images synthétiques seulement ; aucune caméra ni carte n'a été utilisée.
+**Inspection thermique par région, export de séries, dérive du capteur et contrôle du rack (testé sur l'hôte seulement) :** `inspect` juge chaque composant d'un plan selon la règle de température de son type et peut exporter le minimum, le maximum et la moyenne de chaque région sous forme d'échantillons pour le datalake de HYDRA-UMC, en lignes JSON ou en valeurs de nœuds OPC-UA ; `drift-check` compare des images d'une scène de référence à une ligne de base (pixels morts, dérive de décalage) et peut écrire un fichier de calibration ; `rack-check` juge les pointes du rack d'outils à partir d'une image thermique. `rack-watch` suit les pointes pendant que le rack chauffe et indique quand chaque emplacement a atteint sa cible et si l'outil peut être changé ; `rack-simulate` écrit les images d'un rack simulé (sain ou avec un défaut) pour l'essayer sans caméra ; les commandes du rack s'affichent en huit langues (`--lang`). Voir [la référence de la CLI](docs/CLI_REFERENCE.md). Exécuté sur des images synthétiques seulement ; aucune caméra ni carte n'a été utilisée.
 
 **Capture thermique par un adaptateur CAN série (nouveau, testé seulement contre un adaptateur et une tête simulés) :** `capture --port PORT` lit une image calibrée d'une tête URTC qui porte l'outil d'inspection thermique, à travers un adaptateur SLCAN (un port série ou une URL pyserial), avec l'échange de `0x250` à `0x255`, et l'enregistre en `.npy` et en PNG en fausses couleurs, prêt pour `inspect`, `drift-check` et `rack-check`. Une tête qui signale une erreur, ne devient jamais prête ou laisse un bloc sans réponse termine la commande avec un message clair (code de sortie 1), et un port qui ne peut pas être ouvert la termine avec le code 2. Elle n'a pas été exécutée avec un vrai adaptateur, un vrai bus ni une vraie tête.
 
@@ -129,7 +129,7 @@ Tout cela est du C pur testé sur un ordinateur ; cela n'a jamais tourné sur un
 * **Les messages d'inspection thermique d'URTC** (`0x250` à `0x255` : déclenchement, état, blocs de pixels bruts et calibrés, documentés dans `docs/CANBUS.TXT` d'URTC) : le côté hôte de cet échange est `urtc_thermal.py`, testé sans matériel contre une tête simulée. `capture --port PORT` l'exécute via un adaptateur SLCAN (un port série ou une URL pyserial) et enregistre l'image en `.npy` et en PNG fausses couleurs ; une tête qui signale une erreur, ne devient jamais prête ou laisse un bloc sans réponse termine la commande avec le code de sortie 1, et un port impossible à ouvrir avec le code 2.
 * **La trame du capteur du firmware :** version 2, big-endian, CRC-8 (`sensor_frame.c`) ; c'est une brique distincte, testée sur l'hôte, qui ne transporte pas l'image thermique.
 * **La ligne de commande `vision-companion` :** `version`, `selftest`, `analyze-roi`, `capture`, `inspect`, `drift-check`, `rack-check`, `rack-watch` et `rack-simulate`, avec chaque option et code de sortie dans [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md).
-* **Exports :** les mesures de `inspect` en JSON Lines, en valeurs de nœuds OPC UA ou en échantillons pour le lac de données de HYDRA-UMC.
+* **Exports :** les mesures de `inspect` en JSON Lines, en valeurs de nœuds OPC UA ou en échantillons pour le datalake de HYDRA-UMC.
 
 ## 🚀 Démarrage rapide
 
@@ -192,11 +192,11 @@ Les versions des programmes URTC qui fonctionnent ensemble, et la version du pro
 
 ## 🧪 Tests
 
-Deux suites. Le côté firmware est du C dans `tests/` (217 vérifications `TEST_ASSERT`) : la trame du capteur, la mesure, le limiteur de cadence, les diagnostics, la fraîcheur, les scénarios de toute la liaison, la robustesse face aux entrées erronées et les vecteurs partagés d'URTC-COMMON, compilés et exécutés avec le compilateur C de la machine et, en CI, avec AddressSanitizer, UBSan et un plancher de couverture. Le côté hôte est le paquet `vision_companion`, avec 244 cas pytest (`cd src/vision_companion && pytest`) qui exécutent toute la chaîne sans matériel : images synthétiques, fausses couleurs, alignement, calibration, la capture thermique contre une tête simulée, l'inspection, la dérive et le contrôle du rack. Quatre fichiers de test Python vérifient les scripts de compilation, les fichiers joints de la release et les fichiers de version. `bash build_firmware.sh` exécute les tests C avant la compilation croisée et s'interrompt si une assertion échoue. Le chemin de réception qu'utilisera une interruption (`sensor_rx.c` : l'interruption ne fait que mettre l'octet dans un anneau, la boucle principale trouve les trames, se resynchronise après une trame abîmée et abandonne une demi-trame restée trop longtemps en attente) est aussi de la logique pure, rejouée octet par octet dans les tests.
+Deux suites. Le côté firmware est du C dans `tests/` (217 vérifications `TEST_ASSERT`) : la trame du capteur, la mesure, le limiteur de cadence, les diagnostics, la fraîcheur, les scénarios de toute la liaison, la robustesse face aux entrées erronées et les vecteurs partagés d'URTC-COMMON, compilés et exécutés avec le compilateur C de la machine et, en CI, avec AddressSanitizer, UBSan et un plancher de couverture. Le côté hôte est le paquet `vision_companion`, avec 244 cas pytest (`cd src/vision_companion && pytest`) qui exécutent toute la chaîne sans matériel : images synthétiques, fausses couleurs, alignement, calibration, la capture thermique contre une tête simulée, l'inspection, la dérive et le contrôle du rack. Quatre fichiers de test Python vérifient les scripts de compilation, les fichiers joints de la release et les fichiers de version. `bash build_firmware.sh` exécute les tests C avant la compilation croisée et s'interrompt si une assertion échoue. Le chemin de réception qu'utilisera une interruption (`sensor_rx.c` : l'interruption ne fait que mettre l'octet dans un tampon circulaire, la boucle principale trouve les trames, se resynchronise après une trame abîmée et abandonne une demi-trame restée trop longtemps en attente) est aussi de la logique pure, rejouée octet par octet dans les tests.
 
 ## 🏗️ Compilation et publication
 
-La compilation commence par compiler et exécuter `tests/` avec le compilateur C *de la machine* (jamais `arm-none-eabi-gcc` : ce sont des tests de logique pure, sans toucher aux registres du MCU) et s'interrompt entièrement si une assertion échoue. Ensuite seulement elle compile `main.c` et `startup_stm32_minimal.c` pour Cortex-M4F, les lie avec la carte mémoire provisoire `STM32_MINIMAL.ld` et publie des fichiers `.elf`/`.bin`/`.hex` versionnés dans `firmware/`. Compiler ne change jamais la version.
+La compilation commence par compiler et exécuter `tests/` avec le compilateur C *de la machine* (jamais `arm-none-eabi-gcc` : ce sont des tests de logique pure, sans toucher aux registres du MCU) et s'interrompt entièrement si une assertion échoue. Ensuite seulement elle compile `main.c` et `startup_stm32_minimal.c` pour Cortex-M4F, les lie avec le plan mémoire provisoire `STM32_MINIMAL.ld` et publie des fichiers `.elf`/`.bin`/`.hex` versionnés dans `firmware/`. Compiler ne change jamais la version.
 
 Chaque module de `src/` est aussi compilé pour Cortex-M4F et tous sont liés ensemble par vérification (aucune bibliothèque C n'est disponible sur la cible), même si l'image ne contient aujourd'hui que `main.c` et le fichier de démarrage. Avec `URTC_CI=1`, aucun fichier suivi n'est touché.
 
@@ -245,8 +245,8 @@ La liste annotée de chaque fichier source, une ligne par fichier, est dans [doc
 
 **Limites connues aujourd'hui**
 
-* Aucun PCB ni schéma n'existe encore pour cette carte (voir `hardware/`) : rien de tout cela n'a jamais lu un vrai MLX9064x en I2C, une caméra RVB ou un transceiveur CAN. `main.c` et le fichier de démarrage prouvent seulement que la compilation croisée et l'édition de liens pour Cortex-M4F réussissent avec un script provisoire.
-* Le firmware de la tête n'existe pas encore : le côté hôte de l'échange thermique n'est testé que contre une tête et un adaptateur SLCAN simulés.
+* Aucun PCB ni schéma n'existe encore pour cette carte (voir `hardware/`) : rien de tout cela n'a jamais lu un vrai MLX9064x en I2C, une caméra RGB ou un transceiveur CAN. `main.c` et le fichier de démarrage prouvent seulement que la compilation croisée et l'édition de liens pour Cortex-M4F réussissent avec un script d'édition de liens provisoire.
+* Le firmware de la tête n'existe pas encore : le côté hôte de l'échange d'inspection thermique n'est testé que contre une tête et un adaptateur SLCAN simulés.
 * `alignment.py` suppose un champ de vision commun et remet chaque axe à l'échelle linéairement ; une vraie calibration pixel par pixel (damier, distorsion de l'objectif) demande de vraies caméras.
 * La précision sub-millimétrique, la capture réelle synchronisée et les limites thermiques des règles d'inspection n'ont pas été essayées sur de vraies pièces.
 
@@ -267,9 +267,9 @@ URTC est fait de dépôts indépendants, chacun avec sa version, ses tests et so
   * [URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON) - le protocole CAN écrit une seule fois comme données (spécification, tables générées, vecteurs de conformité) et le code que les programmes partagent.
   * [URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER) - outil de bureau qui met à jour le firmware de la carte par CAN ou par SWD/JTAG.
   * [URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY) - passerelle devant le bus CAN : ne laisse passer que les identifiants d'une liste, limite leur cadence et demande une clé de session.
-  * [URTC-SMART-RACK](https://github.com/JuanenRac/URTC-SMART-RACK) - logique C indépendante du matériel et protocole de commandes pour un support d'outils avec préchauffage et suivi du cycle de vie.
+  * [URTC-SMART-RACK](https://github.com/JuanenRac/URTC-SMART-RACK) - logique C indépendante du matériel et protocole de commandes pour un rack d'outils avec préchauffage et suivi du cycle de vie.
   * [URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER) - testeur de bureau du bus CAN en direct qui affiche les commandes et la télémétrie du profil d'outil signalé par une carte.
-  * **URTC-VISION-TOOL** (ce dépôt) - protocole de trames de capteur en C et compagnon Python thermique/RVB pour une tête d'outil d'inspection.
+  * **URTC-VISION-TOOL** (ce dépôt) - protocole de trames de capteur en C et compagnon Python thermique/RGB pour une tête d'outil d'inspection.
   * [URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO) - application de navigateur qui flashe et teste la carte via Web Serial et SLCAN, sans rien installer.
 * **Ecosystem Operations:**
   * [URTC-DEVTOOLS](https://github.com/JuanenRac/URTC-DEVTOOLS) - les outils de dépôt communs de la famille en un ensemble versionné, avec un fichier de verrou qui distingue une copie modifiée d'une copie en retard.

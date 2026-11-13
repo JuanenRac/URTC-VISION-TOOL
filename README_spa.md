@@ -30,7 +30,7 @@
 | Versión | `0.2.0` |
 | Madurez | Funcional |
 | Tests | 244 (`pytest`) |
-| Tecnología | C / STM32 / Python vision companion |
+| Tecnología | C / STM32 / acompañante de visión en Python |
 | Destino | Una placa con microcontrolador (el firmware); se compila en un PC |
 | En hardware real | Todavía no: no consta ninguna ejecución en hardware real para esta versión |
 
@@ -108,9 +108,9 @@ flowchart LR
 
 ## ✨ Funciones
 
-**Inspección térmica por regiones, exportación de series, deriva del sensor y comprobación del rack (solo probado en el host):** `inspect` juzga cada componente de un plan según la regla de temperatura de su tipo y puede exportar el mínimo, el máximo y la media de cada región como muestras para el datalake de HYDRA-UMC, como líneas JSON o como valores de nodos OPC-UA; `drift-check` compara fotogramas de una escena de referencia con una línea base (píxeles muertos, deriva del desfase) y puede escribir un archivo de calibración; `rack-check` juzga las puntas del rack de herramientas a partir de un fotograma térmico. `rack-watch` sigue las puntas mientras el rack calienta e indica cuándo cada ranura alcanzó su objetivo y si se puede cambiar la herramienta, `rack-simulate` escribe los fotogramas de un rack simulado (sano o con un fallo) para probarlo sin cámara, y las órdenes del rack muestran sus mensajes en ocho idiomas (`--lang`). Véase [la referencia de la CLI](docs/CLI_REFERENCE.md). Ejecutado solo con fotogramas sintéticos; no se ha usado ninguna cámara ni placa.
+**Inspección térmica por regiones, exportación de series, deriva del sensor y comprobación del rack (solo probado en el host):** `inspect` juzga cada componente de un plan según la regla de temperatura de su tipo y puede exportar el mínimo, el máximo y la media de cada región como muestras para el datalake de HYDRA-UMC, como líneas JSON o como valores de nodos OPC-UA; `drift-check` compara fotogramas de una escena de referencia con una línea base (píxeles muertos, deriva del desfase) y puede escribir un archivo de calibración; `rack-check` juzga las puntas del rack de herramientas a partir de un fotograma térmico. `rack-watch` sigue las puntas mientras el rack calienta e indica cuándo cada ranura alcanzó su objetivo y si se puede cambiar la herramienta, `rack-simulate` escribe los fotogramas de un rack simulado (sano o con un fallo) para probarlo sin cámara, y los comandos del rack muestran sus mensajes en ocho idiomas (`--lang`). Véase [la referencia de la CLI](docs/CLI_REFERENCE.md). Ejecutado solo con fotogramas sintéticos; no se ha usado ninguna cámara ni placa.
 
-**Captura térmica por un adaptador CAN serie (nuevo, probado solo con un adaptador y un cabezal simulados):** `capture --port PUERTO` lee una imagen calibrada de un cabezal URTC que lleva la herramienta de inspección térmica, a través de un adaptador SLCAN (un puerto serie o una URL de pyserial), con el intercambio de `0x250` a `0x255`, y la guarda como `.npy` y PNG en falso color, lista para `inspect`, `drift-check` y `rack-check`. Un cabezal que informa de un error, nunca queda listo o deja un bloque sin responder termina el comando con un mensaje claro (código de salida 1), y un puerto que no se puede abrir lo termina con el código 2. No se ha ejecutado con un adaptador, un bus ni un cabezal reales.
+**Captura térmica por un adaptador CAN serie (nuevo, probado solo con un adaptador y un cabezal simulados):** `capture --port PUERTO` lee una imagen calibrada de un cabezal URTC que lleva la herramienta de inspección térmica, a través de un adaptador SLCAN (un puerto serie o una URL de pyserial), con el intercambio de `0x250` a `0x255`, y la guarda como `.npy` y PNG en falso color, lista para `inspect`, `drift-check` y `rack-check`. Un cabezal que informa de un error, nunca queda listo o deja un trozo sin responder termina el comando con un mensaje claro (código de salida 1), y un puerto que no se puede abrir lo termina con el código 2. No se ha ejecutado con un adaptador, un bus ni un cabezal reales.
 
 ## 🔒 Seguridad y protección
 
@@ -129,7 +129,7 @@ Todo esto es C puro probado en un ordenador; nunca se ha ejecutado en una placa 
 * **Los mensajes de inspección térmica de URTC** (`0x250` a `0x255`: disparo, estado, trozos de píxeles en bruto y calibrados, documentados en `docs/CANBUS.TXT` de URTC): el lado host de ese intercambio es `urtc_thermal.py`, probado sin hardware contra un cabezal simulado. `capture --port PORT` lo ejecuta a través de un adaptador SLCAN (un puerto serie o una URL de pyserial) y guarda la imagen como `.npy` y un PNG en falso color; un cabezal que informa de un error, nunca queda listo o deja un trozo sin respuesta termina el comando con código de salida 1, y un puerto que no se puede abrir con código 2.
 * **La trama del sensor del firmware:** versión 2, big-endian, CRC-8 (`sensor_frame.c`); es un bloque aparte, probado en el host, y no transporta la imagen térmica.
 * **La línea de comandos `vision-companion`:** `version`, `selftest`, `analyze-roi`, `capture`, `inspect`, `drift-check`, `rack-check`, `rack-watch` y `rack-simulate`, con cada opción y código de salida en [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md).
-* **Exportaciones:** las lecturas de `inspect` como JSON Lines, como valores de nodos OPC UA o como muestras para el lago de datos de HYDRA-UMC.
+* **Exportaciones:** las lecturas de `inspect` como JSON Lines, como valores de nodos OPC UA o como muestras para el datalake de HYDRA-UMC.
 
 ## 🚀 Inicio rápido
 
@@ -192,7 +192,7 @@ Qué versiones de los programas de URTC funcionan juntas, y qué versión del pr
 
 ## 🧪 Pruebas
 
-Hay dos baterías. El lado del firmware es C en `tests/` (217 comprobaciones `TEST_ASSERT`): la trama del sensor, la lectura, el limitador de frecuencia, los diagnósticos, la frescura, los escenarios de todo el enlace, la robustez ante entradas erróneas y los vectores compartidos de URTC-COMMON, compilados y ejecutados con el compilador de C del propio equipo y, en la CI, con AddressSanitizer, UBSan y un mínimo de cobertura. El lado del host es el paquete `vision_companion`, con 244 casos de pytest (`cd src/vision_companion && pytest`) que ejecutan todo el flujo sin hardware: imágenes sintéticas, falso color, alineación, calibración, la captura térmica contra un cabezal simulado, la inspección, la deriva y la comprobación del rack. Cuatro archivos de prueba en Python comprueban los scripts de compilación, los archivos adjuntos de la release y los archivos de versión. `bash build_firmware.sh` ejecuta las pruebas en C antes de la compilación cruzada y se interrumpe si una aserción falla. La ruta de recepción que usará una interrupción (`sensor_rx.c`: la interrupción solo mete el byte en un anillo, el bucle principal encuentra las tramas, se resincroniza tras una dañada y descarta una trama a medias que esperó demasiado) también es lógica pura, reproducida byte a byte en las pruebas.
+Hay dos baterías. El lado del firmware es C en `tests/` (217 comprobaciones `TEST_ASSERT`): la trama del sensor, la lectura, el limitador de frecuencia, los diagnósticos, la frescura, los escenarios de todo el enlace, la robustez ante entradas erróneas y los vectores compartidos de URTC-COMMON, compilados y ejecutados con el compilador de C del propio equipo y, en la CI, con AddressSanitizer, UBSan y un mínimo de cobertura. El lado del host es el paquete `vision_companion`, con 244 casos de pytest (`cd src/vision_companion && pytest`) que ejecutan todo el flujo sin hardware: imágenes sintéticas, falso color, alineación, calibración, la captura térmica contra un cabezal simulado, la inspección, la deriva y la comprobación del rack. Cuatro archivos de prueba en Python comprueban los scripts de compilación, los archivos adjuntos de la release y los archivos de versión. `bash build_firmware.sh` ejecuta las pruebas en C antes de la compilación cruzada y se interrumpe si una aserción falla. La ruta de recepción que usará una interrupción (`sensor_rx.c`: la interrupción solo mete el byte en un búfer circular, el bucle principal encuentra las tramas, se resincroniza tras una dañada y descarta una trama a medias que esperó demasiado) también es lógica pura, reproducida byte a byte en las pruebas.
 
 ## 🏗️ Compilación y publicación
 
@@ -245,8 +245,8 @@ La lista anotada de cada archivo de código, una línea por archivo, está en [d
 
 **Límites conocidos hoy**
 
-* Todavía no existe PCB ni esquema para esta placa (véase `hardware/`): nada de esto ha leído nunca un MLX9064x real por I2C, una cámara RGB ni un transceptor CAN. `main.c` y el archivo de arranque solo demuestran que la compilación cruzada y el enlace para Cortex-M4F funcionan con un script de enlazado provisional.
-* El firmware del cabezal no existe todavía: el lado host del intercambio térmico solo se prueba contra un cabezal y un adaptador SLCAN simulados.
+* Todavía no existe PCB ni esquema para esta placa (véase `hardware/`): nada de esto ha leído nunca un MLX9064x real por I2C, una cámara RGB ni un transceptor CAN. `main.c` y el archivo de arranque solo demuestran que la compilación cruzada y el enlazado para Cortex-M4F funcionan con un script de enlazado provisional.
+* El firmware del cabezal no existe todavía: el lado host del intercambio de inspección térmica solo se prueba contra un cabezal y un adaptador SLCAN simulados.
 * `alignment.py` supone un campo de visión compartido y reescala cada eje linealmente; una calibración real por píxel (tablero de ajedrez, distorsión de la lente) necesita cámaras reales.
 * La precisión submilimétrica, la captura real sincronizada y los límites térmicos de las reglas de inspección no se han probado con piezas reales.
 
@@ -267,12 +267,12 @@ URTC se compone de repositorios independientes, cada uno con su versión, sus pr
   * [URTC-COMMON](https://github.com/JuanenRac/URTC-COMMON) - el protocolo CAN escrito una sola vez como datos (especificación, tablas generadas, vectores de conformidad) y el código que comparten los programas.
   * [URTC-FLASHER](https://github.com/JuanenRac/URTC-FLASHER) - herramienta de escritorio que actualiza el firmware de la placa por CAN o por SWD/JTAG.
   * [URTC-GATEWAY](https://github.com/JuanenRac/URTC-GATEWAY) - pasarela delante del bus CAN: solo deja pasar los identificadores de una lista, limita su frecuencia y pide una clave de sesión.
-  * [URTC-SMART-RACK](https://github.com/JuanenRac/URTC-SMART-RACK) - lógica en C independiente del hardware y protocolo de órdenes para un soporte de herramientas con precalentamiento y seguimiento del ciclo de vida.
+  * [URTC-SMART-RACK](https://github.com/JuanenRac/URTC-SMART-RACK) - lógica en C independiente del hardware y protocolo de comandos para un rack de herramientas con precalentamiento y seguimiento del ciclo de vida.
   * [URTC-TESTER](https://github.com/JuanenRac/URTC-TESTER) - probador de escritorio del bus CAN en vivo que muestra los controles y la telemetría del perfil de herramienta que informa una placa.
   * **URTC-VISION-TOOL** (este repositorio) - protocolo de tramas de sensor en C y un acompañante en Python térmico/RGB para un cabezal de inspección.
   * [URTC-WEB-STUDIO](https://github.com/JuanenRac/URTC-WEB-STUDIO) - aplicación de navegador que graba y prueba la placa por Web Serial y SLCAN, sin instalar nada.
 * **Ecosystem Operations:**
-  * [URTC-DEVTOOLS](https://github.com/JuanenRac/URTC-DEVTOOLS) - las herramientas de repositorio compartidas de la familia como un conjunto con versión y un fichero de bloqueo que distingue una copia editada de una desfasada.
+  * [URTC-DEVTOOLS](https://github.com/JuanenRac/URTC-DEVTOOLS) - las herramientas de repositorio compartidas de la familia como un conjunto con versión y un archivo de bloqueo que distingue una copia editada de una desfasada.
   * [URTC-DOCS](https://github.com/JuanenRac/URTC-DOCS) - arquitectura, interfaces, línea base de seguridad y catálogo generado del ecosistema, más las herramientas que comparan todos los repositorios.
   * [URTC-UPDATER](https://github.com/JuanenRac/URTC-UPDATER) - herramienta de escritorio que detecta, instala y actualiza los repositorios de la familia URTC, una acción explícita cada vez.
 
