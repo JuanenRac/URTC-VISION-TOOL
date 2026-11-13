@@ -17,7 +17,7 @@
 
 ---
 
-**Verifica di onestà - cosa funziona davvero oggi:** il protocollo dei sensori lato firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) è vero C puro coperto da 217 controlli `TEST_ASSERT` superati (`tests/test_*.c`, compilati ed eseguiti con il compilatore C dell'host), e la CI di questo repo li esegue davvero: il passo firmware di `.github/workflows/ci.yml` invoca `build_firmware.sh`, il cui passo 2 compila ed esegue sempre `tests/` prima di toccare la build STM32. Il pacchetto `vision_companion` lato host (`alignment.py`, `cli.py`) è anch'esso reale e coperto da 234 casi pytest superati, e la CI esegue anche quella suite (un passo dedicato installa `src/vision_companion/requirements.txt` ed esegue lì `pytest tests/`), quindi una regressione in una delle due metà fa fallire la build. Come già dice l'introduzione del README: per questa scheda non esistono ancora PCB/schema, quindi niente di tutto ciò ha mai letto un vero sensore MLX9064x o una telecamera RGB, né pilotato un vero transceiver CAN - `main.c`/`startup_stm32_minimal.c` dimostrano solo che la cross-compilazione e il link Cortex-M4F riescono con uno script di link provvisorio. Vedi `CHANGELOG.md` per cosa è stato effettivamente rilasciato.
+**Verifica di onestà - cosa funziona davvero oggi:** il protocollo dei sensori lato firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) è vero C puro coperto da 217 controlli `TEST_ASSERT` superati (`tests/test_*.c`, compilati ed eseguiti con il compilatore C dell'host), e la CI di questo repo li esegue davvero: il passo firmware di `.github/workflows/ci.yml` invoca `build_firmware.sh`, il cui passo 2 compila ed esegue sempre `tests/` prima di toccare la build STM32. Il pacchetto `vision_companion` lato host (`alignment.py`, `cli.py`) è anch'esso reale e coperto da 244 casi pytest superati, e la CI esegue anche quella suite (un passo dedicato installa `src/vision_companion/requirements.txt` ed esegue lì `pytest tests/`), quindi una regressione in una delle due metà fa fallire la build. Come già dice l'introduzione del README: per questa scheda non esistono ancora PCB/schema, quindi niente di tutto ciò ha mai letto un vero sensore MLX9064x o una telecamera RGB, né pilotato un vero transceiver CAN - `main.c`/`startup_stm32_minimal.c` dimostrano solo che la cross-compilazione e il link Cortex-M4F riescono con uno script di link provvisorio. Vedi `CHANGELOG.md` per cosa è stato effettivamente rilasciato.
 
 ---
 
@@ -29,7 +29,7 @@
 |---|---|
 | Versione | `0.2.0` |
 | Maturità | Funzionale |
-| Test | 234 (`pytest`) |
+| Test | 244 (`pytest`) |
 | Tecnologia | C / STM32 / Python vision companion |
 | Destinazione | Una scheda con microcontrollore (il firmware); compilato su un PC |
 | Su hardware reale | Non ancora: per questa versione non risulta alcuna esecuzione su hardware reale |
@@ -66,7 +66,7 @@ Non esiste ancora un PCB/schematico per questa scheda (vedi `hardware/`), quindi
 * 📡 **Integrazione con URTC** — decisa: questa testa è una testa utensile URTC e riutilizza l'utensile di ispezione termica di URTC (profilo utensile 22, MLX90640/90641/90642) e i suoi messaggi CAN `0x250`-`0x255` (avvio, stato, blocchi di pixel grezzi e calibrati, documentati in `docs/CANBUS.TXT` di URTC) invece di un secondo protocollo. Il lato host di quello scambio è reale e provato senza hardware (`urtc_thermal.py`, con una testa simulata); il firmware della testa, un transceiver CAN e una scheda assemblata non esistono ancora, quindi nulla di tutto ciò è girato su un bus. *(Il protocollo di frame lato sensore di questo repository, sotto, è un blocco separato provato sull'host; non trasporta l'immagine termica.)*
 * 🔒 **Controlli di Intervallo del Protocollo Sensore** — framing versionato con checksum CRC8, validazione dell'intervallo di misura, limitazione della velocità, controllo di freschezza dei frame (sequenza e timestamp) e contatori di diagnostica dedicati per errori/latenza/reset del bus. Frame in versione 2: ogni valore su più byte (il timestamp e la lettura termica) è big-endian, come il bus, e un frame di versione 1 viene rifiutato. *(implementato in C puro e testato solo su un PC; mai eseguito su una scheda o con un sensore reale e non è una funzione di sicurezza)*
 * ✅ **Toolchain firmware Cortex-M4F** — un'immagine bare-metal reale che compila e collega davvero con `arm-none-eabi-gcc`, la stessa toolchain dei repository gemelli URTC e URTC-SMART-RACK. *(implementato — vedi COMPILAZIONE sotto)*
-* ✅ **Pipeline di elaborazione `vision_companion`** — un pacchetto Python reale e funzionante: generazione sintetica di frame termici+RGB, rendering termico a falsi colori, allineamento ROI RGB->termico + estrazione di statistiche di temperatura, report statistico, tutto coperto da 234 casi pytest reali, funziona end-to-end senza hardware collegato. *(implementato — vedi COMPAGNO DI VISIONE sotto)*
+* ✅ **Pipeline di elaborazione `vision_companion`** — un pacchetto Python reale e funzionante: generazione sintetica di frame termici+RGB, rendering termico a falsi colori, allineamento ROI RGB->termico + estrazione di statistiche di temperatura, report statistico, tutto coperto da 244 casi pytest reali, funziona end-to-end senza hardware collegato. *(implementato — vedi COMPAGNO DI VISIONE sotto)*
 
 ## 🧩 Ruolo in URTC
 
@@ -175,7 +175,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-234 casi pytest reali coprono `cli.py`, `alignment.py` e gli altri moduli del pacchetto:
+244 casi pytest reali coprono `cli.py`, `alignment.py` e gli altri moduli del pacchetto:
 
 ```bash
 pip install -e ".[dev]"
@@ -192,7 +192,7 @@ Quali versioni dei programmi URTC funzionano insieme, e quale versione del proto
 
 ## 🧪 Test
 
-Due suite. Il lato firmware è C in `tests/` (217 controlli `TEST_ASSERT`): il frame del sensore, la lettura, il limitatore di frequenza, la diagnostica, la freschezza, gli scenari dell'intero collegamento, la robustezza contro input errati e i vettori condivisi di URTC-COMMON, compilati ed eseguiti con il compilatore C del computer e, in CI, con AddressSanitizer, UBSan e una soglia di copertura. Il lato host è il pacchetto `vision_companion`, con 234 casi pytest (`cd src/vision_companion && pytest`) che eseguono l'intera catena senza hardware: immagini sintetiche, falsi colori, allineamento, calibrazione, l'acquisizione termica contro una testa simulata, l'ispezione, la deriva e il controllo del rack. Quattro file di test Python verificano gli script di compilazione, gli asset della release e i file di versione. `bash build_firmware.sh` esegue i test C prima della compilazione incrociata e fallisce se un'asserzione fallisce. Anche il percorso di ricezione che userà un interrupt (`sensor_rx.c`: l'interrupt si limita a mettere il byte in un anello, il ciclo principale trova i frame, si risincronizza dopo uno danneggiato e scarta un frame a metà rimasto troppo in attesa) è logica pura, riprodotta byte per byte nei test.
+Due suite. Il lato firmware è C in `tests/` (217 controlli `TEST_ASSERT`): il frame del sensore, la lettura, il limitatore di frequenza, la diagnostica, la freschezza, gli scenari dell'intero collegamento, la robustezza contro input errati e i vettori condivisi di URTC-COMMON, compilati ed eseguiti con il compilatore C del computer e, in CI, con AddressSanitizer, UBSan e una soglia di copertura. Il lato host è il pacchetto `vision_companion`, con 244 casi pytest (`cd src/vision_companion && pytest`) che eseguono l'intera catena senza hardware: immagini sintetiche, falsi colori, allineamento, calibrazione, l'acquisizione termica contro una testa simulata, l'ispezione, la deriva e il controllo del rack. Quattro file di test Python verificano gli script di compilazione, gli asset della release e i file di versione. `bash build_firmware.sh` esegue i test C prima della compilazione incrociata e fallisce se un'asserzione fallisce. Anche il percorso di ricezione che userà un interrupt (`sensor_rx.c`: l'interrupt si limita a mettere il byte in un anello, il ciclo principale trova i frame, si risincronizza dopo uno danneggiato e scarta un frame a metà rimasto troppo in attesa) è logica pura, riprodotta byte per byte nei test.
 
 ## 🏗️ Compilazione e rilascio
 

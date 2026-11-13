@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The serial line of the SLCAN adapter is tested when it fails:** a port that goes away while it is written or read, an adapter that cannot flush its input, a port that cannot be closed, a package that is not installed and a line that never ends are each a clear error or are dropped as noise, with a fake line that fails on command; the coverage floor of the continuous check is raised to the value that is measured.
+
 - **The words of the rack check are tested in the eight languages:** the same placeholders in each, no stray spaces, the fallbacks of the lookup (an unknown language gives English, an unknown key gives the key), the place of the number in each language, and the register of German, French, Portuguese and Chinese.
 
 - **The check of the sensor is tested at its edges:** wrong shapes of the frames, too few frames, a sensor that reads no number at all, frames of another size, no pixel working in both the baseline and the new frames, new and recovered dead pixels, a common drift measured, the suggested calibration, and every way a baseline file can be unreadable or damaged (fixed seeds).
