@@ -30,7 +30,7 @@
 | Version | `0.2.0` |
 | Maturité | Fonctionnel |
 | Tests | 244 (`pytest`) |
-| Technologie | C / STM32 / compagnon de vision en Python |
+| Technologie | C / STM32 / Python vision companion |
 | Cible | Une carte à microcontrôleur (le firmware) ; compilé sur un PC |
 | Sur matériel réel | Pas encore : aucune exécution sur du matériel réel n'est consignée pour cette version |
 
