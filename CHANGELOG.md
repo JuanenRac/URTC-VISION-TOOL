@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The Related Projects section follows the shared texts of the documentation repository:** the programs are called the same way in every language (tester, updater, Web Studio) and the rate limit of the gateway is a frequency, never a bit rate.
+
 - **The Spanish, German, French, European Portuguese and Chinese README got a second terminology pass:** the same word now names the same thing within each file (a pixel chunk, the rack, the datalake, the thermal inspection tool, the alignment), the remaining English words in the technology row and in the table of the family were translated, and the "thermal exchange" of the CAN messages can no longer be read as a heat exchange.
 
 - **The Spanish, German, French and European Portuguese README were read sentence by sentence:** mixed registers and calques ("timestamp", "framing", "pipeline", "checksum", "assets", "companion") were corrected, words of another language that had slipped into the diagram and into two sentences were translated, and the same word is now used for the same thing throughout: images of the sensor are "images" and not "frames" (a frame is a CAN frame), the rate limiter is a frequency limiter ("cadence" in French) and not a bit rate.
