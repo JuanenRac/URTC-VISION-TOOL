@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "urtc_common_version": "0.2.4",
+  "urtc_common_version": "0.2.6",
   "files": {
     "urtc_crc8.h": {
       "from": "firmware_base/urtc_crc8.h",
