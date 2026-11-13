@@ -6,7 +6,7 @@
 
 <p align="center"><a href="README.md">🇺🇸 English</a> | <a href="README_spa.md">🇪🇸 Español</a> | 🇫🇷 <b>Français</b> | <a href="README_ita.md">🇮🇹 Italiano</a> | <a href="README_deu.md">🇩🇪 Deutsch</a> | <a href="README_zho.md">🇨🇳 简体中文</a> | <a href="README_jpn.md">🇯🇵 日本語</a> | <a href="README_por.md">🇵🇹 Português</a></p>
 
-### 🔬 Tête d'Outil Intégrée Combinant Perception Thermique et RGB
+### 🔬 Tête d'outil intégrée combinant perception thermique et RGB
 
 <p align="center">
   <img src="https://img.shields.io/badge/License-GPL%203.0-blue.svg" alt="GPL 3.0">
@@ -17,11 +17,11 @@
 
 ---
 
-**Vérification d'honnêteté - ce qui fonctionne réellement aujourd'hui :** le protocole capteurs côté firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) est du vrai C pur couvert par 217 vérifications `TEST_ASSERT` qui passent (`tests/test_*.c`, compilées et exécutées avec le compilateur C de l'hôte), et la CI de ce dépôt les exécute réellement : l'étape firmware de `.github/workflows/ci.yml` appelle `build_firmware.sh`, dont l'étape 2 compile et exécute toujours `tests/` avant de toucher au build STM32. Le paquet `vision_companion` côté hôte (`alignment.py`, `cli.py`) est lui aussi réel et couvert par 244 cas pytest qui passent, et la CI exécute aussi cette suite (une étape dédiée installe `src/vision_companion/requirements.txt` et y lance `pytest tests/`), donc une régression dans l'une ou l'autre moitié fait échouer le build. Comme le dit déjà l'introduction du README : il n'existe pas encore de PCB/schéma pour cette carte, donc rien ici n'a jamais lu un vrai capteur MLX9064x ou une caméra RGB, ni piloté un vrai transceiver CAN - `main.c`/`startup_stm32_minimal.c` prouvent seulement que la compilation croisée et l'édition de liens Cortex-M4F réussissent avec un script d'édition de liens provisoire. Voir `CHANGELOG.md` pour ce qui a réellement été publié.
+**Point d'honnêteté : ce qui fonctionne réellement aujourd'hui :** le protocole capteurs côté firmware (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) est du vrai C pur, couvert par 217 vérifications `TEST_ASSERT` qui passent (`tests/test_*.c`, compilées et exécutées avec le compilateur C de l'hôte), et la CI de ce dépôt les exécute réellement : l'étape firmware de `.github/workflows/ci.yml` appelle `build_firmware.sh`, dont l'étape 2 compile et exécute toujours `tests/` avant de toucher à la compilation pour STM32. Le paquet `vision_companion` côté hôte (`alignment.py`, `cli.py`) est lui aussi réel et couvert par 244 cas pytest qui passent, et la CI exécute aussi cette suite (une étape dédiée installe `src/vision_companion/requirements.txt` et y lance `pytest tests/`), donc une régression dans l'une ou l'autre moitié fait échouer la compilation. Comme le dit déjà l'introduction du README : il n'existe pas encore de PCB ni de schéma pour cette carte, donc rien ici n'a jamais lu un vrai capteur MLX9064x ni une caméra RGB, ni piloté un vrai transceiveur CAN ; `main.c` et `startup_stm32_minimal.c` prouvent seulement que la compilation croisée et l'édition de liens pour Cortex-M4F réussissent avec un script d'édition de liens provisoire. `CHANGELOG.md` indique ce qui a réellement été publié.
 
 ---
 
-> **État de la sûreté et de la cybersécurité :** cet écosystème n'est pas un système de sécurité certifié et aucune carte URTC assemblée n'existe encore. Les bootloaders contrôlent les images de firmware par CRC32 et un HMAC-SHA256 à clé partagée, pas par une signature asymétrique (prévue) ; les images d'application publiées sont signées avec la clé publique de développement (`signing_key_kind: dev`), si bien que n'importe qui peut produire une image acceptée par le bootloader ; rien n'a été transmis à une carte réelle. Lisez la [base de sécurité](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/SECURITY_BASELINE.md) et le [modèle de menaces](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/THREAT_MODEL.md) avant de vous fier à une affirmation d'ici pour la sécurité d'une personne.
+> **État de la sûreté et de la cybersécurité :** cet écosystème n'est pas un système de sécurité certifié et aucune carte URTC assemblée n'existe encore. Les bootloaders contrôlent les images de firmware par CRC32 et un HMAC-SHA256 à clé partagée, pas par une signature asymétrique (prévue) ; les images d'application publiées sont signées avec la clé publique de développement (`signing_key_kind: dev`), si bien que n'importe qui peut produire une image acceptée par le bootloader ; rien n'a été transmis à une carte réelle. Lisez la [base de sécurité](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/SECURITY_BASELINE.md) et le [modèle de menaces](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/THREAT_MODEL.md) avant de vous fier à une affirmation de ce dépôt quant à la sécurité d'une personne.
 
 ## 📋 En un coup d'œil
 
@@ -53,24 +53,24 @@
 
 ## 🎯 Présentation
 
-**URTC-VISION-TOOL** est une tête d'outil robotique spécialisée qui fusionne la perception visuelle et thermique en un seul effecteur compatible URTC. Conçue pour le contrôle qualité avancé, l'inspection thermique de PCB et l'alignement Pick-and-Place haute précision.
+**URTC-VISION-TOOL** est une tête d'outil robotique spécialisée qui fusionne la perception visuelle et thermique en un seul effecteur compatible URTC. Elle est conçue pour le contrôle qualité avancé, l'inspection thermique de PCB et l'alignement de haute précision en pick-and-place.
 
-Équipée d'une caméra RGB à obturateur global et d'un capteur thermique de la famille MLX9064x, elle fournit au Vision AI Node des données à double modalité, lui permettant de détecter non seulement la présence d'un composant mais aussi sa température de fonctionnement ou la dissipation thermique d'une soudure.
+Équipée d'une caméra RGB à obturateur global et d'un capteur thermique de la famille MLX9064x, elle fournit au nœud de vision par IA des données de deux natures, ce qui lui permet de détecter non seulement la présence d'un composant, mais aussi sa température de fonctionnement ou la dissipation thermique d'une soudure.
 
-Aucun PCB/schéma n'existe encore pour cette carte (voir `hardware/`), donc rien ci-dessous ne peut piloter de vrais capteurs thermiques/RGB - mais la chaîne d'outils firmware et le pipeline de vision côté hôte (génération synthétique de trames, rendu en fausses couleurs, alignement de ROI RGB->thermique et extraction de statistiques de température, le tout couvert par pytest) sont réels et fonctionnent aujourd'hui.
+Aucun PCB ni schéma n'existe encore pour cette carte (voir `hardware/`), donc rien ci-dessous ne peut piloter de vrais capteurs thermiques ou RGB, mais la chaîne d'outils du firmware et la chaîne de vision côté hôte (génération d'images synthétiques, rendu en fausses couleurs, alignement de la ROI RGB->thermique et extraction de statistiques de température, le tout couvert par pytest) sont réelles et fonctionnent aujourd'hui.
 
-### Fonctionnalités Clés :
-* 🔬 **Perception Double-Modale** — capture synchronisée d'images Thermique et RGB. *(le pipeline de traitement alimenté par les deux trames est réel - voir ci-dessous ; la capture synchronisée réelle nécessite le PCB et les capteurs.)*
-* 🌡️ **Thermique Haute Précision** — prise en charge intégrée des capteurs MLX90640/41/42. *(le rendu en fausses couleurs et l'extraction de statistiques par région sont réels - voir ci-dessous ; lire un vrai MLX9064x par I2C nécessite le PCB.)*
-* 🎯 **Alignement Eye-in-Hand** — PnP et AOI (Inspection Optique Automatisée) sub-millimétrique. *(le mappage de coordonnées ROI RGB->thermique et l'extraction de statistiques de température sont réels et testés - voir `vision_companion/alignment.py` ci-dessous ; la précision sub-millimétrique nécessite une vraie caméra calibrée.)*
-* 📡 **Intégration à URTC** — décidée : cette tête est une tête d'outil URTC et réutilise l'outil d'inspection thermique d'URTC (profil d'outil 22, MLX90640/90641/90642) et ses messages CAN `0x250`-`0x255` (déclenchement, état, blocs de pixels bruts et calibrés, documentés dans `docs/CANBUS.TXT` d'URTC) au lieu d'un second protocole. Le côté hôte de cet échange est réel et testé sans matériel (`urtc_thermal.py`, avec une tête simulée) ; le firmware de la tête, un transceiver CAN et une carte montée n'existent pas encore, donc rien de tout cela n'a tourné sur un bus. *(Le protocole de trames côté capteur de ce dépôt, ci-dessous, est une brique distincte testée sur l'hôte ; il ne transporte pas l'image thermique.)*
-* 🔒 **Contrôles de Plage du Protocole Capteur** — trame versionnée avec somme de contrôle CRC8, validation de plage de mesure, limitation de débit, contrôle de fraîcheur des trames (séquence et horodatage) et compteurs de diagnostic dédiés d'erreurs/latence/réinitialisations de bus. Trame en version 2 : toute valeur sur plusieurs octets (l'horodatage et la mesure thermique) est en big-endian, comme le bus, et une trame de version 1 est refusée. *(implémenté en C pur et testé uniquement sur un PC ; jamais exécuté sur une carte ni avec un vrai capteur, et pas une fonction de sécurité)*
-* ✅ **Chaîne d'outils firmware Cortex-M4F** — une image bare-metal réelle qui compile et se lie réellement avec `arm-none-eabi-gcc`, la même chaîne d'outils que les dépôts frères URTC et URTC-SMART-RACK. *(implémenté — voir COMPILATION ci-dessous)*
-* ✅ **Pipeline de traitement `vision_companion`** — un vrai paquet Python fonctionnel : génération synthétique de trames thermiques+RGB, rendu thermique en fausses couleurs, alignement de ROI RGB->thermique + extraction de statistiques de température, rapport de statistiques, le tout couvert par 244 cas pytest réels, fonctionne de bout en bout sans matériel connecté. *(implémenté — voir COMPAGNON DE VISION ci-dessous)*
+### Fonctionnalités clés :
+* 🔬 **Perception bimodale** — capture synchronisée d'images thermiques et RGB. *(la chaîne de traitement alimentée par les deux images est réelle, voir ci-dessous ; la capture synchronisée réelle nécessite le PCB et les capteurs.)*
+* 🌡️ **Thermique haute précision** — prise en charge intégrée des capteurs MLX90640, MLX90641 et MLX90642. *(le rendu en fausses couleurs et l'extraction de statistiques par région sont réels, voir ci-dessous ; lire un vrai MLX9064x par I2C nécessite le PCB.)*
+* 🎯 **Alignement Eye-in-Hand** — PnP et AOI (inspection optique automatisée) submillimétriques. *(la correspondance des coordonnées de la ROI RGB->thermique et l'extraction de statistiques de température sont réelles et testées, voir `vision_companion/alignment.py` ci-dessous ; la précision submillimétrique nécessite une vraie caméra calibrée.)*
+* 📡 **Intégration à URTC** — décidée : cette tête est une tête d'outil URTC et réutilise l'outil d'inspection thermique d'URTC (profil d'outil 22, MLX90640/90641/90642) et ses messages CAN `0x250`-`0x255` (déclenchement, état, blocs de pixels bruts et calibrés, documentés dans `docs/CANBUS.TXT` d'URTC) au lieu d'un second protocole. Le côté hôte de cet échange est réel et testé sans matériel (`urtc_thermal.py`, avec une tête simulée) ; le firmware de la tête, un transceiveur CAN et une carte montée n'existent pas encore, donc rien de tout cela n'a tourné sur un bus. *(Le protocole de trames côté capteur de ce dépôt, ci-dessous, est une brique distincte testée sur l'hôte ; il ne transporte pas l'image thermique.)*
+* 🔒 **Contrôles de plage du protocole du capteur** — trame versionnée avec somme de contrôle CRC8, validation de la plage de mesure, limitation de cadence, contrôle de fraîcheur des trames (séquence et horodatage) et compteurs de diagnostic dédiés aux erreurs, à la latence et aux réinitialisations du bus. Trame en version 2 : toute valeur sur plusieurs octets (l'horodatage et la mesure thermique) est en big-endian, comme le bus, et une trame de version 1 est refusée. *(implémenté en C pur et testé uniquement sur un PC ; jamais exécuté sur une carte ni avec un vrai capteur, et pas une fonction de sécurité)*
+* ✅ **Chaîne d'outils firmware Cortex-M4F** — une image bare-metal réelle qui se compile et se lie réellement avec `arm-none-eabi-gcc`, la même chaîne d'outils que les dépôts frères URTC et URTC-SMART-RACK. *(implémenté, voir « Compilation et publication » ci-dessous)*
+* ✅ **Chaîne de traitement `vision_companion`** — un vrai paquet Python fonctionnel : génération d'images thermiques et RGB synthétiques, rendu thermique en fausses couleurs, alignement de la ROI RGB->thermique, extraction de statistiques de température et rapport de statistiques ; le tout est couvert par 244 cas pytest réels et fonctionne de bout en bout sans matériel connecté. *(implémenté, voir « Compagnon de vision » ci-dessous)*
 
 ## 🧩 Rôle dans URTC
 
-URTC-VISION-TOOL est une tête d'outil qui réunit une caméra RVB et un capteur thermique MLX9064x, pour le contrôle qualité, l'inspection thermique de cartes et l'alignement d'une tête de placement. C'est une tête d'outil URTC : elle réutilise l'outil d'inspection thermique d'URTC et ses messages CAN `0x250` à `0x255` plutôt qu'un second protocole, et fournit au nœud de vision (Hailo-8) et au contrôleur HYDRA-UMC des données de deux natures, si bien qu'un composant se juge non seulement à sa présence mais à sa température. Ce qui est réel aujourd'hui, c'est le protocole du capteur du firmware et le compagnon de vision côté hôte, tous deux testés sur un ordinateur ; aucune carte n'existe encore. C'est un outil complémentaire, pas un enfant d'URTC.
+URTC-VISION-TOOL est une tête d'outil qui réunit une caméra RGB et un capteur thermique MLX9064x, pour le contrôle qualité, l'inspection thermique de cartes et l'alignement d'une tête de placement. C'est une tête d'outil URTC : elle réutilise l'outil d'inspection thermique d'URTC et ses messages CAN `0x250` à `0x255` plutôt qu'un second protocole, et fournit au nœud de vision (Hailo-8) et au contrôleur HYDRA-UMC des données de deux natures, si bien qu'un composant se juge non seulement à sa présence mais à sa température. Ce qui est réel aujourd'hui, c'est le protocole du capteur du firmware et le compagnon de vision côté hôte, tous deux testés sur un ordinateur ; aucune carte n'existe encore. C'est un outil complémentaire, pas un enfant d'URTC.
 
 ## 🏛️ Architecture
 
@@ -86,31 +86,31 @@ Comment les parties de ce dépôt s'articulent : qui l'utilise, ce qu'il contien
 ```mermaid
 flowchart LR
     TOOL["URTC-VISION-TOOL"] --> RGB["Caméra RGB (USB 3.0)"]
-    TOOL --> THRM["Capteur Thermique (CAN / I2C)"]
+    TOOL --> THRM["Capteur thermique (CAN / I2C)"]
     RGB --> VISION["VISION-NODE (Hailo-8)"]
     THRM --> CORE["Cœur HYDRA-UMC (STM32)"]
-    VISION --> SYNC["Fusion Multi-Modale"]
+    VISION --> SYNC["Fusion multimodale"]
     CORE --> SYNC
-    SYNC --> DASH["Tableau de Bord Studio"]
+    SYNC --> DASH["Tableau de bord Studio"]
 ```
 
 </details>
 
-### ARCHITECTURE & DÉCISIONS DE CONCEPTION
+### Architecture et décisions de conception
 
-* **Pourquoi ce projet a 2 pistes de version indépendantes.** `src/firmware_common.h` (le firmware côté STM32) et `src/vision_companion/vision_companion/__init__.py` (un paquet Python séparé côté hôte) sont versionnés indépendamment - ils tournent sur du matériel différent (MCU contre hôte CM5/PC) et sont publiés selon des calendriers différents.
-* **Pourquoi ce n'est pas un enfant d'URTC lui-même.** Même raison que le propre README d'URTC-SMART-RACK - un Outil Complémentaire qui partage les conventions de firmware d'URTC, sans faire partie de sa hiérarchie d'intégration.
-* **Pourquoi un paquet compagnon côté hôte.** La capture bi-modale thermique/RGB nécessite un vrai traitement d'image (numpy/Pillow) qui n'a pas sa place sur le STM32 lui-même - le paquet compagnon est là où cela se passe réellement. Il n'a pas d'accès propre au bus, mais il parle les messages d'inspection thermique d'URTC (`urtc_thermal.py`) : il construit les requêtes, recompose les blocs de 16 pixels en une image et remet les messages à ce qui transporte le bus.
-* **Pourquoi `alignment.py` suppose un champ de vision partagé plutôt qu'une vraie homographie.** Les deux capteurs sont sur la même tête d'outil rigide, donc une remise à l'échelle linéaire par axe entre les coordonnées de pixel en espace RGB et en espace thermique est une approximation v0 raisonnable - une vraie calibration par pixel (damier, distorsion d'objectif) nécessite de vraies caméras pour se calibrer, qui n'existent pas encore.
-* **Comment cela s'intègre dans le reste de l'écosystème.** Fait partie de l'écosystème d'outils d'URTC (il réutilise l'outil d'inspection thermique d'URTC et ses messages CAN, voir plus haut), et forme une paire naturelle avec HYDRA-UMC-DETECTION-HEF pour le même rôle de reconnaissance visuelle qu'URTC-SMART-RACK remplit aussi.
-* **Pourquoi le protocole de trame du capteur porte son propre champ d'horodatage.** Un véritable horodatage en millisecondes côté capteur permet à l'appelant de savoir *quand* une lecture a réellement été effectuée, indépendamment du moment où le MCU parvient à analyser la trame - une réelle valeur d'historisation/diagnostic qu'une simple hypothèse « vient d'arriver » ferait perdre.
-* **Pourquoi les compteurs de diagnostic (`sensor_diagnostics.c`) ne prennent jamais eux-mêmes de décision d'acceptation/rejet.** Seuls `sensor_frame.c` (trame), `sensor_reading.c` (plage) et `rate_limiter.c` (limitation de débit) décident si une trame est fiable - le diagnostic se contente d'enregistrer ce qu'ils ont décidé. Maintenir cette frontière stricte signifie qu'un bug de diagnostic ne peut jamais laisser passer accidentellement de mauvaises données, le fameux « separar diagnostico de salida de control » des notes de diagnostic.
+* **Pourquoi ce projet a deux lignes de versions indépendantes.** `src/firmware_common.h` (le firmware côté STM32) et `src/vision_companion/vision_companion/__init__.py` (un paquet Python séparé côté hôte) sont versionnés indépendamment : ils tournent sur du matériel différent (MCU contre hôte CM5 ou PC) et sont publiés selon des calendriers différents.
+* **Pourquoi ce n'est pas un enfant d'URTC.** C'est la même raison que dans le README d'URTC-SMART-RACK : un outil complémentaire qui partage les conventions de firmware d'URTC, sans faire partie de sa hiérarchie d'intégration.
+* **Pourquoi un paquet compagnon côté hôte.** La capture double, thermique et RGB, nécessite un vrai traitement d'image (numpy et Pillow) qui n'a pas sa place sur le STM32 lui-même : le paquet compagnon est là où cela se passe réellement. Il n'a pas d'accès propre au bus, mais il parle les messages d'inspection thermique d'URTC (`urtc_thermal.py`) : il construit les requêtes, recompose les blocs de 16 pixels en une image et remet les messages à ce qui transporte le bus.
+* **Pourquoi `alignment.py` suppose un champ de vision partagé plutôt qu'une vraie homographie.** Les deux capteurs sont sur la même tête d'outil rigide, donc une remise à l'échelle linéaire par axe entre les coordonnées de pixel en espace RGB et en espace thermique est une approximation raisonnable pour la version 0 ; une vraie calibration par pixel (damier, distorsion d'objectif) nécessite de vraies caméras avec lesquelles calibrer, et elles n'existent pas encore.
+* **Comment cela s'intègre dans le reste de l'écosystème.** C'est une tête d'outil URTC (elle réutilise l'outil d'inspection thermique d'URTC et ses messages CAN, voir plus haut), et forme une paire naturelle avec HYDRA-UMC-DETECTION-HEF pour le même rôle de reconnaissance visuelle qu'URTC-SMART-RACK remplit aussi.
+* **Pourquoi le protocole de trame du capteur porte son propre champ d'horodatage.** Un véritable horodatage en millisecondes côté capteur permet à l'appelant de savoir *quand* une lecture a réellement été effectuée, indépendamment du moment où le MCU parvient à analyser la trame : une information utile pour l'historique et le diagnostic qu'une simple hypothèse « vient d'arriver » ferait perdre.
+* **Pourquoi les compteurs de diagnostic (`sensor_diagnostics.c`) ne prennent jamais eux-mêmes de décision d'acceptation ou de rejet.** Seuls `sensor_frame.c` (trame), `sensor_reading.c` (plage) et `rate_limiter.c` (limitation de cadence) décident si une trame est fiable ; le diagnostic se contente d'enregistrer ce qu'ils ont décidé. Maintenir cette frontière stricte signifie qu'un bogue du diagnostic ne peut jamais laisser passer accidentellement de mauvaises données ; les notes de diagnostic appellent cela « séparer le diagnostic de la sortie de commande ».
 
 ## ✨ Fonctionnalités
 
 **Inspection thermique par région, export de séries, dérive du capteur et contrôle du rack (testé sur l'hôte seulement) :** `inspect` juge chaque composant d'un plan selon la règle de température de son type et peut exporter le minimum, le maximum et la moyenne de chaque région sous forme d'échantillons pour le datalake de HYDRA-UMC, en lignes JSON ou en valeurs de nœuds OPC-UA ; `drift-check` compare des images d'une scène de référence à une base (pixels morts, dérive de décalage) et peut écrire un fichier de calibration ; `rack-check` juge les pointes du rack d'outils à partir d'une image thermique. `rack-watch` suit les pointes pendant que le rack chauffe et indique quand chaque emplacement a atteint sa cible et si l'outil peut être changé ; `rack-simulate` écrit les images d'un rack simulé (sain ou avec un défaut) pour l'essayer sans caméra ; les commandes du rack s'affichent en huit langues (`--lang`). Voir [la référence de la CLI](docs/CLI_REFERENCE.md). Exécuté sur des images synthétiques seulement ; aucune caméra ni carte n'a été utilisée.
 
-**Capture thermique par un adaptateur CAN série (nouveau, testé seulement contre un adaptateur et une tête simulés) :** `capture --port PORT` lit une image calibrée d'une tête URTC qui porte l'outil d'inspection thermique, à travers un adaptateur SLCAN (un port série ou une URL pyserial), avec l'échange de `0x250` à `0x255`, et l'enregistre en `.npy` et en PNG en fausses couleurs, prêt pour `inspect`, `drift-check` et `rack-check`. Une tête qui signale une erreur, ne devient jamais prête ou laisse un bloc sans réponse termine la commande avec un message clair (code de sortie 1), et un port qui ne peut pas être ouvert la termine avec le code 2. Elle n'a pas été exécutée avec un vrai adaptateur, bus ou tête.
+**Capture thermique par un adaptateur CAN série (nouveau, testé seulement contre un adaptateur et une tête simulés) :** `capture --port PORT` lit une image calibrée d'une tête URTC qui porte l'outil d'inspection thermique, à travers un adaptateur SLCAN (un port série ou une URL pyserial), avec l'échange de `0x250` à `0x255`, et l'enregistre en `.npy` et en PNG en fausses couleurs, prêt pour `inspect`, `drift-check` et `rack-check`. Une tête qui signale une erreur, ne devient jamais prête ou laisse un bloc sans réponse termine la commande avec un message clair (code de sortie 1), et un port qui ne peut pas être ouvert la termine avec le code 2. Elle n'a pas été exécutée avec un vrai adaptateur, un vrai bus ni une vraie tête.
 
 ## 🔒 Sécurité et protection
 
@@ -144,7 +144,7 @@ chmod +x build_firmware.sh   # une seule fois
 build_firmware.bat
 ```
 
-### COMPAGNON DE VISION (Python côté hôte)
+### Compagnon de vision (Python côté hôte)
 
 Cette partie fonctionne aujourd'hui, entièrement, sans aucun matériel connecté :
 
@@ -160,9 +160,9 @@ python3 -m venv .venv
 .venv\Scripts\python -m vision_companion selftest
 ```
 
-`selftest` génère une trame thermique synthétique de forme MLX9064x (32x24, avec un point chaud façon pointe à souder) et un motif de test RGB à barres de couleur, rend/enregistre les deux en fichiers réels, et affiche leurs statistiques — preuve que le pipeline de traitement numpy/Pillow fonctionne réellement, indépendamment de l'étape de capture réelle du capteur qui viendra une fois le matériel existant.
+`selftest` génère une image thermique synthétique de forme MLX9064x (32x24, avec un point chaud façon pointe à souder) et une mire RGB à barres de couleur, rend et enregistre les deux en fichiers réels, et affiche leurs statistiques : preuve que la chaîne de traitement numpy et Pillow fonctionne réellement, indépendamment de la capture avec le capteur réel, qui viendra une fois le matériel disponible.
 
-`analyze-roi X0 Y0 X1 Y1` mappe une boîte englobante en espace RGB vers l'espace thermique et rapporte des statistiques de température réelles pour cette région — la logique d'alignement derrière la fonctionnalité Eye-in-Hand Alignment du README, réelle aujourd'hui :
+`analyze-roi X0 Y0 X1 Y1` reporte une boîte englobante de l'espace RGB vers l'espace thermique et fournit des statistiques de température réelles pour cette région ; c'est la logique d'alignement derrière la fonctionnalité Eye-in-Hand du README, réelle aujourd'hui :
 
 ```bash
 .venv/bin/python -m vision_companion analyze-roi 280 210 360 270
@@ -182,7 +182,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-Voir `src/vision_companion/README.md` pour la documentation complète du compagnon, et [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md) pour chaque commande, option et code de sortie avec une sortie réelle capturée.
+La documentation complète du compagnon est dans `src/vision_companion/README.md`, et [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md) décrit chaque commande, option et code de sortie avec une sortie réelle capturée.
 
 <!-- urtc-section:compatibility -->
 ### Prérequis et compatibilité
@@ -192,19 +192,19 @@ Les versions des programmes URTC qui fonctionnent ensemble, et la version du pro
 
 ## 🧪 Tests
 
-Deux suites. Le côté firmware est du C dans `tests/` (217 vérifications `TEST_ASSERT`) : la trame du capteur, la mesure, le limiteur de débit, les diagnostics, la fraîcheur, les scénarios de toute la liaison, la robustesse face aux entrées erronées et les vecteurs partagés d'URTC-COMMON, compilés et exécutés avec le compilateur C de la machine et, en CI, avec AddressSanitizer, UBSan et un plancher de couverture. Le côté hôte est le paquet `vision_companion`, avec 244 cas pytest (`cd src/vision_companion && pytest`) qui exécutent toute la chaîne sans matériel : images synthétiques, fausses couleurs, alignement, calibration, la capture thermique contre une tête simulée, l'inspection, la dérive et le contrôle du rack. Quatre fichiers de test Python vérifient les scripts de compilation, les ressources de release et les fichiers de version. `bash build_firmware.sh` exécute les tests C avant la compilation croisée et échoue si une assertion échoue. Le chemin de réception qu'utilisera une interruption (`sensor_rx.c` : l'interruption ne fait que mettre l'octet dans un anneau, la boucle principale trouve les trames, se resynchronise après une trame abîmée et abandonne une demi-trame restée trop longtemps en attente) est aussi de la logique pure, rejouée octet par octet dans les tests.
+Deux suites. Le côté firmware est du C dans `tests/` (217 vérifications `TEST_ASSERT`) : la trame du capteur, la mesure, le limiteur de cadence, les diagnostics, la fraîcheur, les scénarios de toute la liaison, la robustesse face aux entrées erronées et les vecteurs partagés d'URTC-COMMON, compilés et exécutés avec le compilateur C de la machine et, en CI, avec AddressSanitizer, UBSan et un plancher de couverture. Le côté hôte est le paquet `vision_companion`, avec 244 cas pytest (`cd src/vision_companion && pytest`) qui exécutent toute la chaîne sans matériel : images synthétiques, fausses couleurs, alignement, calibration, la capture thermique contre une tête simulée, l'inspection, la dérive et le contrôle du rack. Quatre fichiers de test Python vérifient les scripts de compilation, les fichiers joints de la release et les fichiers de version. `bash build_firmware.sh` exécute les tests C avant la compilation croisée et s'interrompt si une assertion échoue. Le chemin de réception qu'utilisera une interruption (`sensor_rx.c` : l'interruption ne fait que mettre l'octet dans un anneau, la boucle principale trouve les trames, se resynchronise après une trame abîmée et abandonne une demi-trame restée trop longtemps en attente) est aussi de la logique pure, rejouée octet par octet dans les tests.
 
 ## 🏗️ Compilation et publication
 
-La compilation commence par compiler et exécuter `tests/` avec le compilateur C *de la machine* (jamais `arm-none-eabi-gcc` : ce sont des tests de logique pure, sans toucher aux registres du MCU) et échoue entièrement si une assertion échoue. Ensuite seulement elle compile `main.c` et `startup_stm32_minimal.c` pour Cortex-M4F, les lie avec la carte mémoire provisoire `STM32_MINIMAL.ld` et publie des fichiers `.elf`/`.bin`/`.hex` versionnés dans `firmware/`. Compiler ne change jamais la version.
+La compilation commence par compiler et exécuter `tests/` avec le compilateur C *de la machine* (jamais `arm-none-eabi-gcc` : ce sont des tests de logique pure, sans toucher aux registres du MCU) et s'interrompt entièrement si une assertion échoue. Ensuite seulement elle compile `main.c` et `startup_stm32_minimal.c` pour Cortex-M4F, les lie avec la carte mémoire provisoire `STM32_MINIMAL.ld` et publie des fichiers `.elf`/`.bin`/`.hex` versionnés dans `firmware/`. Compiler ne change jamais la version.
 
 Chaque module de `src/` est aussi compilé pour Cortex-M4F et tous sont liés ensemble par vérification (aucune bibliothèque C n'est disponible sur la cible), même si l'image ne contient aujourd'hui que `main.c` et le fichier de démarrage. Avec `URTC_CI=1`, aucun fichier suivi n'est touché.
 
-Il n'y a encore rien à flasher sur du matériel réel - aucun PCB n'existe pour confirmer la référence STM32 cible, le brochage, le câblage du MLX9064x, ou l'interface de la caméra RGB.
+Il n'y a encore rien à flasher sur du matériel réel : aucun PCB n'existe pour confirmer la référence STM32 cible, le brochage, le câblage du MLX9064x ni l'interface de la caméra RGB.
 
-Les images du firmware (`.bin`, `.hex`, `.elf`) ne sont pas versionnées dans git : un build de release écrit `firmware/URTC_VISION_TOOL_FIRMWARE_v<version>.*` (ignoré par git ; `build/firmware` en mode CI, `URTC_CI=1`) et elles ne sont publiées que comme assets de la release GitHub de chaque version. `python tools/publish_release_assets.py` vérifie les fichiers, écrit le fichier `.sha256` manquant et affiche la commande `gh release create` exacte avec les fichiers à joindre.
+Les images du firmware (`.bin`, `.hex`, `.elf`) ne sont pas versionnées dans git : une compilation de release écrit `firmware/URTC_VISION_TOOL_FIRMWARE_v<version>.*` (ignoré par git ; `build/firmware` en mode CI, `URTC_CI=1`) et elles ne sont publiées que comme fichiers joints de la release GitHub de chaque version. `python tools/publish_release_assets.py` vérifie les fichiers, écrit le fichier `.sha256` manquant et affiche la commande `gh release create` exacte avec les fichiers à joindre.
 
-Voir [`CHANGELOG.md`](CHANGELOG.md) pour l'historique complet des versions ; chaque version y a sa propre entrée.
+L'historique complet des versions est dans [`CHANGELOG.md`](CHANGELOG.md) ; chaque version y a sa propre entrée.
 
 ## 📂 Structure du dépôt
 
@@ -284,9 +284,9 @@ URTC est fait de dépôts indépendants, chacun avec sa version, ses tests et so
 
 ## 📚 Documentation
 
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — pile technologique et lignes directrices de codage pour une pull request.
-- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** — les normes de comportement attendues dans cette communauté.
-- **[SECURITY.md](SECURITY.md)** — comment signaler une vulnérabilité, et les véritables axes de sécurité de ce projet.
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — technologies utilisées et consignes de codage pour une pull request.
+- **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** — les règles de conduite attendues dans cette communauté.
+- **[SECURITY.md](SECURITY.md)** — comment signaler une vulnérabilité, et les véritables priorités de sécurité de ce projet.
 - **[SUPPORT.md](SUPPORT.md)** — où poser des questions et signaler des bugs.
 - **[LICENSE.md](LICENSE.md)** — la licence propre de ce projet.
 
