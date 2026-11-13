@@ -30,7 +30,7 @@
 | Version | `0.2.0` |
 | Reifegrad | Funktionsfähig |
 | Tests | 244 (`pytest`) |
-| Technik | C / STM32 / Python-Vision-Companion |
+| Technik | C / STM32 / Python vision companion |
 | Ziel | Eine Mikrocontroller-Platine (die Firmware); wird auf einem PC gebaut |
 | Auf echter Hardware | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
 
