@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The copy of the shared vectors is current again:** the table of magic payloads of the common repository has one more row (the command that lifts a latched error of a tool head), and the copy and its lock follow it. This program does not use that command.
+
 - **The Related Projects section follows the shared texts of the documentation repository:** the programs are called the same way in every language (tester, updater, Web Studio) and the rate limit of the gateway is a frequency, never a bit rate.
 
 - **The Spanish, German, French, European Portuguese and Chinese README got a second terminology pass:** the same word now names the same thing within each file (a pixel chunk, the rack, the datalake, the thermal inspection tool, the alignment), the remaining English words in the technology row and in the table of the family were translated, and the "thermal exchange" of the CAN messages can no longer be read as a heat exchange.
