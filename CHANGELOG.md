@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [0.2.1] - Refreshed shared vectors, SLCAN failure and sensor check tests, and README readings
 
 - **The copy of the shared vectors is current again:** the table of magic payloads of the common repository has one more row (the command that lifts a latched error of a tool head), and the copy and its lock follow it. This program does not use that command.
 
@@ -21,6 +21,8 @@ All notable changes to this project are documented here.
 - **The shared document policy check is refreshed:** `tools/_doc_policy.py` and `tools/ci_validate.py` are the current copies, which also fail when a build script changes a version and when a script switches into a virtual environment instead of running its python directly.
 
 - **The version of the Python companion has its own step in `bump.py`:** `python bump.py --companion` raises `__version__` of the `vision_companion` package on the ecosystem odometer (`--dry-run` only shows it) and leaves the line endings of the file as they are, so it is no longer bumped by hand. The version of the package stays independent of the version of the project.
+
+## [Unreleased]
 
 ## [0.2.0] - The Spanish README says "grabar" instead of the calque "flashear": the same word as the window of the programs. (and 7 more changes)
 
