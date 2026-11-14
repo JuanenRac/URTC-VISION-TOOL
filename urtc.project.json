@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "ecosystem": "URTC",
   "name": "URTC-VISION-TOOL",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "min_common": "0.2.6",
   "role": "firmware",
   "stack": "firmware-c",
