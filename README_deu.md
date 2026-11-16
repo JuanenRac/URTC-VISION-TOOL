@@ -17,7 +17,7 @@
 
 ---
 
-**Ehrlicher Zwischenstand: Was heute wirklich funktioniert:** das firmwareseitige Sensorprotokoll (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) ist echtes, reines C, abgesichert durch 217 bestandene `TEST_ASSERT`-Prüfungen (`tests/test_*.c`, mit dem C-Compiler des Hosts kompiliert und ausgeführt), und die CI dieses Repositorys führt sie wirklich aus: der Firmware-Schritt von `.github/workflows/ci.yml` ruft `build_firmware.sh` auf, dessen Schritt 2 immer `tests/` kompiliert und ausführt, bevor der Build für den STM32 beginnt. Das hostseitige Paket `vision_companion` (`alignment.py`, `cli.py`) ist ebenfalls echt und durch 244 bestandene pytest-Fälle abgesichert, und die CI führt auch diese Suite aus (ein eigener Schritt installiert `src/vision_companion/requirements.txt` und führt dort `pytest tests/` aus), sodass eine Regression in einer der beiden Hälften den Build scheitern lässt. Wie die Einleitung des READMEs schon sagt: Für diese Platine gibt es noch keine Leiterplatte und keinen Schaltplan, daher hat nichts hiervon je einen echten MLX9064x-Sensor oder eine RGB-Kamera gelesen oder einen echten CAN-Transceiver angesteuert - `main.c` und `startup_stm32_minimal.c` belegen nur, dass Cross-Kompilieren und Linken für Cortex-M4F mit einem vorläufigen Linker-Skript gelingen. Den genauen Stand zeigt `CHANGELOG.md`.
+**Ehrlicher Zwischenstand: Was heute wirklich funktioniert:** das firmwareseitige Sensorprotokoll (`sensor_frame.c`, `sensor_reading.c`, `rate_limiter.c`, `sensor_freshness.c`, `sensor_diagnostics.c`, `vision_sensor_link.c`) ist echtes, reines C, abgesichert durch 217 bestandene `TEST_ASSERT`-Prüfungen (`tests/test_*.c`, mit dem C-Compiler des Hosts kompiliert und ausgeführt), und die CI dieses Repositorys führt sie wirklich aus: der Firmware-Schritt von `.github/workflows/ci.yml` ruft `build_firmware.sh` auf, dessen Schritt 2 immer `tests/` kompiliert und ausführt, bevor der Build für den STM32 beginnt. Das hostseitige Paket `vision_companion` (`alignment.py`, `cli.py`) ist ebenfalls echt und durch 249 bestandene pytest-Fälle abgesichert, und die CI führt auch diese Suite aus (ein eigener Schritt installiert `src/vision_companion/requirements.txt` und führt dort `pytest tests/` aus), sodass eine Regression in einer der beiden Hälften den Build scheitern lässt. Wie die Einleitung des READMEs schon sagt: Für diese Platine gibt es noch keine Leiterplatte und keinen Schaltplan, daher hat nichts hiervon je einen echten MLX9064x-Sensor oder eine RGB-Kamera gelesen oder einen echten CAN-Transceiver angesteuert - `main.c` und `startup_stm32_minimal.c` belegen nur, dass Cross-Kompilieren und Linken für Cortex-M4F mit einem vorläufigen Linker-Skript gelingen. Den genauen Stand zeigt `CHANGELOG.md`.
 
 ---
 
@@ -29,7 +29,7 @@
 |---|---|
 | Version | `0.2.1` |
 | Reifegrad | Funktionsfähig |
-| Tests | 244 (`pytest`) |
+| Tests | 249 (`pytest`) |
 | Technik | C / STM32 / Python vision companion |
 | Ziel | Eine Mikrocontroller-Platine (die Firmware); wird auf einem PC gebaut |
 | Auf echter Hardware | Noch nicht: für diese Version ist kein Lauf auf echter Hardware vermerkt |
@@ -66,7 +66,7 @@ Für diese Platine existiert noch keine PCB/kein Schaltplan (siehe `hardware/`),
 * 📡 **URTC-Integration** — entschieden: Dieser Kopf ist ein URTC-Werkzeugkopf und nutzt das Werkzeug für thermische Inspektion von URTC (Werkzeugprofil 22, MLX90640/90641/90642) mit seinen CAN-Nachrichten `0x250`-`0x255` (Auslöser, Status, Roh- und kalibrierte Pixelblöcke, dokumentiert in `docs/CANBUS.TXT` von URTC) statt eines zweiten Protokolls. Die Hostseite dieses Austauschs ist real und ohne Hardware getestet (`urtc_thermal.py`, mit einem simulierten Kopf); die Firmware des Kopfes, ein CAN-Transceiver und eine bestückte Platine gibt es noch nicht, daher lief nichts davon auf einem Bus. *(Das sensorseitige Frame-Protokoll dieses Repositorys, siehe unten, ist ein eigener, auf dem Host getesteter Baustein; es transportiert nicht das Wärmebild.)*
 * 🔒 **Bereichsprüfungen des Sensorprotokolls** — versionierte Frames mit CRC8-Prüfsumme, Prüfung des Messbereichs, Ratenbegrenzung, Aktualitätsprüfung der Frames (Sequenz und Zeitstempel) und eigene Diagnosezähler für Fehler, Latenz und Bus-Resets. Frame-Version 2: Jeder Mehrbytewert (Zeitstempel und Wärmemesswert) ist Big-Endian wie beim Bus, und ein Frame der Version 1 wird abgelehnt. *(als reines C implementiert und nur auf einem PC getestet; nie auf einer Platine oder mit einem echten Sensor ausgeführt und keine Sicherheitsfunktion)*
 * ✅ **Cortex-M4F-Firmware-Toolchain** — ein echtes Bare-Metal-Image, das mit `arm-none-eabi-gcc` wirklich kompiliert und gelinkt wird, dieselbe Toolchain wie die der Schwester-Repositories URTC und URTC-SMART-RACK. *(implementiert, siehe „Build und Veröffentlichung“ unten)*
-* ✅ **Verarbeitungskette `vision_companion`** — ein echtes, funktionierendes Python-Paket: synthetische Thermal- und RGB-Frames, thermisches Falschfarben-Rendering, RGB->Thermal-ROI-Ausrichtung, Auswertung der Temperaturstatistik und Statistikbericht, alles abgedeckt durch 244 echte pytest-Fälle, und es läuft durchgängig ohne angeschlossene Hardware. *(implementiert, siehe „Vision-Companion“ unten)*
+* ✅ **Verarbeitungskette `vision_companion`** — ein echtes, funktionierendes Python-Paket: synthetische Thermal- und RGB-Frames, thermisches Falschfarben-Rendering, RGB->Thermal-ROI-Ausrichtung, Auswertung der Temperaturstatistik und Statistikbericht, alles abgedeckt durch 249 echte pytest-Fälle, und es läuft durchgängig ohne angeschlossene Hardware. *(implementiert, siehe „Vision-Companion“ unten)*
 
 ## 🧩 Rolle in URTC
 
@@ -175,7 +175,7 @@ RGB ROI (280,210)-(360,270) in a 640x480 frame
   -> thermal stats: min=75.67C max=78.97C mean=77.69C p95=78.70C (16 thermal px)
 ```
 
-244 echte pytest-Fälle decken `cli.py`, `alignment.py` und die übrigen Module des Pakets ab:
+249 echte pytest-Fälle decken `cli.py`, `alignment.py` und die übrigen Module des Pakets ab:
 
 ```bash
 pip install -e ".[dev]"
@@ -192,7 +192,7 @@ Welche Versionen der URTC-Programme zusammenarbeiten und welche Protokollversion
 
 ## 🧪 Tests
 
-Es gibt zwei Suiten. Die Firmware-Seite ist C in `tests/` (217 `TEST_ASSERT`-Prüfungen): der Sensor-Frame, der Messwert, der Ratenbegrenzer, die Diagnose, die Aktualität, die Szenarien der ganzen Verbindung, Robustheit gegen fehlerhafte Eingaben und die gemeinsamen Vektoren von URTC-COMMON, kompiliert und ausgeführt mit dem C-Compiler des Rechners selbst und in der CI mit AddressSanitizer, UBSan und einer Abdeckungsschwelle. Die Host-Seite ist das Paket `vision_companion` mit 244 pytest-Fällen (`cd src/vision_companion && pytest`), die die ganze Verarbeitungskette ohne Hardware ausführen: synthetische Bilder, Falschfarben, Ausrichtung, Kalibrierung, die thermische Aufnahme gegen einen simulierten Kopf, die Prüfung, die Drift und die Rack-Prüfung. Vier Python-Testdateien prüfen die Build-Skripte, die Release-Anhänge und die Versionsdateien. `bash build_firmware.sh` führt die C-Tests vor dem Cross-Kompilieren aus und bricht ab, wenn eine Prüfung fehlschlägt. Auch der Empfangsweg, den ein Interrupt nutzen wird (`sensor_rx.c`: der Interrupt legt das Byte nur in einen Ringpuffer, die Hauptschleife findet die Frames, synchronisiert sich nach einem beschädigten neu und verwirft einen halben Frame, der zu lange wartete), ist reine Logik und wird in den Tests Byte für Byte abgespielt.
+Es gibt zwei Suiten. Die Firmware-Seite ist C in `tests/` (217 `TEST_ASSERT`-Prüfungen): der Sensor-Frame, der Messwert, der Ratenbegrenzer, die Diagnose, die Aktualität, die Szenarien der ganzen Verbindung, Robustheit gegen fehlerhafte Eingaben und die gemeinsamen Vektoren von URTC-COMMON, kompiliert und ausgeführt mit dem C-Compiler des Rechners selbst und in der CI mit AddressSanitizer, UBSan und einer Abdeckungsschwelle. Die Host-Seite ist das Paket `vision_companion` mit 249 pytest-Fällen (`cd src/vision_companion && pytest`), die die ganze Verarbeitungskette ohne Hardware ausführen: synthetische Bilder, Falschfarben, Ausrichtung, Kalibrierung, die thermische Aufnahme gegen einen simulierten Kopf, die Prüfung, die Drift und die Rack-Prüfung. Vier Python-Testdateien prüfen die Build-Skripte, die Release-Anhänge und die Versionsdateien. `bash build_firmware.sh` führt die C-Tests vor dem Cross-Kompilieren aus und bricht ab, wenn eine Prüfung fehlschlägt. Auch der Empfangsweg, den ein Interrupt nutzen wird (`sensor_rx.c`: der Interrupt legt das Byte nur in einen Ringpuffer, die Hauptschleife findet die Frames, synchronisiert sich nach einem beschädigten neu und verwirft einen halben Frame, der zu lange wartete), ist reine Logik und wird in den Tests Byte für Byte abgespielt.
 
 ## 🏗️ Build und Veröffentlichung
 
