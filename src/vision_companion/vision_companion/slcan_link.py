@@ -60,7 +60,8 @@ class SlcanLink:
     """An SLCAN adapter opened on a serial port: ``send`` a message, ``receive`` what arrives."""
 
     def __init__(self, port: str, *, bitrate_kbps: int = DEFAULT_BITRATE_KBPS, baudrate: int = 115200,
-                 first_wait_s: float = 0.5, idle_wait_s: float = 0.03) -> None:
+                 first_wait_s: float = 0.5, idle_wait_s: float = 0.03, total_wait_s: float = 5.0,
+                 max_messages: int = 4096) -> None:
         if bitrate_kbps not in BITRATE_CODES:
             known = ", ".join(str(k) for k in BITRATE_CODES)
             raise LinkError(f"{bitrate_kbps} kbit/s is not a bit rate of SLCAN (one of {known})")
@@ -69,6 +70,8 @@ class SlcanLink:
         self.baudrate = baudrate
         self.first_wait_s = first_wait_s  # how long receive() waits for the first byte of an answer
         self.idle_wait_s = idle_wait_s    # and how long a silence after data ends the answer
+        self.total_wait_s = total_wait_s  # the most one receive() lasts after the first byte, whatever the traffic
+        self.max_messages = max_messages  # and the most messages it gathers
         self._serial = None
         self._buffer = ""
 
@@ -131,12 +134,17 @@ class SlcanLink:
         self._write(format_frame(message))
 
     def receive(self) -> list[CanMessage]:
-        """The messages that arrive after the last call: waits for the first byte, then until the line is quiet."""
+        """The messages that arrive after the last call: waits for the first byte, then until the line is quiet.
+
+        A bus that is never quiet (other nodes sending all the time) does not hold the call for ever: it ends
+        after `total_wait_s` or `max_messages`, with what arrived.
+        """
         if self._serial is None:
             raise LinkError("the adapter is not open")
         messages: list[CanMessage] = []
         deadline = time.monotonic() + self.first_wait_s
         quiet_since: float | None = None
+        end: float | None = None
         while True:
             try:
                 chunk = self._serial.read(256)
@@ -144,6 +152,8 @@ class SlcanLink:
                 raise LinkError(f"cannot read from {self.port}: {error}") from error
             now = time.monotonic()
             if chunk:
+                if end is None:
+                    end = now + self.total_wait_s
                 self._buffer += chunk.decode("ascii", errors="replace")
                 quiet_since = now
                 *lines, self._buffer = self._buffer.split("\r")
@@ -151,6 +161,8 @@ class SlcanLink:
                     message = parse_line(line)
                     if message is not None:
                         messages.append(message)
+                if len(messages) >= self.max_messages or now >= end:
+                    return messages
             elif quiet_since is not None and now - quiet_since >= self.idle_wait_s:
                 return messages
             elif quiet_since is None and now >= deadline:

@@ -24,6 +24,12 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The receiver of the SLCAN adapter ends on a busy bus:** one call of `receive()` stops after `total_wait_s` (5 s after the first byte) or `max_messages` (4096) with what arrived, instead of waiting for a silence that a bus with other nodes sending all the time never gives. Tests with a line that is never quiet.
+
+- **The write token of the datalake goes only to the address it was given:** a redirect is no longer followed, and a plain `http://` address to another machine logs a warning (`UVIS_ALLOW_PLAIN_DATALAKE=0` refuses it; the default keeps the previous behaviour). Tests with a local server that redirects.
+
+- **The coverage database is no longer versioned:** the local `.coverage` file, which held paths of the machine that made it, leaves the repository and is ignored.
+
 - **The security note of the README describes the Ed25519 bootloader:** the main bootloader checks the image against a table of public keys and holds no secret, official releases are signed with the release image-signing key and bench builds trust the public development key; the note no longer speaks of a shared-key HMAC. The eight languages follow.
 
 ## [0.2.0] - The Spanish README says "grabar" instead of the calque "flashear": the same word as the window of the programs. (and 7 more changes)

@@ -11,9 +11,12 @@
 # The token for the datalake is read from an environment variable whose name the caller gives; it is never printed.
 from __future__ import annotations
 
+import ipaddress
 import json
+import logging
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from typing import Any
@@ -66,23 +69,55 @@ def opcua_nodes(samples: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return nodes
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """The token goes to the address that was given and nowhere else: a redirect is an answer, not a place to follow."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ANN001
+        return None
+
+
+_OPENER = urllib.request.build_opener(_NoRedirect)
+LOG = logging.getLogger("vision_companion.export")
+
+
+def plain_datalake_refusal(base_url: str) -> str | None:
+    """None when the write token may be sent to ``base_url`` (https, or plain http to this same machine), otherwise the reason."""
+    parsed = urllib.parse.urlparse(base_url)
+    host = parsed.hostname or ""
+    local = host == "localhost"
+    if not local:
+        try:
+            local = ipaddress.ip_address(host).is_loopback
+        except ValueError:
+            local = False
+    if parsed.scheme == "https" and host or parsed.scheme == "http" and local:
+        return None
+    return "the write token must not cross a network in clear: use an https:// address, or http:// to this same machine"
+
+
 def post_samples(base_url: str, samples: list[dict[str, Any]], token_env: str, timeout_s: float = 10.0) -> int:
     """POST every sample to ``<base_url>/ingest`` with the bearer token held in the environment variable ``token_env``.
 
-    Returns how many were accepted; raises ExportError on the first refusal or network failure (naming the status, never the token).
+    Returns how many were accepted; raises ExportError on the first refusal or network failure (naming the status, never the token). A redirect is never followed. A plain
+    http address to another machine is accepted with a warning unless ``UVIS_ALLOW_PLAIN_DATALAKE=0`` refuses it.
     """
     token = os.environ.get(token_env, "")
     if not token:
         raise ExportError(f"the environment variable {token_env} holds no token")
     if not base_url.startswith(("http://", "https://")):
         raise ExportError("the datalake address must start with http:// or https://")
+    problem = plain_datalake_refusal(base_url)
+    if problem:
+        if os.environ.get("UVIS_ALLOW_PLAIN_DATALAKE", "1").strip() == "0":
+            raise ExportError(f"{problem} (UVIS_ALLOW_PLAIN_DATALAKE=0)")
+        LOG.warning("%s; accepted because UVIS_ALLOW_PLAIN_DATALAKE is not 0", problem)
     accepted = 0
     for sample in samples:
         request = urllib.request.Request(
             base_url.rstrip("/") + "/ingest", data=json.dumps(sample).encode("utf-8"), method="POST",
             headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"})
         try:
-            with urllib.request.urlopen(request, timeout=timeout_s) as response:  # noqa: S310 - the scheme is checked above
+            with _OPENER.open(request, timeout=timeout_s) as response:  # noqa: S310 - the scheme is checked above
                 if response.status >= 300:
                     raise ExportError(f"the datalake answered {response.status}")
         except urllib.error.HTTPError as error:
