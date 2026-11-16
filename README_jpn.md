@@ -21,7 +21,7 @@
 
 ---
 
-> **安全性とセキュリティの現状：** このエコシステムは認証された安全システムではなく、実装済みの URTC ボードもまだ存在しません。ブートローダーはファームウェアイメージを CRC32 と共有鍵の HMAC-SHA256 で検査しており、非対称署名ではありません（予定）。公開されているアプリケーションイメージは公開の開発用鍵（`signing_key_kind: dev`）で署名されているため、誰でもブートローダーが受け入れるイメージを作れます。実際のボードには何も送信されていません。ここに書かれた内容を人の安全のために頼る前に、[セキュリティベースライン](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/SECURITY_BASELINE.md)と[脅威モデル](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/THREAT_MODEL.md)をお読みください。
+> **安全性とセキュリティの現状：** このエコシステムは認証された安全システムではなく、実装済みの URTC ボードもまだ存在しません。メインのブートローダーはファームウェアイメージを CRC32 と、公開鍵の表に対する Ed25519 レコードで検査し、秘密を保持しません。正式リリースはリリース用のイメージ署名鍵で署名されますが、ベンチ用ビルドは公開の開発用鍵（`signing_key_kind: dev`）を信頼するため、誰でもベンチ用ブートローダーが受け入れるイメージを作れます。実際のボードには何も送信されていません。ここに書かれた内容を人の安全のために頼る前に、[セキュリティベースライン](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/SECURITY_BASELINE.md)と[脅威モデル](https://github.com/JuanenRac/URTC-DOCS/blob/main/docs/THREAT_MODEL.md)をお読みください。
 
 ## 📋 ひと目で
 
