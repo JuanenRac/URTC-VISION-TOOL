@@ -18,3 +18,7 @@ firmware/*.bin
 firmware/*.elf
 firmware/*.hex
 firmware/*.sha256
+
+# coverage.py databases are local artifacts (they hold paths of the machine that made them)
+.coverage
+.coverage.*
