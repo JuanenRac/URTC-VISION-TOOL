@@ -246,6 +246,7 @@ def read_frame(
     receive: Callable[[], list[CanMessage]],
     variant: str = "90640",
     max_polls: int = 50,
+    chunk_retries: int = 0,
 ) -> np.ndarray:
     """Runs a whole capture over two callables: ``send(message)`` and ``receive() -> list[CanMessage]``.
 
@@ -253,7 +254,13 @@ def read_frame(
     chunk can come in pieces on a slow line, so as long as anything keeps arriving it goes on receiving, and the chunk
     counts as lost when a whole wait brings nothing. Raises :class:`ThermalProtocolError` when the head reports
     an error, never becomes ready, or does not answer a chunk request with its four frames.
+
+    ``chunk_retries`` (0 by default, the behaviour so far) asks again for a chunk that was not answered, up to that
+    many times per chunk, after discarding whatever was received for the lost attempt so that a late frame of it is
+    never mixed into the new one.
     """
+    if chunk_retries < 0:
+        raise ValueError("chunk_retries cannot be negative")
     send(trigger_message())
     for _ in range(max_polls):
         send(status_request())
@@ -268,6 +275,7 @@ def read_frame(
     else:
         raise ThermalProtocolError("the head did not become ready")
     assembler = FrameAssembler(variant)
+    retries_left = chunk_retries
     while not assembler.complete:
         send(assembler.next_request())
         done = False
@@ -280,5 +288,10 @@ def read_frame(
         if not done:
             index = assembler.missing[0]
             assembler.abandon_chunk()
-            raise ThermalProtocolError(f"chunk {index} was not answered with four frames")
+            if retries_left <= 0:
+                raise ThermalProtocolError(f"chunk {index} was not answered with four frames")
+            retries_left -= 1
+            receive()    # what is still on its way belongs to the attempt that was given up
+            continue
+        retries_left = chunk_retries
     return assembler.frame_c()
