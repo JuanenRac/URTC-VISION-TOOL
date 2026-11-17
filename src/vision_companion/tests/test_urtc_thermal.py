@@ -192,3 +192,45 @@ def test_read_frame_reports_an_error_status_a_head_that_never_gets_ready_and_a_s
 def test_the_simulator_refuses_an_image_of_the_wrong_shape() -> None:
     with pytest.raises(ut.ThermalProtocolError):
         ut.SimulatedThermalHead(np.zeros((12, 16), dtype=np.float32), "90640")
+
+
+def test_read_frame_asks_again_for_a_lost_chunk_only_when_retries_are_allowed() -> None:
+    truth = _frame()
+
+    class LosesOnce(ut.SimulatedThermalHead):
+        lost = False
+
+        def handle(self, message: ut.CanMessage) -> list[ut.CanMessage]:
+            answer = super().handle(message)
+            if message.arbitration_id == 0x254 and not self.lost:
+                self.lost = True
+                return answer[:3]
+            return answer
+
+    def run(head: ut.SimulatedThermalHead, **kw: object) -> np.ndarray:
+        inbox: list[ut.CanMessage] = []
+
+        def send(message: ut.CanMessage) -> None:
+            inbox.extend(head.handle(message))
+
+        def receive() -> list[ut.CanMessage]:
+            taken = list(inbox)
+            inbox.clear()
+            return taken
+
+        return ut.read_frame(send=send, receive=receive, **kw)  # type: ignore[arg-type]
+
+    with pytest.raises(ut.ThermalProtocolError, match="four frames"):
+        run(LosesOnce(truth))
+    got = run(LosesOnce(truth), chunk_retries=1)
+    assert got.shape == truth.shape
+    with pytest.raises(ValueError):
+        run(LosesOnce(truth), chunk_retries=-1)
+
+    class AlwaysLoses(ut.SimulatedThermalHead):
+        def handle(self, message: ut.CanMessage) -> list[ut.CanMessage]:
+            answer = super().handle(message)
+            return answer[:3] if message.arbitration_id == 0x254 else answer
+
+    with pytest.raises(ut.ThermalProtocolError, match="four frames"):
+        run(AlwaysLoses(truth), chunk_retries=2)
