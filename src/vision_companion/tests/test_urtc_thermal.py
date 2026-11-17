@@ -187,6 +187,7 @@ def test_read_frame_reports_an_error_status_a_head_that_never_gets_ready_and_a_s
 
     with pytest.raises(ut.ThermalProtocolError, match="four frames"):
         run(Dropping(truth))
+    _asks_again_for_a_lost_chunk_only_when_retries_are_allowed()
 
 
 def test_the_simulator_refuses_an_image_of_the_wrong_shape() -> None:
@@ -194,7 +195,7 @@ def test_the_simulator_refuses_an_image_of_the_wrong_shape() -> None:
         ut.SimulatedThermalHead(np.zeros((12, 16), dtype=np.float32), "90640")
 
 
-def test_read_frame_asks_again_for_a_lost_chunk_only_when_retries_are_allowed() -> None:
+def _asks_again_for_a_lost_chunk_only_when_retries_are_allowed() -> None:
     truth = _frame()
 
     class LosesOnce(ut.SimulatedThermalHead):
