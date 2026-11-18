@@ -29,7 +29,7 @@
 |---|---|
 | Versión | `0.2.1` |
 | Madurez | Funcional |
-| Tests | 249 (`pytest`) |
+| Tests | 250 (`pytest`) |
 | Tecnología | C / STM32 / Python vision companion |
 | Destino | Una placa con microcontrolador (el firmware); se compila en un PC |
 | En hardware real | Todavía no: no consta ninguna ejecución en hardware real para esta versión |

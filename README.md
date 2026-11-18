@@ -29,7 +29,7 @@
 |---|---|
 | Version | `0.2.1` |
 | Maturity | Functional |
-| Tests | 249 (`pytest`) |
+| Tests | 250 (`pytest`) |
 | Stack | C / STM32 / Python vision companion |
 | Target | A microcontroller board (the firmware); built on a PC |
 | On real hardware | Not yet: no run on real hardware is recorded for this version |

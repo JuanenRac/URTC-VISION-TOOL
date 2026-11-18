@@ -155,6 +155,17 @@ def test_the_capture_command_saves_the_image_where_the_other_commands_read_it(ad
     assert "thermal frame: 32x24" in capsys.readouterr().out
 
 
+def test_the_capture_command_asks_again_for_a_lost_chunk_only_when_told_to(adapter, tmp_path, capsys):
+    lost = adapter(drop_chunk_frames=1)
+    assert cli.main(["capture", "--port", lost.url, "--out", str(tmp_path)]) == cli.EXIT_NO_DATA
+    assert "chunk 0 was not answered" in capsys.readouterr().err
+    again = adapter(drop_chunk_frames=1)
+    assert cli.main(["capture", "--port", again.url, "--out", str(tmp_path), "--chunk-retries", "1"]) == cli.EXIT_OK
+    assert np.allclose(np.load(tmp_path / "thermal_frame.npy"), image(), atol=0.006)
+    refused = cli.main(["capture", "--port", again.url, "--out", str(tmp_path), "--chunk-retries", "-1"])
+    assert refused == cli.EXIT_BAD_INPUT
+
+
 def test_the_saved_image_can_be_judged_by_the_other_commands(adapter, tmp_path, capsys):
     # a head that sees a warm part: the image crosses the serial line, is saved, and `inspect` judges a region of it
     # from the file

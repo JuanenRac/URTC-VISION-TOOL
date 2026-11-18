@@ -172,14 +172,15 @@ class SlcanLink:
 
 
 def capture(port: str, *, variant: str = "90640", bitrate_kbps: int = DEFAULT_BITRATE_KBPS, max_polls: int = 50,
-            idle_wait_s: float = 0.03) -> np.ndarray:
+            idle_wait_s: float = 0.03, chunk_retries: int = 0) -> np.ndarray:
     """One calibrated image from the thermal head on the bus behind ``port``, in degrees Celsius, (height, width).
 
     Raises :class:`LinkError` when the adapter cannot be used and :class:`ThermalProtocolError` when the head does not
     carry out the exchange.
     """
     with SlcanLink(port, bitrate_kbps=bitrate_kbps, idle_wait_s=idle_wait_s) as link:
-        return read_frame(send=link.send, receive=link.receive, variant=variant, max_polls=max_polls)
+        return read_frame(send=link.send, receive=link.receive, variant=variant, max_polls=max_polls,
+                          chunk_retries=chunk_retries)
 
 
 __all__ = ["BITRATE_CODES", "LinkError", "SlcanLink", "ThermalProtocolError", "capture", "format_frame", "parse_line"]
