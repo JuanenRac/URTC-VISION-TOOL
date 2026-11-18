@@ -233,13 +233,17 @@ def cmd_capture(args: argparse.Namespace) -> int:
     if value_range is not None and not value_range[1] > value_range[0]:
         print(f"error: --range needs HIGH greater than LOW, got {value_range[0]} {value_range[1]}", file=sys.stderr)
         return EXIT_BAD_INPUT
+    if args.chunk_retries < 0:
+        print("error: --chunk-retries cannot be negative", file=sys.stderr)
+        return EXIT_BAD_INPUT
     try:
         calibration = _load_cal(args)
     except CalibrationError as error:
         print(f"error: {error}", file=sys.stderr)
         return EXIT_BAD_INPUT
     try:
-        thermal = slcan_link.capture(args.port, variant=args.variant, bitrate_kbps=args.bitrate)
+        thermal = slcan_link.capture(args.port, variant=args.variant, bitrate_kbps=args.bitrate,
+                                       chunk_retries=args.chunk_retries)
     except slcan_link.LinkError as error:
         print(f"error: {error}", file=sys.stderr)
         return EXIT_BAD_INPUT
@@ -492,6 +496,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     capture_cmd.add_argument("--port", required=True, help="serial port of the adapter (COM3, /dev/ttyACM0) or a pyserial URL (socket://127.0.0.1:7777)")
     capture_cmd.add_argument("--bitrate", type=int, default=500, choices=[10, 20, 50, 100, 125, 250, 500, 800, 1000], help="bit rate of the bus in kbit/s (default: %(default)s)")
+    capture_cmd.add_argument("--chunk-retries", type=int, default=0, metavar="N", help="how many times to ask again for a chunk of the image that was not answered (default: %(default)s, none)")
     capture_cmd.add_argument("--out", default="capture_output", help="Output directory (default: ./capture_output)")
     capture_cmd.add_argument("--variant", choices=sorted(THERMAL_VARIANTS), default=DEFAULT_VARIANT, help=variant_help)
     capture_cmd.add_argument("--range", nargs=2, type=float, metavar=("LOW", "HIGH"), help="Fixed false-color scale in degrees C instead of the frame's own min/max")

@@ -116,7 +116,7 @@ $ ls -la /tmp/vc_selftest_out
 -rw-r--r-- 1 juane 197609 3846 thermal_frame_falsecolor.png
 ```
 
-### `capture --port PORT [--bitrate KBPS] [--out DIR] [--variant VARIANT] [--range LOW HIGH] [--calibration FILE]`
+### `capture --port PORT [--bitrate KBPS] [--chunk-retries N] [--out DIR] [--variant VARIANT] [--range LOW HIGH] [--calibration FILE]`
 
 Reads one calibrated thermal image from a URTC head that carries the thermal inspection tool, through a serial CAN adapter
 (SLCAN, as the CANable and similar adapters speak it), and saves it the way `selftest` does: `thermal_frame.npy` and
@@ -127,7 +127,10 @@ Reads one calibrated thermal image from a URTC head that carries the thermal ins
 (kbit/s, default 500, the rate of a URTC bus) must be one of the SLCAN rates: 10, 20, 50, 100, 125, 250, 500, 800 or 1000. The
 adapter is closed, set up, opened, used and closed again; the exchange is the one of `urtc_thermal.py`: `0x250` starts a capture,
 `0x251` is polled until the head says it is ready, and each of the 48 chunks (12 for the 90641) is asked with `0x254` and answered
-with four `0x255` frames. The `--range` and `--calibration` options are the ones of `selftest`.
+with four `0x255` frames. The `--range` and `--calibration` options are the ones of `selftest`. `--chunk-retries N` (default 0, which keeps the
+behaviour so far) asks again, up to N times per chunk, for a chunk that was not answered with its four frames, after
+discarding what was received for the lost attempt so that a late frame of it is never mixed into the new one; a negative
+value is refused with exit code `2`.
 
 Exit codes: `0` the image was read and saved; `1` the head did not deliver an image (it reported an error, never became ready or left a
 chunk unanswered); `2` the adapter could not be opened or used (pyserial missing, a port that does not exist), or the arguments are wrong.

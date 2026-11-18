@@ -24,6 +24,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The capture command can ask again for a lost chunk:** `capture --chunk-retries N` (and the `chunk_retries` argument of `capture()`) passes the retry limit of `read_frame` to a capture over the serial adapter; 0 by default, the behaviour so far, and a negative value is refused.
+
 - **The architecture picture quotes the current number of pytest cases.**
 - **A capture can ask again for a chunk that was not answered:** `read_frame` takes `chunk_retries` (0 by default, the behaviour so far); with a value it discards what was received for the lost attempt and repeats the request up to that many times per chunk, so a late frame of the old attempt is never mixed into the new one. Tests with a head that loses a chunk once and one that always loses it.
 
