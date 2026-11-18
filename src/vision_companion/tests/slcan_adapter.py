@@ -24,13 +24,16 @@ from vision_companion.urtc_thermal import CAN_ID_CALIBRATED_CHUNK, CanMessage, S
 
 class SimulatedAdapter:
     def __init__(self, head: SimulatedThermalHead, *, drop_chunk_frames: int = 0, garbage_before_answers: bool = False,
-                 silent: bool = False, chunk_frame_delay_s: float = 0.0) -> None:
+                 silent: bool = False, chunk_frame_delay_s: float = 0.0, background_period_s: float = 0.0) -> None:
         self.head = head
         # a slow line: the frames of an answer come one by one, this far apart
         self.chunk_frame_delay_s = chunk_frame_delay_s
         self.drop_chunk_frames = drop_chunk_frames  # how many frames of chunk answers to lose (a line that drops one)
         self.garbage_before_answers = garbage_before_answers
         self.silent = silent
+        # a shared bus: a frame of another node arrives this often, whatever is asked (0 = a quiet bus)
+        self.background_period_s = background_period_s
+        self._send_lock = threading.Lock()
         self.commands: list[str] = []
         self.requests: list[CanMessage] = []
         self._server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -52,6 +55,8 @@ class SimulatedAdapter:
             return
         connection.settimeout(0.2)
         buffer = b""
+        if self.background_period_s > 0:
+            threading.Thread(target=self._chatter, args=(connection,), name="simulated-slcan-bus", daemon=True).start()
         with connection:
             while True:
                 try:
@@ -67,12 +72,22 @@ class SimulatedAdapter:
                 for raw in lines:
                     self._handle(connection, raw.decode("ascii", errors="replace"))
 
+    def _chatter(self, connection: socket.socket) -> None:
+        while True:
+            time.sleep(self.background_period_s)
+            try:
+                with self._send_lock:
+                    connection.sendall(b"t1230\r")
+            except OSError:
+                return
+
     def _handle(self, connection: socket.socket, line: str) -> None:
         if not line:
             return
         if not line.startswith("t"):
             self.commands.append(line)
-            connection.sendall(b"\r")  # an SLCAN adapter acknowledges a command with a carriage return
+            with self._send_lock:
+                connection.sendall(b"\r")  # an SLCAN adapter acknowledges a command with a carriage return
             return
         message = parse_line(line)
         if message is None or self.silent:
@@ -89,10 +104,12 @@ class SimulatedAdapter:
             pieces.append(format_frame(answer))
         if self.chunk_frame_delay_s:
             for piece in pieces:
-                connection.sendall(piece)
+                with self._send_lock:
+                    connection.sendall(piece)
                 time.sleep(self.chunk_frame_delay_s)
         elif pieces:
-            connection.sendall(b"".join(pieces))  # one write: the answer reaches the line as one burst
+            with self._send_lock:
+                connection.sendall(b"".join(pieces))  # one write: the answer reaches the line as one burst
 
     def close(self) -> None:
         try:

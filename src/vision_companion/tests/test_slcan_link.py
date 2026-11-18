@@ -115,6 +115,15 @@ def test_a_lost_frame_of_a_chunk_is_reported_with_the_chunk_number(adapter):
         capture(adapter(drop_chunk_frames=1).url, idle_wait_s=FAST)
 
 
+def test_a_capture_ends_on_a_bus_shared_with_other_nodes_that_never_goes_quiet(adapter):
+    # another node sends every 2 ms, so the line is never quiet for the 30 ms that normally end an answer: the call
+    # ends at its own limit and the capture still reads the head's chunks out of what arrived
+    simulated = adapter(background_period_s=0.002)
+    with SlcanLink(simulated.url, idle_wait_s=0.03, total_wait_s=0.05) as link:
+        frame = slcan_link.read_frame(send=link.send, receive=link.receive, chunk_retries=2)
+    assert np.allclose(frame, image(), atol=0.006)
+
+
 def test_a_head_that_never_answers_ends_the_capture_instead_of_waiting_for_ever(adapter):
     simulated = adapter(silent=True)
     with SlcanLink(simulated.url, first_wait_s=0.05, idle_wait_s=0.02) as link:
