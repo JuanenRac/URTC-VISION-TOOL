@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+## [0.2.2] - Chunk retries for captures, bounded SLCAN receive, datalake token scoping and shared vector refresh
+
+- **The capture command can ask again for a lost chunk:** `capture --chunk-retries N` (and the `chunk_retries` argument of `capture()`) passes the retry limit of `read_frame` to a capture over the serial adapter; 0 by default, the behaviour so far, and a negative value is refused.
+
+- **The architecture picture quotes the current number of pytest cases.**
+- **A capture can ask again for a chunk that was not answered:** `read_frame` takes `chunk_retries` (0 by default, the behaviour so far); with a value it discards what was received for the lost attempt and repeats the request up to that many times per chunk, so a late frame of the old attempt is never mixed into the new one. Tests with a head that loses a chunk once and one that always loses it.
+
+- **The receiver of the SLCAN adapter ends on a busy bus:** one call of `receive()` stops after `total_wait_s` (5 s after the first byte) or `max_messages` (4096) with what arrived, instead of waiting for a silence that a bus with other nodes sending all the time never gives. Tests with a line that is never quiet.
+
+- **The write token of the datalake goes only to the address it was given:** a redirect is no longer followed, and a plain `http://` address to another machine logs a warning (`UVIS_ALLOW_PLAIN_DATALAKE=0` refuses it; the default keeps the previous behaviour). Tests with a local server that redirects.
+
+- **The coverage database is no longer versioned:** the local `.coverage` file, which held paths of the machine that made it, leaves the repository and is ignored.
+
+- **The security note of the README describes the Ed25519 bootloader:** the main bootloader checks the image against a table of public keys and holds no secret, official releases are signed with the release image-signing key and bench builds trust the public development key; the note no longer speaks of a shared-key HMAC. The eight languages follow.
+
 ## [0.2.1] - Refreshed shared vectors, SLCAN failure and sensor check tests, and README readings
 
 - **The copy of the shared vectors is current again:** the table of magic payloads of the common repository has one more row (the command that lifts a latched error of a tool head), and the copy and its lock follow it. This program does not use that command.
@@ -21,21 +38,6 @@ All notable changes to this project are documented here.
 - **The shared document policy check is refreshed:** `tools/_doc_policy.py` and `tools/ci_validate.py` are the current copies, which also fail when a build script changes a version and when a script switches into a virtual environment instead of running its python directly.
 
 - **The version of the Python companion has its own step in `bump.py`:** `python bump.py --companion` raises `__version__` of the `vision_companion` package on the ecosystem odometer (`--dry-run` only shows it) and leaves the line endings of the file as they are, so it is no longer bumped by hand. The version of the package stays independent of the version of the project.
-
-## [Unreleased]
-
-- **The capture command can ask again for a lost chunk:** `capture --chunk-retries N` (and the `chunk_retries` argument of `capture()`) passes the retry limit of `read_frame` to a capture over the serial adapter; 0 by default, the behaviour so far, and a negative value is refused.
-
-- **The architecture picture quotes the current number of pytest cases.**
-- **A capture can ask again for a chunk that was not answered:** `read_frame` takes `chunk_retries` (0 by default, the behaviour so far); with a value it discards what was received for the lost attempt and repeats the request up to that many times per chunk, so a late frame of the old attempt is never mixed into the new one. Tests with a head that loses a chunk once and one that always loses it.
-
-- **The receiver of the SLCAN adapter ends on a busy bus:** one call of `receive()` stops after `total_wait_s` (5 s after the first byte) or `max_messages` (4096) with what arrived, instead of waiting for a silence that a bus with other nodes sending all the time never gives. Tests with a line that is never quiet.
-
-- **The write token of the datalake goes only to the address it was given:** a redirect is no longer followed, and a plain `http://` address to another machine logs a warning (`UVIS_ALLOW_PLAIN_DATALAKE=0` refuses it; the default keeps the previous behaviour). Tests with a local server that redirects.
-
-- **The coverage database is no longer versioned:** the local `.coverage` file, which held paths of the machine that made it, leaves the repository and is ignored.
-
-- **The security note of the README describes the Ed25519 bootloader:** the main bootloader checks the image against a table of public keys and holds no secret, official releases are signed with the release image-signing key and bench builds trust the public development key; the note no longer speaks of a shared-key HMAC. The eight languages follow.
 
 ## [0.2.0] - The Spanish README says "grabar" instead of the calque "flashear": the same word as the window of the programs. (and 7 more changes)
 
