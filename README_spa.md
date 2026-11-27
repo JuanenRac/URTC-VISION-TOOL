@@ -27,7 +27,7 @@
 
 | | |
 |---|---|
-| Versión | `0.2.2` |
+| Versión | `0.2.3` |
 | Madurez | Funcional |
 | Tests | 267 (`pytest`) |
 | Tecnología | C / STM32 / Python vision companion |
