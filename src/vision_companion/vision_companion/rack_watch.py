@@ -95,6 +95,11 @@ def simulate(state: dict[str, Any], scenario: str, count: int, interval_ms: int,
     slots = state.get("slots") if isinstance(state, dict) else None
     if not isinstance(slots, list):
         raise RackCheckError("the state needs a list of slots")
+    try:
+        for item in slots:
+            int(item.get("target_c", 0))
+    except (AttributeError, TypeError, ValueError, OverflowError) as error:
+        raise RackCheckError(f"every slot must be an object with a whole target_c: {error}") from error
     rng = np.random.default_rng(seed)
     frames = np.full((count, height, width), AMBIENT_C, dtype=np.float32)
     heated = [s for s in slots if s.get("occupied") and int(s.get("target_c", 0)) > 0]

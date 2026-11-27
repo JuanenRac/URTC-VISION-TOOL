@@ -92,7 +92,10 @@ def plan_from_dict(data: Any) -> tuple[Profile, list[Component]]:
     if not isinstance(raw_profile, dict):
         raise PlanError("profile must be an object")
     rules: dict[str, Rule] = {}
-    for kind, raw in (raw_profile.get("rules") or {}).items():
+    raw_rules = raw_profile.get("rules") or {}
+    if not isinstance(raw_rules, dict):
+        raise PlanError("profile.rules must be an object")
+    for kind, raw in raw_rules.items():
         if not isinstance(raw, dict):
             raise PlanError(f"rule {kind!r} must be an object")
         extra = set(raw) - _RULE_KEYS
@@ -106,7 +109,10 @@ def plan_from_dict(data: Any) -> tuple[Profile, list[Component]]:
     profile = Profile(str(raw_profile.get("name", "profile")), None if ambient is None else _num(ambient, "ambient_c"), rules)
     components: list[Component] = []
     seen: set[str] = set()
-    for item in data.get("components") or []:
+    raw_components = data.get("components") or []
+    if not isinstance(raw_components, list):
+        raise PlanError("components must be a list")
+    for item in raw_components:
         if not isinstance(item, dict) or not isinstance(item.get("ref"), str) or not item["ref"]:
             raise PlanError("each component needs a ref")
         if item["ref"] in seen:

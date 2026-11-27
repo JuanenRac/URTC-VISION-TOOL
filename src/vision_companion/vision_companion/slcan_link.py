@@ -47,13 +47,14 @@ def format_frame(message: CanMessage) -> bytes:
 
 def parse_line(line: str) -> CanMessage | None:
     """The message of one SLCAN line, or None when the line is anything but a well-formed standard data frame."""
-    match = _FRAME.match(line.strip())
+    match = _FRAME.match(line.strip(" \t\r\n\a"))   # an adapter answers a refused command with a bell and no line end
     if match is None:
         return None
-    data = match.group(3)
-    if len(data) != 2 * int(match.group(2)):
+    data, length = match.group(3), 2 * int(match.group(2))
+    identifier = int(match.group(1), 16)
+    if len(data) not in (length, length + 4) or identifier > 0x7FF:   # 4 more: a time stamp
         return None
-    return CanMessage(int(match.group(1), 16), bytes.fromhex(data))
+    return CanMessage(identifier, bytes.fromhex(data[:length]))
 
 
 class SlcanLink:
@@ -85,10 +86,16 @@ class SlcanLink:
         except (OSError, ValueError, serial.SerialException) as error:
             raise LinkError(f"cannot open {self.port}: {error}") from error
         self._buffer = ""
-        for command in ("C", f"S{BITRATE_CODES[self.bitrate_kbps]}", "O"):
-            self._write((command + "\r").encode("ascii"))
-            time.sleep(0.02)
-        self._discard()
+        try:
+            for command in ("C", f"S{BITRATE_CODES[self.bitrate_kbps]}", "O"):
+                self._write((command + "\r").encode("ascii"))
+                time.sleep(0.02)
+            self._discard()
+        except LinkError:
+            if self._serial is not None:
+                self._serial.close()      # do not keep a port that could not be set up
+            self._serial = None
+            raise
 
     def close(self) -> None:
         if self._serial is None:

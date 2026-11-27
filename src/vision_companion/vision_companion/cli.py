@@ -310,13 +310,23 @@ def cmd_analyze_roi(args: argparse.Namespace) -> int:
     return EXIT_OK
 
 
+def _load_npy(path: str) -> np.ndarray:
+    """One array of numbers from a .npy file. An empty or cut file, an archive or an array of something else is a CalibrationError."""
+    try:
+        loaded = np.load(path)
+    except (OSError, ValueError, EOFError) as error:
+        raise CalibrationError(f"cannot read the frames: {error}") from error
+    if not isinstance(loaded, np.ndarray) or loaded.dtype.kind not in "fiu":
+        if hasattr(loaded, "close"):
+            loaded.close()
+        raise CalibrationError("the frame file must hold one array of numbers (.npy)")
+    return loaded
+
+
 def _load_frames(path: str | None, variant_shape: tuple[int, int], count: int = 1) -> np.ndarray:
     """A saved frame (or a stack of frames) from a .npy file, or the synthetic frame when no file is given."""
     if path:
-        try:
-            return np.load(path)
-        except (OSError, ValueError) as error:
-            raise CalibrationError(f"cannot read the frames: {error}") from error
+        return _load_npy(path)
     width, height = variant_shape
     return generate_synthetic_thermal_frame(width, height)
 
@@ -326,7 +336,7 @@ def cmd_inspect(args: argparse.Namespace) -> int:
     import json
     import time
     try:
-        plan = json.loads(Path(args.plan).read_text(encoding="utf-8"))
+        plan = json.loads(Path(args.plan).read_text(encoding="utf-8-sig"))
         profile, components = inspection.plan_from_dict(plan)
         thermal = _load_frames(args.frame, _variant_shape(args))
         if thermal.ndim != 2:
@@ -368,7 +378,7 @@ def cmd_drift_check(args: argparse.Namespace) -> int:
     """Compare frames of the reference scene with a stored baseline (or store the baseline with --update)."""
     import json
     try:
-        frames = np.load(args.frames) if args.frames else sensor_drift.synthetic_reference(*_variant_shape(args))
+        frames = _load_npy(args.frames) if args.frames else sensor_drift.synthetic_reference(*_variant_shape(args))
         if args.update:
             baseline = sensor_drift.make_baseline(frames, args.ambient)
             Path(args.baseline).write_text(json.dumps(baseline.to_dict()) + "\n", encoding="utf-8")
@@ -379,7 +389,7 @@ def cmd_drift_check(args: argparse.Namespace) -> int:
         if args.suggest_calibration:
             Path(args.suggest_calibration).write_text(json.dumps(sensor_drift.suggest_calibration(baseline, frames), indent=2) + "\n", encoding="utf-8")
             print(f"  -> calibration suggested in {args.suggest_calibration}")
-    except (OSError, ValueError, sensor_drift.DriftError) as error:
+    except (OSError, ValueError, CalibrationError, sensor_drift.DriftError) as error:
         print(f"error: {error}", file=sys.stderr)
         return EXIT_BAD_INPUT
     print(f"sensor check: {report.verdict} ({report.frames} frame(s))")

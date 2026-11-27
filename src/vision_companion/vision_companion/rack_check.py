@@ -71,8 +71,11 @@ def check_rack(thermal: np.ndarray, state: dict[str, Any], rgb_width: int, rgb_h
     for item in state["slots"]:
         try:
             box = BoundingBox(*item["roi"])
-            slot, occupied, target = int(item["slot"]), bool(item["occupied"]), int(item.get("target_c", 0))
-        except (KeyError, TypeError, ValueError) as error:
+            slot, occupied, target = int(item["slot"]), item["occupied"], int(item.get("target_c", 0))
+            if occupied not in (True, False):   # "false" as text is true to Python: it must not be believed
+                raise ValueError("occupied must be true or false")
+            occupied = bool(occupied)
+        except (KeyError, TypeError, ValueError, OverflowError) as error:
             raise RackCheckError(f"a slot needs slot, roi [x0, y0, x1, y1], occupied and target_c: {error}") from error
         stats = analyze_rgb_roi(thermal, box, rgb_width=rgb_width, rgb_height=rgb_height)
         measured = None if stats.is_empty else stats.max_c
@@ -88,7 +91,7 @@ def results_to_dict(results: list[SlotResult], ambient_c: float | None = None) -
 
 def load_state(path: str) -> dict[str, Any]:
     try:
-        with open(path, encoding="utf-8") as handle:
+        with open(path, encoding="utf-8-sig") as handle:
             return json.load(handle)
     except (OSError, ValueError) as error:
         raise RackCheckError(f"cannot read the rack state: {error}") from error
