@@ -2,6 +2,9 @@
 
 All notable changes to this project are documented here.
 
+## [0.2.3] - Damaged and byte-order-marked files handled and no lost serial frames
+
+
 ## [Unreleased]
 
 - **A recorded script can be replayed whatever its comments say:** `tools/sensor_bench.py --replay` stopped, or never returned, when the script had a byte order mark (Notepad writes one) or a comment with a character the Windows code page does not have. The file is now read and passed to the virtual sensor link as UTF-8. Checked by a host test. The README files also state the real number of Python test files, held by a test.
