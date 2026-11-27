@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **A recorded script can be replayed whatever its comments say:** `tools/sensor_bench.py --replay` stopped, or never returned, when the script had a byte order mark (Notepad writes one) or a comment with a character the Windows code page does not have. The file is now read and passed to the virtual sensor link as UTF-8. Checked by a host test. The README files also state the real number of Python test files, held by a test.
+
 - **A frame file that is empty, cut short, an archive or not made of numbers is a message:** `inspect`, `rack-check`, `rack-watch` and `drift-check` used to end in a traceback.
 - **A wrong value in an inspection plan or a rack state is refused:** a list where an object is expected, an infinite number or `"occupied": "false"` written as text (which counted as occupied).
 - **Files saved with a byte-order mark are read:** plans, rack states, calibrations and drift baselines, as some Windows editors write them.
