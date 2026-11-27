@@ -162,7 +162,7 @@ def suggest_calibration(baseline: Baseline, frames: Any) -> dict[str, Any]:
 
 def load_baseline(path: str | Path) -> Baseline:
     try:
-        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
     except (OSError, ValueError) as error:
         raise DriftError(f"cannot read the baseline: {error}") from error
     if not isinstance(data, dict) or data.get("schema") != SCHEMA:

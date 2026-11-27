@@ -124,8 +124,8 @@ def calibration_from_dict(data: Any) -> Calibration:
 
 def load_calibration(path: str | Path) -> Calibration:
     try:
-        text = Path(path).read_text(encoding="utf-8")
-    except OSError as error:
+        text = Path(path).read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeDecodeError) as error:
         raise CalibrationError(f"cannot read the calibration file: {error}") from error
     try:
         data = json.loads(text)

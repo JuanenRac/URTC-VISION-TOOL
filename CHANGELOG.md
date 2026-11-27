@@ -4,6 +4,11 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **A frame file that is empty, cut short, an archive or not made of numbers is a message:** `inspect`, `rack-check`, `rack-watch` and `drift-check` used to end in a traceback.
+- **A wrong value in an inspection plan or a rack state is refused:** a list where an object is expected, an infinite number or `"occupied": "false"` written as text (which counted as occupied).
+- **Files saved with a byte-order mark are read:** plans, rack states, calibrations and drift baselines, as some Windows editors write them.
+- **The serial adapter no longer loses frames after a refused command or with time stamps on:** a frame preceded by the bell character or followed by the four digits of a time stamp is read; a port that cannot be set up is closed again.
+
 ## [0.2.2] - Chunk retries for captures, bounded SLCAN receive, datalake token scoping and shared vector refresh
 
 - **The capture command can ask again for a lost chunk:** `capture --chunk-retries N` (and the `chunk_retries` argument of `capture()`) passes the retry limit of `read_frame` to a capture over the serial adapter; 0 by default, the behaviour so far, and a negative value is refused.
