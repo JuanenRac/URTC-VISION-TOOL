@@ -453,7 +453,7 @@ def main(argv: list[str] | None = None) -> int:
             print("SENSOR_BENCH=SKIPPED no host C compiler, or local builds are locked (ALLOW_LOCAL_BUILD=1 allows them)")
             return 2
         if args.replay:
-            done = subprocess.run(prefix, input=Path(args.replay).read_text(encoding="utf-8"), capture_output=True, text=True, timeout=300, check=False)
+            done = subprocess.run(prefix, input=Path(args.replay).read_text(encoding="utf-8-sig"), capture_output=True, encoding="utf-8", errors="replace", timeout=300, check=False)
             sys.stdout.write(done.stdout)
             return done.returncode
         problems = run_all(prefix, args.only, args.seed, args.events)

@@ -115,6 +115,16 @@ class PublishedNumbersTests(unittest.TestCase):
             self.assertTrue(numbers, f"{name} must state how many pytest cases back it")
             self.assertEqual(set(numbers), {str(count)}, f"{name} quotes a stale pytest case count")
 
+    def test_the_python_test_files_stated_in_the_readmes(self):
+        files = list((ROOT / "tests").glob("test_*.py"))
+        tests = sum(len(re.findall(r"(?m)^    def test_", path.read_text(encoding="utf-8"))) for path in files)
+        for name in README_FILES:
+            numbers = re.findall(r"(\d+) ?(?:つの |个 )?[^\d\n(（]{0,30}Python[^\d\n(（]{0,24}(?:[(（](\d+))?", read(name))
+            stated = [pair for pair in numbers if pair[0] == str(len(files))]
+            self.assertEqual(len(stated), 1, f"{name} must state the {len(files)} Python test files: {numbers}")
+            if stated[0][1]:
+                self.assertEqual(stated[0][1], str(tests), f"{name} quotes a stale number of Python tests")
+
 
 class PcbFieldsTests(unittest.TestCase):
     """The manifest carries the chip and the hardware identifier of the board this firmware is for. Empty means the board does not exist yet (pending); a value is

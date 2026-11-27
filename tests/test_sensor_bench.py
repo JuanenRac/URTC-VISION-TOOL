@@ -1,11 +1,13 @@
 """The software bench of the sensor link (tools/sensor_bench.py): the scripts it writes, how it reads the answers, its reference, and the run against the virtual link when a compiler is there."""
 import contextlib
 import io
+import locale
 import os
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "tools"))
@@ -136,6 +138,19 @@ class RealLinkTests(unittest.TestCase):
         if status == 2:
             self.skipTest("no host C compiler, or local builds are off (ALLOW_LOCAL_BUILD=1 allows them)")
         self.assertEqual(status, 0, out.getvalue()[-3000:])
+
+
+class ReplayTests(unittest.TestCase):
+    def test_a_script_with_a_byte_order_mark_and_any_comment_is_played_whatever_the_code_page(self):
+        # the stand-in for the program under test: like it, it takes a line that starts with # as a comment
+        child = "import sys\nlines = sys.stdin.buffer.read().splitlines()\nsys.exit(3) if not lines[0].startswith(b'#') else None\nprint(' '.join(l.decode() for l in lines if not l.startswith(b'#')))"
+        with tempfile.TemporaryDirectory() as folder:
+            script = Path(folder) / "recorded.txt"
+            script.write_text("# r\u00e1faga \u2192 fallo\nT 0\n", encoding="utf-8-sig")
+            out = io.StringIO()
+            with mock.patch.object(bench, "build", return_value=[sys.executable, "-c", child]), mock.patch.object(locale, "getencoding", return_value="cp1252", create=True), mock.patch.object(locale, "getpreferredencoding", return_value="cp1252"), contextlib.redirect_stdout(out):
+                code = bench.main(["--replay", str(script), "--build-dir", folder])
+        self.assertEqual((code, out.getvalue().strip()), (0, "T 0"))
 
 
 if __name__ == "__main__":
