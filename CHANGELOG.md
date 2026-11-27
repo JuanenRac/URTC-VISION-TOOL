@@ -4,6 +4,8 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+- **The coverage of the C host suites is the union of the lines the suites run:** `tools/run_host_tests.py` kept, for each source, the best figure of any one suite, so the lines that only another suite runs were not counted. It now reads the lines of every suite (`gcov -t`) and counts a line as run when any suite ran it, and as runnable when any suite compiled it.
+
 ## [0.2.3] - Damaged and byte-order-marked files handled and no lost serial frames
 
 - **A recorded script can be replayed whatever its comments say:** `tools/sensor_bench.py --replay` stopped, or never returned, when the script had a byte order mark (Notepad writes one) or a comment with a character the Windows code page does not have. The file is now read and passed to the virtual sensor link as UTF-8. Checked by a host test. The README files also state the real number of Python test files, held by a test.
